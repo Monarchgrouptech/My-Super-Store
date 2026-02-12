@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useAdmin } from '../../context/AdminContext';
 import {
     Menu,
     X,
@@ -11,7 +10,6 @@ import {
     Store,
     Settings,
     LogOut,
-    Home,
     Activity,
     Grid3X3,
 } from 'lucide-react';
@@ -22,8 +20,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const { signOut, user } = useAuth();
-    const { adminRole } = useAdmin();
+    const { signOut } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -121,28 +118,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Main Content */}
             <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 flex flex-col overflow-hidden`}>
-                {/* Top Bar */}
-                <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
-                        <p className="text-sm text-gray-500">Role: {adminRole}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link
-                            to="/"
-                            className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-100 transition-colors"
-                        >
-                            <Home size={18} />
-                            <span className="text-sm">Back to Store</span>
-                        </Link>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>{user?.email}</span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Content Area */}
-                <main className="flex-1 overflow-auto p-6">
+                <main className="flex-1 overflow-auto p-6 bg-gray-50">
                     {children}
                 </main>
             </div>
