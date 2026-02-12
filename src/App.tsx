@@ -30,6 +30,7 @@ import { OrderList } from './pages/vendor/OrderList';
 import { VendorProfile } from './pages/vendor/VendorProfile';
 
 // Admin Dashboard Imports
+import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminProducts } from './pages/admin/AdminProducts';
@@ -113,13 +114,46 @@ export default function App() {
                 } />
 
                 {/* Admin Routes */}
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/products" element={<AdminProducts />} />
-                <Route path="/admin/vendors" element={<AdminVendors />} />
-                <Route path="/admin/orders" element={<AdminOrders />} />
-                <Route path="/admin/categories" element={<AdminCategories />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin" element={
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/dashboard" element={
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/users" element={
+                  <AdminLayout>
+                    <AdminUsers />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/products" element={
+                  <AdminLayout>
+                    <AdminProducts />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/vendors" element={
+                  <AdminLayout>
+                    <AdminVendors />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/orders" element={
+                  <AdminLayout>
+                    <AdminOrders />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/categories" element={
+                  <AdminLayout>
+                    <AdminCategories />
+                  </AdminLayout>
+                } />
+                <Route path="/admin/settings" element={
+                  <AdminLayout>
+                    <AdminSettings />
+                  </AdminLayout>
+                } />
 
                 <Route path="*" element={<Home />} />
               </Routes>

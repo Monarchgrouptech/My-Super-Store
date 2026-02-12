@@ -1,10 +1,12 @@
-import { ShoppingCart, User, Menu, Gem, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, Menu, Gem, ChevronDown, LogOut, Home } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { SearchBar } from './SearchBar';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileSearch } from './MobileSearch';
+import { useAuth } from '../context/AuthContext';
+import { useAdmin } from '../context/AdminContext';
 
 interface HeaderProps {
   cartItemCount: number;
@@ -16,6 +18,8 @@ export function Header({ cartItemCount }: HeaderProps) {
   const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,8 +49,69 @@ export function Header({ cartItemCount }: HeaderProps) {
     { name: 'Login', path: '/login' }
   ];
 
-
   const isAccountPage = location.pathname.startsWith('/account');
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  // If on admin page, show admin navbar instead
+  if (isAdminPage && isAdmin) {
+    return (
+      <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex justify-center w-full">
+          <div className="flex justify-between w-full max-w-[1280px] items-center px-4 sm:px-6 md:px-8 lg:px-10 py-4 gap-4 sm:gap-6 md:gap-8">
+            {/* Logo Area - Left */}
+            <Link to="/" className="flex items-center gap-2 cursor-pointer no-underline flex-shrink-0">
+              <div className="flex items-center justify-center size-8 rounded-full bg-black">
+                <Gem size={20} strokeWidth={2} className="text-white" />
+              </div>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 whitespace-nowrap" style={{ fontFamily: 'Flowmery' }}>My Super Store</h2>
+            </Link>
+
+            {/* Admin Nav Links - Center */}
+            <nav className="hidden md:flex items-center gap-6 flex-1 ml-12">
+              <Link to="/admin/dashboard" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Dashboard</Link>
+              <Link to="/admin/users" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Users</Link>
+              <Link to="/admin/products" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Products</Link>
+              <Link to="/admin/vendors" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Vendors</Link>
+              <Link to="/admin/orders" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Orders</Link>
+              <Link to="/admin/categories" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Categories</Link>
+              <Link to="/admin/settings" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">Settings</Link>
+            </nav>
+
+            {/* Right Side - Back to Store and Logout */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link 
+                to="/" 
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 transition-colors text-sm font-semibold text-slate-700"
+              >
+                <Home size={18} />
+                <span>Store</span>
+              </Link>
+
+              <button
+                onClick={async () => {
+                  await signOut();
+                  navigate('/');
+                }}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded hover:bg-red-50 transition-colors text-sm font-semibold text-red-600"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+
+              {/* Mobile Menu */}
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="md:hidden p-2 rounded hover:bg-gray-100"
+                aria-label="Open navigation menu"
+              >
+                <Menu size={24} className="text-slate-900" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   // Header styling based on page
   const headerClass = isAccountPage
