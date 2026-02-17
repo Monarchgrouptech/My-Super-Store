@@ -6,7 +6,7 @@ import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { Category } from '../../types/vendor';
 
 export function AdminCategories() {
-    const { isAdmin, hasPermission } = useAdmin();
+    const { isAdmin } = useAdmin();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -14,10 +14,10 @@ export function AdminCategories() {
     const [formData, setFormData] = useState({ name: '', slug: '', parent_id: '' });
 
     useEffect(() => {
-        if (isAdmin && hasPermission('manage_categories' as any)) {
+        if (isAdmin) {
             fetchCategories();
         }
-    }, [isAdmin, hasPermission]);
+    }, [isAdmin]);
 
     const fetchCategories = async () => {
         try {

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { supabase } from '../../lib/supabase';
-import { AdminStats, DashboardMetric } from '../../types/admin';
-import { Users, ShoppingBag, Store, TrendingUp } from 'lucide-react';
+import { AdminStats } from '../../types/admin';
+import { Users, ShoppingBag, Store, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { StatCard } from '../../components/admin/StatCard';
 
 export function AdminDashboard() {
+    const navigate = useNavigate();
     const { isAdmin } = useAdmin();
     const [stats, setStats] = useState<AdminStats>({
         totalUsers: 0,
@@ -17,6 +20,21 @@ export function AdminDashboard() {
         pendingProductApprovals: 0,
     });
     const [loading, setLoading] = useState(true);
+    const [orderBreakdown, setOrderBreakdown] = useState({
+        pending: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0,
+    });
+    const [productBreakdown, setProductBreakdown] = useState({
+        published: 0,
+        drafts: 0,
+    });
+    const [vendorBreakdown, setVendorBreakdown] = useState({
+        verified: 0,
+        pending: 0,
+    });
 
     useEffect(() => {
         fetchStats();
@@ -24,9 +42,9 @@ export function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            // Fetch total users
+            // Fetch total users from user_profiles
             const { count: usersCount } = await supabase
-                .from('auth.users')
+                .from('user_profiles')
                 .select('id', { count: 'exact', head: true });
 
             // Fetch total vendors
@@ -50,13 +68,55 @@ export function AdminDashboard() {
                 .select('id', { count: 'exact', head: true })
                 .eq('is_verified', false);
 
-            // Calculate total revenue
-            const { data: ordersData } = await supabase
-                .from('orders')
-                .select('total_amount')
-                .eq('status', 'completed');
+            // Calculate total revenue from order_items (matching vendor panel logic)
+            // Revenue = sum of (quantity * unit_price) for all order items
+            const { data: orderItems, error: revenueError } = await supabase
+                .from('order_items')
+                .select('quantity, unit_price');
 
-            const totalRevenue = ordersData?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
+            if (revenueError) {
+                console.error('Error fetching revenue:', revenueError);
+            }
+
+            const totalRevenue = orderItems?.reduce(
+                (sum, item) => sum + (item.quantity * item.unit_price),
+                0
+            ) || 0;
+
+            // Fetch order breakdown
+            const { data: orders } = await supabase
+                .from('orders')
+                .select('status');
+
+            const breakdown = {
+                pending: orders?.filter(o => o.status === 'pending').length || 0,
+                processing: orders?.filter(o => o.status === 'processing').length || 0,
+                shipped: orders?.filter(o => o.status === 'shipped').length || 0,
+                delivered: orders?.filter(o => o.status === 'delivered').length || 0,
+                cancelled: orders?.filter(o => o.status === 'cancelled').length || 0,
+            };
+
+            setOrderBreakdown(breakdown);
+
+            // Fetch product breakdown
+            const { data: products } = await supabase
+                .from('products')
+                .select('published');
+
+            setProductBreakdown({
+                published: products?.filter(p => p.published).length || 0,
+                drafts: products?.filter(p => !p.published).length || 0,
+            });
+
+            // Fetch vendor breakdown
+            const { data: vendors } = await supabase
+                .from('vendors')
+                .select('is_verified');
+
+            setVendorBreakdown({
+                verified: vendors?.filter(v => v.is_verified).length || 0,
+                pending: vendors?.filter(v => !v.is_verified).length || 0,
+            });
 
             setStats({
                 totalUsers: usersCount || 0,
@@ -85,39 +145,6 @@ export function AdminDashboard() {
         );
     }
 
-    const metrics: DashboardMetric[] = [
-        {
-            label: 'Total Users',
-            value: stats.totalUsers,
-            icon: 'users',
-        },
-        {
-            label: 'Active Vendors',
-            value: stats.totalVendors,
-            icon: 'store',
-        },
-        {
-            label: 'Total Products',
-            value: stats.totalProducts,
-            icon: 'shopping-bag',
-        },
-        {
-            label: 'Total Orders',
-            value: stats.totalOrders,
-            icon: 'trending-up',
-        },
-        {
-            label: 'Total Revenue',
-            value: `$${stats.totalRevenue.toLocaleString()}`,
-            icon: 'trending-up',
-        },
-        {
-            label: 'Pending Approvals',
-            value: stats.pendingVendorApprovals,
-            icon: 'alert',
-        },
-    ];
-
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -135,105 +162,75 @@ export function AdminDashboard() {
                         {/* Metrics Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Total Users */}
-                            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-sm">Total Users</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.totalUsers}</p>
-                                    </div>
-                                    <Users className="text-blue-500" size={32} />
-                                </div>
-                            </div>
+                            <StatCard
+                                title="Total Users"
+                                value={stats.totalUsers}
+                                icon={Users}
+                                color="blue"
+                            />
 
-                            {/* Active Vendors */}
-                            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-sm">Active Vendors</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.totalVendors}</p>
-                                    </div>
-                                    <Store className="text-green-500" size={32} />
-                                </div>
-                            </div>
+                            {/* Total Vendors */}
+                            <StatCard
+                                title="Total Vendors"
+                                value={stats.totalVendors}
+                                icon={Store}
+                                color="green"
+                                breakdown={[
+                                    { label: 'Verified', value: vendorBreakdown.verified, color: 'bg-green-500' },
+                                    { label: 'Pending Approval', value: vendorBreakdown.pending, color: 'bg-yellow-500' },
+                                ]}
+                            />
 
                             {/* Total Products */}
-                            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-sm">Total Products</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.totalProducts}</p>
-                                    </div>
-                                    <ShoppingBag className="text-purple-500" size={32} />
-                                </div>
-                            </div>
-
-                            {/* Total Orders */}
-                            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-sm">Total Orders</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.totalOrders}</p>
-                                    </div>
-                                    <TrendingUp className="text-orange-500" size={32} />
-                                </div>
-                            </div>
+                            <StatCard
+                                title="Total Products"
+                                value={stats.totalProducts}
+                                icon={ShoppingBag}
+                                color="purple"
+                                breakdown={[
+                                    { label: 'Published', value: productBreakdown.published, color: 'bg-green-500' },
+                                    { label: 'Drafts', value: productBreakdown.drafts, color: 'bg-gray-400' },
+                                ]}
+                            />
 
                             {/* Total Revenue */}
-                            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-sm">Total Revenue</p>
-                                        <p className="text-3xl font-bold text-gray-900">
-                                            ${stats.totalRevenue.toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <TrendingUp className="text-yellow-500" size={32} />
-                                </div>
-                            </div>
+                            <StatCard
+                                title="Total Revenue"
+                                value={`$${stats.totalRevenue.toLocaleString()}`}
+                                icon={DollarSign}
+                                color="blue"
+                            />
+
+                            {/* Total Orders */}
+                            <StatCard
+                                title="Total Orders"
+                                value={stats.totalOrders}
+                                icon={TrendingUp}
+                                color="orange"
+                                breakdown={[
+                                    { label: 'Pending', value: orderBreakdown.pending, color: 'bg-yellow-500' },
+                                    { label: 'Processing', value: orderBreakdown.processing, color: 'bg-blue-500' },
+                                    { label: 'Shipped', value: orderBreakdown.shipped, color: 'bg-purple-500' },
+                                    { label: 'Delivered', value: orderBreakdown.delivered, color: 'bg-green-500' },
+                                    { label: 'Cancelled', value: orderBreakdown.cancelled, color: 'bg-red-500' },
+                                ]}
+                                action={{
+                                    label: 'All Orders',
+                                    onClick: () => navigate('/admin/orders'),
+                                }}
+                            />
 
                             {/* Pending Approvals */}
-                            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-sm">Pending Approvals</p>
-                                        <p className="text-3xl font-bold text-gray-900">
-                                            {stats.pendingVendorApprovals}
-                                        </p>
-                                    </div>
-                                    <TrendingUp className="text-red-500" size={32} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <a
-                                    href="/admin/users"
-                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-center transition-colors"
-                                >
-                                    Manage Users
-                                </a>
-                                <a
-                                    href="/admin/vendors"
-                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-center transition-colors"
-                                >
-                                    Manage Vendors
-                                </a>
-                                <a
-                                    href="/admin/products"
-                                    className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-center transition-colors"
-                                >
-                                    Manage Products
-                                </a>
-                                <a
-                                    href="/admin/orders"
-                                    className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 text-center transition-colors"
-                                >
-                                    View Orders
-                                </a>
-                            </div>
+                            <StatCard
+                                title="Pending Vendor Approvals"
+                                value={stats.pendingVendorApprovals}
+                                icon={AlertCircle}
+                                color="red"
+                                action={{
+                                    label: 'View Vendors',
+                                    onClick: () => navigate('/admin/vendors'),
+                                }}
+                            />
                         </div>
                     </>
                 )}

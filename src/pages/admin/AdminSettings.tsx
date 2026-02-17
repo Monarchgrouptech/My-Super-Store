@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Save, AlertCircle } from 'lucide-react';
@@ -16,7 +16,7 @@ interface SystemSettings {
 }
 
 export function AdminSettings() {
-    const { isAdmin, hasPermission } = useAdmin();
+    const { isAdmin } = useAdmin();
     const [settings, setSettings] = useState<SystemSettings>({
         store_name: 'My Super Store',
         store_email: 'admin@mysuperstore.com',

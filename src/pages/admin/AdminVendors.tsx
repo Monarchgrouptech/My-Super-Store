@@ -1,30 +1,42 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { supabase } from '../../lib/supabase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Search, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { StatCard } from '../../components/admin/StatCard';
+import { Search, Trash2, CheckCircle, Clock, Eye, Store } from 'lucide-react';
 import { Vendor } from '../../types/vendor';
 
 export function AdminVendors() {
-    const { isAdmin, hasPermission } = useAdmin();
+    const navigate = useNavigate();
+    const { isAdmin } = useAdmin();
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredVendors, setFilteredVendors] = useState<Vendor[]>([]);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'verified'>('all');
 
     useEffect(() => {
-        if (isAdmin && hasPermission('view_vendors' as any)) {
+        if (isAdmin) {
             fetchVendors();
         }
-    }, [isAdmin, hasPermission]);
+    }, [isAdmin]);
 
     useEffect(() => {
-        const filtered = vendors.filter(vendor =>
+        let filtered = vendors.filter(vendor =>
             vendor.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             vendor.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
+
+        // Apply status filter
+        if (statusFilter === 'pending') {
+            filtered = filtered.filter(v => !v.is_verified);
+        } else if (statusFilter === 'verified') {
+            filtered = filtered.filter(v => v.is_verified);
+        }
+
         setFilteredVendors(filtered);
-    }, [searchTerm, vendors]);
+    }, [searchTerm, vendors, statusFilter]);
 
     const fetchVendors = async () => {
         try {
@@ -101,6 +113,62 @@ export function AdminVendors() {
                     <p className="text-gray-600">Manage all vendors and their verification status</p>
                 </div>
 
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatCard
+                        title="Total Vendors"
+                        value={vendors.length}
+                        icon={Store}
+                        color="green"
+                    />
+                    <StatCard
+                        title="Verified"
+                        value={vendors.filter(v => v.is_verified).length}
+                        icon={CheckCircle}
+                        color="green"
+                    />
+                    <StatCard
+                        title="Pending Approval"
+                        value={vendors.filter(v => !v.is_verified).length}
+                        icon={Clock}
+                        color="yellow"
+                    />
+                </div>
+
+
+                {/* Filter Tabs */}
+                <div className="bg-white rounded-lg shadow p-2">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setStatusFilter('all')}
+                            className={`px-4 py-2 rounded transition-colors ${statusFilter === 'all'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            All Vendors ({vendors.length})
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('pending')}
+                            className={`px-4 py-2 rounded transition-colors ${statusFilter === 'pending'
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            Pending Approval ({vendors.filter(v => !v.is_verified).length})
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('verified')}
+                            className={`px-4 py-2 rounded transition-colors ${statusFilter === 'verified'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            Verified ({vendors.filter(v => v.is_verified).length})
+                        </button>
+                    </div>
+                </div>
+
                 {/* Search Bar */}
                 <div className="bg-white rounded-lg shadow p-4">
                     <div className="flex items-center gap-2">
@@ -159,11 +227,10 @@ export function AdminVendors() {
                                                 {vendor.city || '-'}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
-                                                <span className={`px-2 py-1 rounded text-xs inline-flex items-center gap-1 ${
-                                                    vendor.is_verified
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
+                                                <span className={`px-2 py-1 rounded text-xs inline-flex items-center gap-1 ${vendor.is_verified
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                                    }`}>
                                                     {vendor.is_verified ? (
                                                         <>
                                                             <CheckCircle size={14} />
@@ -182,7 +249,14 @@ export function AdminVendors() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    {!vendor.is_verified && hasPermission('approve_vendors' as any) && (
+                                                    <button
+                                                        onClick={() => navigate(`/admin/vendors/${vendor.id}`)}
+                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                        title="View vendor details"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                    {!vendor.is_verified && (
                                                         <button
                                                             onClick={() => handleApproveVendor(vendor.id)}
                                                             className="text-green-600 hover:text-green-800 transition-colors text-sm px-2 py-1 rounded hover:bg-green-50"
@@ -190,15 +264,13 @@ export function AdminVendors() {
                                                             Approve
                                                         </button>
                                                     )}
-                                                    {hasPermission('manage_vendors' as any) && (
-                                                        <button
-                                                            onClick={() => handleDeleteVendor(vendor.id)}
-                                                            className="text-red-600 hover:text-red-800 transition-colors"
-                                                            title="Delete vendor"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteVendor(vendor.id)}
+                                                        className="text-red-600 hover:text-red-800 transition-colors"
+                                                        title="Delete vendor"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -210,24 +282,7 @@ export function AdminVendors() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Total Vendors</p>
-                        <p className="text-3xl font-bold text-gray-900">{vendors.length}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Verified</p>
-                        <p className="text-3xl font-bold text-green-600">
-                            {vendors.filter(v => v.is_verified).length}
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Pending Approval</p>
-                        <p className="text-3xl font-bold text-yellow-600">
-                            {vendors.filter(v => !v.is_verified).length}
-                        </p>
-                    </div>
-                </div>
+
             </div>
         </AdminLayout>
     );

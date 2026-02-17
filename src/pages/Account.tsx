@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CreditCard, LogOut, ChevronRight, ShoppingBag, Loader2, Sparkles, Crown, Star, Package, X, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useAdmin } from '../context/AdminContext';
 import { supabase } from '../lib/supabase';
 import { getAvatarUrl } from '../lib/avatarUtils';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { getAddressFromLocation } from '../lib/geolocationUtils';
 
 export function Account() {
     const { user, signOut, loading: authLoading } = useAuth();
+    const { isAdmin, loading: adminLoading } = useAdmin();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('orders');
     const [orders, setOrders] = useState<any[]>([]);
@@ -37,6 +39,13 @@ export function Account() {
         if (!authLoading && !user) navigate('/login');
         if (user) fetchData();
     }, [user, authLoading, navigate]);
+
+    // Redirect admins to admin panel
+    useEffect(() => {
+        if (!authLoading && !adminLoading && user && isAdmin) {
+            navigate('/admin');
+        }
+    }, [user, isAdmin, authLoading, adminLoading, navigate]);
 
     const fetchData = async () => {
         setLoading(true);

@@ -35,6 +35,12 @@ export interface Product {
     updated_at: string;
     brand: string | null;
     seller_id: string;
+    // Optional joined vendor data
+    vendors?: {
+        id: string;
+        business_name: string;
+        is_verified: boolean;
+    };
 }
 
 export interface ProductImage {

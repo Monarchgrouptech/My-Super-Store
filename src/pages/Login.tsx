@@ -36,12 +36,26 @@ export function Login() {
 
         try {
             if (activeTab === 'login') {
-                const { error } = await supabase.auth.signInWithPassword({
+                // Sign in user
+                const { data: authData, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
                 if (error) throw error;
-                navigate('/account');
+
+                // Check admin status from user_profiles
+                const { data: profile } = await supabase
+                    .from('user_profiles')
+                    .select('is_admin')
+                    .eq('user_id', authData.user.id)
+                    .single();
+
+                // Route based on admin status
+                if (profile?.is_admin === true) {
+                    navigate('/admin');
+                } else {
+                    navigate('/account');
+                }
             } else {
                 const { error } = await supabase.auth.signUp({
                     email,

@@ -9,12 +9,12 @@ interface CarouselSlide {
 }
 
 const slides: CarouselSlide[] = [
-    { id: 1, image: '../assets/hero/Cosmetics.jpg', alt: 'Premium Cosmetics Collection', category: 'Cosmetics' },
-    { id: 2, image: '../assets/hero/construction_materials.png', alt: 'Construction Tools & Equipment', category: 'Construction' },
-    { id: 3, image: '../assets/hero/Furniture.jpg', alt: 'Luxury Furniture Showroom', category: 'Furniture' },
-    { id: 4, image: '../assets/hero/fashion.jpg', alt: 'Fashion & Clothing Collection', category: 'Fashion' },
-    { id: 5, image: '../assets/hero/events.jpg', alt: 'Event Tools & Equipment', category: 'Events' },
-    { id: 6, image: '../assets/hero/Electric gadgets.jpg', alt: 'Electrical Appliances', category: 'Electrical' },
+    { id: 1, image: '/assets/hero/Cosmetics.jpg', alt: 'Premium Cosmetics Collection', category: 'Cosmetics' },
+    { id: 2, image: '/assets/hero/building_materials.jpg', alt: 'Construction Tools & Equipment', category: 'Construction' },
+    { id: 3, image: '/assets/hero/funiture.jpg', alt: 'Luxury Furniture Showroom', category: 'Furniture' },
+    { id: 4, image: '/assets/hero/fashion.jpg', alt: 'Fashion & Clothing Collection', category: 'Fashion' },
+    { id: 5, image: '/assets/hero/events.jpg', alt: 'Event Tools & Equipment', category: 'Events' },
+    { id: 6, image: '/assets/hero/Electric gadgets.jpg', alt: 'Electrical Appliances', category: 'Electrical' },
 ];
 
 const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
@@ -25,6 +25,8 @@ export function HeroCarousel() {
     const touchStartX = useRef<number>(0);
     const touchEndX = useRef<number>(0);
     const autoSlideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
 
     // Auto-slide functionality
     const startAutoSlide = useCallback(() => {
@@ -91,9 +93,27 @@ export function HeroCarousel() {
         }
     };
 
+    // Determine if we should load the image (Current, Next, Previous) to save bandwidth
+    const shouldLoadImage = (index: number) => {
+        if (index === currentSlide) return true;
+
+        // Preload next slide
+        const nextIndex = (currentSlide + 1) % slides.length;
+        if (index === nextIndex) return true;
+
+        // Keep previous slide loaded for smooth transition back
+        const prevIndex = (currentSlide - 1 + slides.length) % slides.length;
+        if (index === prevIndex) return true;
+
+        // Keep already loaded images to avoid re-fetching/flicker
+        // if (loadedImages[slides[index].id]) return true; 
+
+        return loadedImages[slides[index].id] || false;
+    };
+
     return (
         <div
-            className="absolute inset-0 overflow-hidden"
+            className="absolute inset-0 overflow-hidden bg-slate-900"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onTouchStart={handleTouchStart}
@@ -101,23 +121,43 @@ export function HeroCarousel() {
             onTouchEnd={handleTouchEnd}
         >
             {/* Carousel slides */}
-            {slides.map((slide, index) => (
-                <div
-                    key={slide.id}
-                    className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out bg-gradient-to-br from-[#0F0F0F] via-[#1A1A1A] to-[#0F0F0F] ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                        }`}
-                    style={{ pointerEvents: index === currentSlide ? 'auto' : 'none' }}
-                >
-                    <img
-                        src={slide.image}
-                        alt={slide.alt}
-                        className="absolute inset-0 w-full h-full object-cover object-center"
-                        loading={index === 0 ? 'eager' : 'lazy'}
-                        decoding="async"
-                        fetchPriority={index === 0 ? 'high' : 'auto'}
-                    />
-                </div>
-            ))}
+            {slides.map((slide, index) => {
+                const isLoaded = loadedImages[slide.id];
+                const shouldLoad = shouldLoadImage(index);
+                const isActive = index === currentSlide;
+
+                return (
+                    <div
+                        key={slide.id}
+                        className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                            }`}
+                        style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+                    >
+                        {/* Loading Skeleton/Placeholder */}
+                        {(!isLoaded || !shouldLoad) && (
+                            <div className="absolute inset-0 bg-slate-800 animate-pulse flex items-center justify-center">
+                                <span className="text-slate-600 text-sm font-medium">Loading...</span>
+                            </div>
+                        )}
+
+                        {/* Image */}
+                        {shouldLoad && (
+                            <img
+                                src={slide.image}
+                                alt={slide.alt}
+                                className={`absolute inset-0 w-full h-full object-fill object-center transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'
+                                    }`}
+                                onLoad={() => setLoadedImages(prev => ({ ...prev, [slide.id]: true }))}
+                                loading={index === 0 ? 'eager' : 'lazy'}
+                                decoding="async"
+                            />
+                        )}
+
+                        {/* Gradient Overlay for Text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 pointer-events-none" />
+                    </div>
+                );
+            })}
 
             {/* Navigation arrows */}
             <div className="absolute inset-0 pointer-events-none z-20">

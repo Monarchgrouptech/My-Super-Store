@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { supabase } from '../../lib/supabase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Search, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
+import { Search, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Product } from '../../types/vendor';
 
 export function AdminProducts() {
-    const { isAdmin, hasPermission } = useAdmin();
+    const { isAdmin } = useAdmin();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
     useEffect(() => {
-        if (isAdmin && hasPermission('view_products' as any)) {
+        if (isAdmin) {
             fetchProducts();
         }
-    }, [isAdmin, hasPermission]);
+    }, [isAdmin]);
 
     useEffect(() => {
         const filtered = products.filter(product =>
@@ -30,7 +30,14 @@ export function AdminProducts() {
         try {
             const { data, error } = await supabase
                 .from('products')
-                .select('*')
+                .select(`
+                    *,
+                    vendors:seller_id (
+                        id,
+                        business_name,
+                        is_verified
+                    )
+                `)
                 .order('created_at', { ascending: false });
 
             if (!error && data) {
@@ -101,6 +108,35 @@ export function AdminProducts() {
                     <p className="text-gray-600">Manage all products in the store</p>
                 </div>
 
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard
+                        title="Total Products"
+                        value={products.length}
+                        icon={ShoppingBag}
+                        color="purple"
+                    />
+                    <StatCard
+                        title="Published"
+                        value={products.filter(p => p.published).length}
+                        icon={Package}
+                        color="blue"
+                    />
+                    <StatCard
+                        title="Drafts"
+                        value={products.filter(p => !p.published).length}
+                        icon={FileText}
+                        color="gray"
+                    />
+                    <StatCard
+                        title="Out of Stock"
+                        value={products.filter(p => p.stock === 0).length}
+                        icon={AlertTriangle}
+                        color="red"
+                    />
+                </div>
+
+
                 {/* Search Bar */}
                 <div className="bg-white rounded-lg shadow p-4">
                     <div className="flex items-center gap-2">
@@ -139,6 +175,9 @@ export function AdminProducts() {
                                             Stock
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                                            Vendor
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                             Status
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase">
@@ -159,22 +198,23 @@ export function AdminProducts() {
                                                 ${product.price.toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                    product.stock > 10
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : product.stock > 0
+                                                <span className={`px-2 py-1 rounded text-xs ${product.stock > 10
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : product.stock > 0
                                                         ? 'bg-yellow-100 text-yellow-800'
                                                         : 'bg-red-100 text-red-800'
-                                                }`}>
+                                                    }`}>
                                                     {product.stock} units
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {product.vendors?.business_name || '-'}
+                                            </td>
                                             <td className="px-6 py-4 text-sm">
-                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                    product.published
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                }`}>
+                                                <span className={`px-2 py-1 rounded text-xs ${product.published
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                                    }`}>
                                                     {product.published ? 'Published' : 'Draft'}
                                                 </span>
                                             </td>
@@ -187,15 +227,13 @@ export function AdminProducts() {
                                                     >
                                                         {product.published ? <Eye size={18} /> : <EyeOff size={18} />}
                                                     </button>
-                                                    {hasPermission('delete_products' as any) && (
-                                                        <button
-                                                            onClick={() => handleDeleteProduct(product.id)}
-                                                            className="text-red-600 hover:text-red-800 transition-colors"
-                                                            title="Delete product"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product.id)}
+                                                        className="text-red-600 hover:text-red-800 transition-colors"
+                                                        title="Delete product"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -207,30 +245,7 @@ export function AdminProducts() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Total Products</p>
-                        <p className="text-3xl font-bold text-gray-900">{products.length}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Published</p>
-                        <p className="text-3xl font-bold text-blue-600">
-                            {products.filter(p => p.published).length}
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Drafts</p>
-                        <p className="text-3xl font-bold text-gray-600">
-                            {products.filter(p => !p.published).length}
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <p className="text-gray-600 text-sm">Out of Stock</p>
-                        <p className="text-3xl font-bold text-red-600">
-                            {products.filter(p => p.stock === 0).length}
-                        </p>
-                    </div>
-                </div>
+
             </div>
         </AdminLayout>
     );
