@@ -137,12 +137,7 @@ export function About({ onNavigate }: AboutProps) {
                   Vendor Portal
                 </button>
 
-                <button
-                  onClick={() => navigate('/admin')}
-                  className="h-14 px-8 min-w-[180px] rounded-lg bg-gradient-to-r from-[#8B0000] to-[#DC143C] text-white font-bold uppercase border border-[#8B0000] hover:from-[#A00000] hover:to-[#E63049] transition"
-                >
-                  Admin Dashboard
-                </button>
+
               </div>
 
               {/* TRUST */}
