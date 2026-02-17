@@ -37,10 +37,10 @@ interface ExchangeRates {
 }
 
 // Payment method to currency mappings
-const PAYMENT_CURRENCY_MAP: Record<string, string[]> = {
-    paystack: ['NGN', 'GHS', 'ZAR', 'KES', 'USD'], // Paystack supported currencies
-    stripe: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'INR', 'BRL'], // Stripe primary supported
-};
+// const PAYMENT_CURRENCY_MAP: Record<string, string[]> = {
+//     paystack: ['NGN', 'GHS', 'ZAR', 'KES', 'USD'], // Paystack supported currencies
+//     stripe: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'INR', 'BRL'], // Stripe primary supported
+// };
 
 export function Checkout() {
     const navigate = useNavigate();
@@ -52,7 +52,7 @@ export function Checkout() {
     const [error, setError] = useState<string | null>(null);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState<string>('USD');
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paystack' | 'stripe' | null>(null);
+    const [, setSelectedPaymentMethod] = useState<'paystack' | 'stripe' | null>(null);
     const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null);
 
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -79,7 +79,7 @@ export function Checkout() {
     // Helper function to format currency
     const formatCurrency = (amount: number, currency: string = selectedCurrency) => {
         const symbol = currencySymbols[currency] || currency;
-        
+
         // Handle large numbers (for currencies like VND, JPY)
         if (amount > 10000) {
             return `${symbol}${Math.round(amount).toLocaleString()}`;
@@ -373,7 +373,7 @@ export function Checkout() {
             <div className="max-w-6xl mx-auto">
                 <div className="flex items-center justify-between mb-12">
                     <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif" }}>Checkout</h1>
-                    
+
                     {/* Currency Selector - For display purposes only */}
                     <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-[var(--gold-primary)]/20 hover:border-[var(--gold-primary)]/50 transition-colors">
                         <Globe size={20} className="text-[var(--gold-primary)]" />

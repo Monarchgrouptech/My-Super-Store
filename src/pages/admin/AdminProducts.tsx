@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { supabase } from '../../lib/supabase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Search, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Search, Trash2, Eye, EyeOff, ShoppingBag, Package, FileText, AlertTriangle } from 'lucide-react';
 import { Product } from '../../types/vendor';
+import { StatCard } from '../../components/admin/StatCard';
 
 export function AdminProducts() {
     const { isAdmin } = useAdmin();
