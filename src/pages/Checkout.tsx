@@ -219,7 +219,7 @@ export function Checkout() {
                     body: JSON.stringify({
                         user_id: user.id,
                         email: userEmail,
-                        currency: 'USD',
+                        currency: 'NGN',
                         items: items,
                         shipping_address_id: shippingAddress.id,
                         billing_address_id: shippingAddress.id
