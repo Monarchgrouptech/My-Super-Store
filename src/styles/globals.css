@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@import "tailwindcss";
+
+/* ===========================
+   Custom Fonts
+=========================== */
+
+@font-face {
+  font-family: 'Qubiko';
+  src: url('./fonts/qubiko/Qubiko-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Transcity';
+  src: url('./fonts/transcity/Transcity-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Manbow';
+  src: url('./fonts/manbow/Manbow Clear.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('./fonts/dosis/Dosis-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sansita_Swashed';
+  src: url('.src/styles/fonts/Sanista/static/SansitaSwashed-Regular.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Flowmery';
+  src: url('./fonts/flowmery/Flowmery-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+
+:root {
+  --color-white: #FFFFFF;
+  --color-black: #0A0A0A;
+  --color-gold: #D4AF37;
+  --color-gold-dark: #B8941F;
+  --color-gold-light: #E5C158;
+  --gradient-gold: linear-gradient(135deg, #F4E04D 0%, #D4AF37 50%, #B8941F 100%);
+  --gradient-gold-shine: linear-gradient(135deg, #FFE55C 0%, #F4D03F 25%, #D4AF37 50%, #C5A028 75%, #B8941F 100%);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Dosis';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-white);
+
+  color: var(--color-black);
+}
+
+h1 {
+  font-size: 3rem;
+  font-family: 'Sansita_Swashed';
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 2.5rem;
+  font-family: 'Sansita_Swashed';
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h4 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+button {
+  font-size: 1rem;
+  font-weight: 600;
+}
+

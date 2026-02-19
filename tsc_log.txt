@@ -1,0 +1,7 @@
+src/components/Header.tsx(1,10): error TS6133: 'Search' is declared but its value is never read.
+src/components/vendor/VendorLayout.tsx(20,21): error TS6133: 'isVendor' is declared but its value is never read.
+src/pages/vendor/ProductForm.tsx(5,27): error TS6133: 'ProductImage' is declared but its value is never read.
+src/pages/vendor/ProductForm.tsx(5,41): error TS6133: 'ProductSpec' is declared but its value is never read.
+src/pages/vendor/ProductForm.tsx(67,63): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/pages/vendor/ProductForm.tsx(67,66): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/pages/vendor/ProductForm.tsx(69,72): error TS7006: Parameter 'pc' implicitly has an 'any' type.

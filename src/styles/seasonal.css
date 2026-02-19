@@ -1,0 +1,359 @@
+/* ============================================
+   SEASONAL UI ANIMATIONS
+   ============================================ */
+
+/* Seasonal Overlay Container */
+.seasonal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+    overflow: hidden;
+}
+
+/* ============================================
+   WINTER THEME - SNOWFLAKES
+   ============================================ */
+
+.snowflake {
+    position: absolute;
+    top: -10px;
+    color: #16b3ec;
+    font-size: 2rem;
+    opacity: 0.9;
+    text-shadow: 0 0 8px rgba(135, 206, 235, 0.8),
+        0 0 12px rgba(176, 224, 230, 0.6);
+    animation: snowfall linear infinite;
+    user-select: none;
+    filter: drop-shadow(0 0 3px rgba(135, 206, 235, 0.5));
+}
+
+@keyframes snowfall {
+    0% {
+        top: -10%;
+        opacity: 0;
+        transform: translateX(0) rotate(0deg);
+    }
+
+    10% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    60% {
+        opacity: 0.4;
+    }
+
+    100% {
+        top: 60vh;
+        opacity: 0;
+        transform: translateX(100px) rotate(360deg);
+    }
+}
+
+/* Snowflake variations for natural effect */
+.snowflake:nth-child(odd) {
+    animation-duration: 12s;
+    font-size: 0.8em;
+}
+
+.snowflake:nth-child(even) {
+    animation-duration: 15s;
+    font-size: 1.2em;
+}
+
+.snowflake:nth-child(3n) {
+    animation-duration: 18s;
+    font-size: 1em;
+}
+
+/* ============================================
+   VALENTINE THEME - HEARTS
+   ============================================ */
+
+.heart {
+    position: absolute;
+    top: -10px;
+    color: #ff69b4;
+    font-size: 1.5em;
+    opacity: 0.7;
+    text-shadow: 0 0 10px rgba(255, 105, 180, 0.6);
+    animation: heartFloat linear infinite;
+    user-select: none;
+}
+
+@keyframes heartFloat {
+    0% {
+        top: -10%;
+        opacity: 0;
+        transform: translateX(0) rotate(0deg) scale(0.5);
+    }
+
+    10% {
+        opacity: 0.7;
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: translateX(-30px) rotate(15deg) scale(1);
+    }
+
+    60% {
+        opacity: 0.3;
+    }
+
+    100% {
+        top: 60vh;
+        opacity: 0;
+        transform: translateX(50px) rotate(-15deg) scale(0.8);
+    }
+}
+
+/* Heart variations for natural effect */
+.heart:nth-child(odd) {
+    animation-duration: 10s;
+    font-size: 1.2em;
+}
+
+.heart:nth-child(even) {
+    animation-duration: 14s;
+    font-size: 1.8em;
+}
+
+.heart:nth-child(3n) {
+    animation-duration: 12s;
+    font-size: 1.5em;
+    color: #ff1493;
+}
+
+/* ============================================
+   SEASONAL BANNER - CORNER RIBBON
+   ============================================ */
+
+.seasonal-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+    /* Contain ribbon within banner */
+    width: 150px;
+    /* Limit banner width */
+    height: 150px;
+    /* Limit banner height */
+}
+
+.corner-ribbon {
+    position: absolute;
+    top: 25px;
+    left: -50px;
+    width: 200px;
+    opacity: 0.8;
+    padding: 8px 0;
+    background: linear-gradient(135deg, #8b0000 0%, #c41e3a 25%, #8b0000 50%, #6b0000 100%);
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(212, 175, 55, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    transform: rotate(-45deg);
+    font-family: var(--font-primary);
+    border-top: 1px solid rgba(212, 175, 55, 0.6);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.6);
+    position: relative;
+    overflow: visible;
+}
+
+.corner-ribbon::before,
+.corner-ribbon::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    border-style: solid;
+    border-color: #4a0000 transparent transparent transparent;
+    z-index: -1;
+}
+
+.corner-ribbon::before {
+    left: 0;
+    border-width: 6px 0 0 6px;
+}
+
+.corner-ribbon::after {
+    right: 0;
+    border-width: 6px 6px 0 0;
+}
+
+/* Valentine's banner variant */
+.corner-ribbon.valentine {
+    background: linear-gradient(135deg, #ff1493 0%, #c71585 100%);
+}
+
+.corner-ribbon.valentine::before,
+.corner-ribbon.valentine::after {
+    border-color: #8b0066 transparent transparent transparent;
+}
+
+/* ============================================
+   GREETING MODAL
+   ============================================ */
+
+.greeting-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.greeting-modal {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(212, 175, 55, 0.2);
+    animation: modalSlideIn 0.4s ease-out;
+    position: relative;
+}
+
+.greeting-modal-content {
+    position: relative;
+    z-index: 1;
+}
+
+.greeting-modal-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: iconBounce 0.6s ease-out;
+}
+
+.greeting-modal-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+}
+
+.greeting-modal-message {
+    color: #a3a3a3;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.greeting-modal-close {
+    background: var(--gold-gradient);
+    color: #050505;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 32px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(222, 157, 13, 0.18);
+    pointer-events: auto;
+}
+
+.greeting-modal-close:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(222, 157, 13, 0.25);
+}
+
+.greeting-modal-close:active {
+    transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes iconBounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .greeting-modal {
+        padding: 2rem 1.5rem;
+    }
+
+    .greeting-modal-icon {
+        font-size: 3rem;
+    }
+
+    .greeting-modal-title {
+        font-size: 1.5rem;
+    }
+
+    .greeting-modal-message {
+        font-size: 1rem;
+    }
+
+    .corner-ribbon {
+        font-size: 7px;
+        width: 170px;
+        top: 18px;
+        left: -52px;
+        padding: 6px 0;
+    }
+
+    .snowflake,
+    .heart {
+        font-size: 0.8em;
+    }
+}
