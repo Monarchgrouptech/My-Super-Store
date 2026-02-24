@@ -5,6 +5,7 @@ import { LuxuryCategoryCard } from '../components/home/LuxuryCategoryCard';
 
 import { HeroCarousel } from '../components/home/HeroCarousel';
 import { AutoScrollProductSection } from '../components/home/AutoScrollProductSection';
+import { useCurrency } from '../context/CurrencyContext';
 
 // Keep the Product interface here for data fetching typing, or move to a types file
 interface Product {
@@ -32,6 +33,7 @@ const PRODUCTS_PER_SECTION = 8;
 
 export function Home() {
   const navigate = useNavigate();
+  const { formatPrice } = useCurrency();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
@@ -277,7 +279,7 @@ export function Home() {
                     {promoProduct.name}
                   </h3>
                   <p className="text-[#D4AF37] font-bold text-sm">
-                    ${promoProduct.price.toFixed(2)}
+                    {formatPrice(promoProduct.price)}
                   </p>
                 </div>
               </div>
@@ -358,7 +360,7 @@ export function Home() {
                           </div>
                           <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{product.name}</h3>
                           <div className="flex items-center justify-between">
-                            <p className="text-base font-extrabold text-[#D4AF37]">${product.price.toFixed(2)}</p>
+                            <p className="text-base font-extrabold text-[#D4AF37]">{formatPrice(product.price)}</p>
                             <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                               {product.category}
                             </span>
@@ -386,7 +388,7 @@ export function Home() {
                           </div>
                           <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{product.name}</h3>
                           <div className="flex items-center justify-between">
-                            <p className="text-base font-extrabold text-[#D4AF37]">${product.price.toFixed(2)}</p>
+                            <p className="text-base font-extrabold text-[#D4AF37]">{formatPrice(product.price)}</p>
                             <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                               {product.category}
                             </span>

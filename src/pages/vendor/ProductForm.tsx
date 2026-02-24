@@ -7,11 +7,13 @@ import { ImageUploader } from '../../components/vendor/ImageUploader';
 import { SpecsEditor } from '../../components/vendor/SpecsEditor';
 import { CategoryMultiSelect } from '../../components/vendor/CategoryMultiSelect';
 import { useVendor } from '../../hooks/useVendor';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function ProductForm() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { vendor, loading: vendorLoading } = useVendor();
+    const { currency } = useCurrency();
     const isEditMode = Boolean(id);
 
     const [formData, setFormData] = useState<ProductFormData>({
@@ -34,6 +36,7 @@ export function ProductForm() {
     const [isPriceRange, setIsPriceRange] = useState(false);
     const [priceRangeMin, setPriceRangeMin] = useState(0);
     const [priceRangeMax, setPriceRangeMax] = useState(0);
+    const currencySymbol = currency === 'NGN' ? '₦' : '$';
 
 
     useEffect(() => {
@@ -391,7 +394,7 @@ export function ProductForm() {
 
                                     {!isPriceRange ? (
                                         <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                            <span className="absolute left-3 top-2.5 text-gray-500">{currencySymbol}</span>
                                             <input
                                                 type="number"
                                                 value={formData.price}
@@ -410,7 +413,7 @@ export function ProductForm() {
                                             <p>Min Price</p>
                                             <div className="relative">
 
-                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span className="absolute left-3 top-2.5 text-gray-500">{currencySymbol}</span>
 
                                                 <input
                                                     type="number"
@@ -426,7 +429,7 @@ export function ProductForm() {
                                             <p>Max Price</p>
                                             <div className="relative">
 
-                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span className="absolute left-3 top-2.5 text-gray-500">{currencySymbol}</span>
 
                                                 <input
                                                     type="number"

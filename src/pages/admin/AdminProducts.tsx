@@ -5,9 +5,11 @@ import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Search, Trash2, Eye, EyeOff, ShoppingBag, Package, FileText, AlertTriangle } from 'lucide-react';
 import { Product } from '../../types/vendor';
 import { StatCard } from '../../components/admin/StatCard';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function AdminProducts() {
     const { isAdmin } = useAdmin();
+    const { formatPrice } = useCurrency();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -196,7 +198,7 @@ export function AdminProducts() {
                                                 {product.sku || '-'}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-900">
-                                                ${product.price.toFixed(2)}
+                                                {formatPrice(product.price)}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
                                                 <span className={`px-2 py-1 rounded text-xs ${product.stock > 10

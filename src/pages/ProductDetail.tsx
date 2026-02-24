@@ -6,6 +6,7 @@ import { LoginPrompt } from '../components/LoginPrompt';
 
 import { supabase } from '../lib/supabase';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ export function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('One Size');
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const { formatPrice } = useCurrency();
 
   const sizes = ['Small', 'Medium', 'Large', 'One Size'];
 
@@ -148,7 +150,7 @@ export function ProductDetail() {
           {/* Price & Stock */}
           <div className="flex items-center gap-4 mb-4">
             <span className="detail-price">
-              ${product.price?.toLocaleString() || '0.00'}
+              {formatPrice(Number(product.price || 0))}
             </span>
             {product.stock !== undefined && product.stock !== null ? (
               product.stock > 0 ? (

@@ -9,6 +9,7 @@ import {
     incrementProductViewCount
 } from '../lib/searchUtils';
 import { SearchProduct, SearchCategory } from '../types/search';
+import { useCurrency } from '../context/CurrencyContext';
 
 /**
  * MobileSearch - Enhanced search component for mobile devices
@@ -33,6 +34,7 @@ export function MobileSearch() {
     const debounceTimerRef = useRef<NodeJS.Timeout>();
     const searchRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { formatPrice } = useCurrency();
 
     // Debounced search function
     const performSearch = useCallback(async (searchQuery: string) => {
@@ -244,7 +246,7 @@ export function MobileSearch() {
                                             <div className="flex-1 text-left">
                                                 <p className="font-semibold text-slate-900 text-sm">{product.name}</p>
                                                 {product.price && (
-                                                    <p className="text-xs text-slate-500">${product.price.toFixed(2)}</p>
+                                                    <p className="text-xs text-slate-500">{formatPrice(product.price)}</p>
                                                 )}
                                             </div>
                                         </button>

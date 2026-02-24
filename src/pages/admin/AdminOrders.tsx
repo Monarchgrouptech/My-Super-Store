@@ -4,9 +4,11 @@ import { supabase } from '../../lib/supabase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Search, Eye } from 'lucide-react';
 import { Order } from '../../types/vendor';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function AdminOrders() {
     const { isAdmin } = useAdmin();
+    const { currency, formatPrice } = useCurrency();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -229,10 +231,10 @@ export function AdminOrders() {
                                                 <span className="text-gray-900 font-medium">{order.id}</span>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-900">
-                                                {order.total_amount.toFixed(2)}
+                                                {formatPrice(order.total_amount)}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {order.currency}
+                                                {currency}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <select

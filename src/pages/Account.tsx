@@ -6,10 +6,12 @@ import { supabase } from '../lib/supabase';
 import { getAvatarUrl } from '../lib/avatarUtils';
 import { useNavigate } from 'react-router-dom';
 import { getAddressFromLocation } from '../lib/geolocationUtils';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function Account() {
     const { user, signOut, loading: authLoading } = useAuth();
     const { isAdmin, loading: adminLoading } = useAdmin();
+    const { formatPrice } = useCurrency();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('orders');
     const [orders, setOrders] = useState<any[]>([]);
@@ -442,7 +444,7 @@ export function Account() {
                                                             <div>
                                                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Total</p>
                                                                 <p className="text-lg font-bold text-[#FFC92E]">
-                                                                    ${order.total_amount.toLocaleString()}
+                                                                    {formatPrice(order.total_amount)}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -464,10 +466,10 @@ export function Account() {
                                                             </div>
                                                             <div className="flex-1">
                                                                 <h4 className="text-white font-medium mb-1">{item.products?.name}</h4>
-                                                                <p className="text-xs text-gray-500">Qty: {item.quantity} × ${item.unit_price}</p>
+                                                                <p className="text-xs text-gray-500">Qty: {item.quantity} × {formatPrice(item.unit_price)}</p>
                                                             </div>
                                                             <div className="text-right">
-                                                                <p className="font-bold text-white">${(item.quantity * item.unit_price).toLocaleString()}</p>
+                                                                <p className="font-bold text-white">{formatPrice(item.quantity * item.unit_price)}</p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -520,10 +522,10 @@ export function Account() {
                                                         </div>
                                                         <div className="flex-1">
                                                             <h4 className="text-white font-medium mb-1">{item.products?.name}</h4>
-                                                            <p className="text-xs text-gray-500">Qty: {item.quantity} × ${parseFloat(item.price_at_time).toFixed(2)}</p>
+                                                            <p className="text-xs text-gray-500">Qty: {item.quantity} × {formatPrice(parseFloat(item.price_at_time))}</p>
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="font-bold text-white">${(item.quantity * parseFloat(item.price_at_time)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                                                            <p className="font-bold text-white">{formatPrice(item.quantity * parseFloat(item.price_at_time))}</p>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -533,7 +535,7 @@ export function Account() {
                                                 <div className="flex justify-between items-center mb-4">
                                                     <p className="text-gray-400">Subtotal</p>
                                                     <p className="text-white font-bold">
-                                                        ${cartItems.reduce((sum, item) => sum + (item.quantity * parseFloat(item.price_at_time)), 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                        {formatPrice(cartItems.reduce((sum, item) => sum + (item.quantity * parseFloat(item.price_at_time)), 0))}
                                                     </p>
                                                 </div>
                                                 <button

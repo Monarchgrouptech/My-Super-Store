@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface Product {
     id: any;
@@ -24,6 +25,7 @@ interface LuxuryProductCardProps {
 
 export function LuxuryProductCard({ product, delay = 0, isTrending = false }: LuxuryProductCardProps) {
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
 
     return (
         <div
@@ -76,7 +78,7 @@ export function LuxuryProductCard({ product, delay = 0, isTrending = false }: Lu
                     {product.name}
                 </p>
                 <p className="text-base font-extrabold bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent mt-auto">
-                    ${product.price.toFixed(2)}
+                    {formatPrice(product.price)}
                 </p>
             </div>
 

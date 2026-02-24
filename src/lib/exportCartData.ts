@@ -64,7 +64,7 @@ export async function generateCartCSV(
             const escapedBusinessName = `"${businessName.replace(/"/g, '""')}"`;
             const escapedEmail = `"${vendorEmail.replace(/"/g, '""')}"`;
 
-            rows.push(`${escapedName},${escapedCategory},${escapedBusinessName},${escapedEmail},$${price.toFixed(2)},${quantity}`);
+            rows.push(`${escapedName},${escapedCategory},${escapedBusinessName},${escapedEmail},${price.toFixed(2)},${quantity}`);
         } catch (error) {
             console.error(`Error fetching data for product ${item.product_id}:`, error);
             // Add row with available data
@@ -72,7 +72,7 @@ export async function generateCartCSV(
             const priceRaw = item.products?.price ?? 0;
             const price = typeof priceRaw === 'number' ? priceRaw : Number(priceRaw || 0);
             const quantity = item.quantity ?? 1;
-            rows.push(`${escapedName},"Uncategorized","Unknown Vendor","N/A",$${price.toFixed(2)},${quantity}`);
+            rows.push(`${escapedName},"Uncategorized","Unknown Vendor","N/A",${price.toFixed(2)},${quantity}`);
         }
     }
 

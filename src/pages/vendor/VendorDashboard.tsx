@@ -4,10 +4,12 @@ import { Package, DollarSign, Eye, ShoppingCart, Plus, TrendingUp, Loader2 } fro
 import { supabase } from '../../lib/supabase';
 import { useVendor } from '../../hooks/useVendor';
 import { VendorStats } from '../../types/vendor';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function VendorDashboard() {
     const navigate = useNavigate();
     const { vendor, loading: vendorLoading, isVendor } = useVendor();
+    const { formatPrice } = useCurrency();
     const [stats, setStats] = useState<VendorStats>({
         totalProducts: 0,
         publishedProducts: 0,
@@ -184,7 +186,7 @@ export function VendorDashboard() {
                         </div>
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
-                        ${stats.totalRevenue.toFixed(2)}
+                        {formatPrice(stats.totalRevenue)}
                     </p>
                     <p className="text-sm text-gray-600">Total Revenue</p>
                     <p className="text-xs text-gray-500 mt-1">All-time sales</p>

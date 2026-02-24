@@ -4,6 +4,7 @@ import { ArrowLeft, Edit, Trash2, Eye, Package, TrendingUp, Loader2 } from 'luci
 import { supabase } from '../../lib/supabase';
 import { ProductWithDetails } from '../../types/vendor';
 import { ConfirmModal } from '../../components/vendor/ConfirmModal';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function ProductDetail() {
     const { id } = useParams<{ id: string }>();
@@ -12,6 +13,7 @@ export function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const { formatPrice } = useCurrency();
 
     useEffect(() => {
         if (id) fetchProduct(id);
@@ -162,7 +164,7 @@ export function ProductDetail() {
                             <TrendingUp className="text-green-600" size={24} />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</p>
+                            <p className="text-2xl font-bold text-gray-900">{formatPrice(product.price)}</p>
                             <p className="text-sm text-gray-600">Price</p>
                         </div>
                     </div>
@@ -208,7 +210,7 @@ export function ProductDetail() {
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Price</dt>
                                 <dd className="text-2xl font-bold text-[#D4AF37]">
-                                    ${product.price.toFixed(2)}
+                                    {formatPrice(product.price)}
                                 </dd>
                             </div>
                             <div>

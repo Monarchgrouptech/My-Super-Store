@@ -3,9 +3,11 @@ import { Loader2, Package, Clock, CheckCircle, XCircle, Copy, CreditCard } from 
 import { supabase } from '../../lib/supabase';
 import { useVendor } from '../../hooks/useVendor';
 import { OrderWithDetails } from '../../types/vendor';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function OrderList() {
     const { vendor, loading: vendorLoading } = useVendor();
+    const { currency, formatPrice } = useCurrency();
     const [orders, setOrders] = useState<OrderWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -300,9 +302,9 @@ export function OrderList() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-2xl font-bold text-[#D4AF37]">
-                                        ${order.total_amount.toFixed(2)}
+                                        {formatPrice(order.total_amount)}
                                     </p>
-                                    <p className="text-sm text-gray-600">{order.currency}</p>
+                                    <p className="text-sm text-gray-600">{currency}</p>
                                 </div>
                             </div>
 
@@ -337,11 +339,11 @@ export function OrderList() {
                                                 </p>
                                             )}
                                             <p className="text-sm text-gray-600">
-                                                Quantity: {item.quantity} Ã— ${item.unit_price.toFixed(2)}
+                                                Quantity: {item.quantity} × {formatPrice(item.unit_price)}
                                             </p>
                                         </div>
                                         <p className="font-semibold text-gray-900">
-                                            ${(item.quantity * item.unit_price).toFixed(2)}
+                                            {formatPrice(item.quantity * item.unit_price)}
                                         </p>
                                     </div>
                                 ))}
@@ -371,7 +373,7 @@ export function OrderList() {
                                             <div className="flex justify-between items-center">
                                                 <span className="text-sm text-gray-600">Amount</span>
                                                 <span className="text-sm font-semibold text-gray-900">
-                                                    {payment.currency} {payment.amount.toFixed(2)}
+                                                    {formatPrice(payment.amount)}
                                                 </span>
                                             </div>
                                             {payment.provider_payment_id && (
@@ -420,3 +422,4 @@ export function OrderList() {
         </div>
     );
 }
+

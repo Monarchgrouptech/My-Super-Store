@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Product {
   id: number;
@@ -24,6 +25,7 @@ interface ProductCardProps {
 export function ProductCard({ product, onProductClick, variant = 'default' }: ProductCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const { formatPrice } = useCurrency();
 
   const images = product.product_images?.map(img => img.url) || [product.image || 'https://via.placeholder.com/500'];
 
@@ -169,7 +171,7 @@ export function ProductCard({ product, onProductClick, variant = 'default' }: Pr
 
         {typeof product.price === 'number' && (
           <div className="product-price">
-            ${product.price.toLocaleString()}
+            {formatPrice(product.price)}
           </div>
         )}
 

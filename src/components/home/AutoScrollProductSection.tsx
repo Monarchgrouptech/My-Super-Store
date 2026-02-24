@@ -1,5 +1,6 @@
 
 import { useNavigate } from 'react-router-dom';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface Product {
     id: any;
@@ -17,6 +18,7 @@ interface AutoScrollProductSectionProps {
 
 export function AutoScrollProductSection({ title, products, className = '' }: AutoScrollProductSectionProps) {
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
 
     if (!products || products.length === 0) return null;
 
@@ -48,7 +50,7 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{product.name}</h3>
                                 <div className="flex items-center justify-between">
-                                    <p className="text-base font-extrabold text-[#D4AF37]">${product.price.toFixed(2)}</p>
+                                    <p className="text-base font-extrabold text-[#D4AF37]">{formatPrice(product.price)}</p>
                                     <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                                         {product.category}
                                     </span>
@@ -77,7 +79,7 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{product.name}</h3>
                                 <div className="flex items-center justify-between">
-                                    <p className="text-base font-extrabold text-[#D4AF37]">${product.price.toFixed(2)}</p>
+                                    <p className="text-base font-extrabold text-[#D4AF37]">{formatPrice(product.price)}</p>
                                     <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                                         {product.category}
                                     </span>

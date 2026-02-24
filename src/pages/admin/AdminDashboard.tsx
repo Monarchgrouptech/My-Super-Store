@@ -6,10 +6,12 @@ import { AdminStats } from '../../types/admin';
 import { Users, ShoppingBag, Store, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { StatCard } from '../../components/admin/StatCard';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export function AdminDashboard() {
     const navigate = useNavigate();
     const { isAdmin } = useAdmin();
+    const { formatPrice } = useCurrency();
     const [stats, setStats] = useState<AdminStats>({
         totalUsers: 0,
         totalVendors: 0,
@@ -196,7 +198,7 @@ export function AdminDashboard() {
                             {/* Total Revenue */}
                             <StatCard
                                 title="Total Revenue"
-                                value={`$${stats.totalRevenue.toLocaleString()}`}
+                                value={formatPrice(stats.totalRevenue)}
                                 icon={DollarSign}
                                 color="blue"
                             />

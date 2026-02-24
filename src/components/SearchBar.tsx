@@ -9,6 +9,7 @@ import {
   incrementProductViewCount
 } from '../lib/searchUtils';
 import { SearchProduct, SearchCategory } from '../types/search';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function SearchBar() {
   const [query, setQuery] = useState('');
@@ -18,6 +19,7 @@ export function SearchBar() {
   const [categories, setCategories] = useState<SearchCategory[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { formatPrice } = useCurrency();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -254,7 +256,7 @@ export function SearchBar() {
                           )}
                           <div className="flex items-center gap-2 mt-1">
                             <span className="font-bold text-blue-600">
-                              ${product.price.toFixed(2)}
+                              {formatPrice(product.price)}
                             </span>
                             {product.category_name && (
                               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">

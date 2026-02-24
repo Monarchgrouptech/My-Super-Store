@@ -2,6 +2,7 @@ import { Minus, Plus, X, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
+import { useCurrency } from '../context/CurrencyContext';
 
 
 interface CartProps {
@@ -10,6 +11,7 @@ interface CartProps {
 
 export function Cart({ onNavigate }: CartProps) {
   const { items, total, removeFromCart, updateQuantity, loading } = useCart();
+  const { formatPrice } = useCurrency();
 
   const subtotal = total;
   const shipping = subtotal > 500 ? 0 : 50;
@@ -61,7 +63,7 @@ export function Cart({ onNavigate }: CartProps) {
                     <div>
                       <h4 className="text-white mb-2">{item.products?.name}</h4>
                       <div className="text-white font-bold">
-                        ${item.products?.price?.toLocaleString()}
+                        {formatPrice(item.products?.price || 0)}
                       </div>
                     </div>
                     <button
@@ -92,7 +94,7 @@ export function Cart({ onNavigate }: CartProps) {
                       </button>
                     </div>
                     <div className="bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent font-bold">
-                      ${((item.products?.price || 0) * item.quantity).toLocaleString()}
+                      {formatPrice((item.products?.price || 0) * item.quantity)}
                     </div>
                   </div>
                 </div>
@@ -108,21 +110,21 @@ export function Cart({ onNavigate }: CartProps) {
               <div className="space-y-4 mb-8">
                 <div className="summary-row">
                   <span>Subtotal</span>
-                  <span>${subtotal.toLocaleString()}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
                 <div className="summary-row">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `$${shipping}`}</span>
+                  <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                 </div>
                 <div className="summary-row">
                   <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>{formatPrice(tax)}</span>
                 </div>
 
                 <div className="summary-total">
                   <span>Total</span>
                   <div className="total-price">
-                    ${finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatPrice(finalTotal)}
                   </div>
                 </div>
               </div>
@@ -149,7 +151,7 @@ export function Cart({ onNavigate }: CartProps) {
               {subtotal < 500 && (
                 <div className="mt-6 p-4 border border-[rgba(222,157,13,0.3)] text-center">
                   <p className="text-muted text-sm">
-                    Add <span style={{ color: 'var(--gold-solid)' }}>${(500 - subtotal).toLocaleString()}</span> more for free shipping
+                    Add <span style={{ color: 'var(--gold-solid)' }}>{formatPrice(500 - subtotal)}</span> more for free shipping
                   </p>
                 </div>
               )}

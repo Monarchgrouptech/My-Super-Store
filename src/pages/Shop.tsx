@@ -4,6 +4,7 @@ import { ProductCard } from '../components/ProductCard';
 import { useSearchParams } from 'react-router-dom';
 
 import { supabase } from '../lib/supabase';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Product {
   id: any;
@@ -34,6 +35,7 @@ export function Shop({ onNavigate }: ShopProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const { formatPrice } = useCurrency();
 
 
 
@@ -210,7 +212,7 @@ export function Shop({ onNavigate }: ShopProps) {
                 onChange={(e) => setPriceRange({ ...priceRange, min: Math.max(0, parseInt(e.target.value) || 0) })}
                 min="0"
                 className="w-full px-2 py-2 border border-gray-300 rounded text-sm"
-                placeholder="$0"
+                placeholder={formatPrice(0)}
               />
             </div>
             <div style={{ flex: 1 }}>
@@ -221,7 +223,7 @@ export function Shop({ onNavigate }: ShopProps) {
                 onChange={(e) => setPriceRange({ ...priceRange, max: Math.max(priceRange.min, parseInt(e.target.value) || 1000000) })}
                 min="0"
                 className="w-full px-2 py-2 border border-gray-300 rounded text-sm"
-                placeholder="$10,000"
+                placeholder={formatPrice(10000)}
               />
             </div>
           </div>
@@ -250,7 +252,7 @@ export function Shop({ onNavigate }: ShopProps) {
             </div>
           </div>
           <p style={{ marginTop: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>
-            ${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()}
+            {formatPrice(priceRange.min)} - {formatPrice(priceRange.max)}
           </p>
         </div>
       )}
@@ -276,3 +278,4 @@ export function Shop({ onNavigate }: ShopProps) {
     </div>
   );
 }
+

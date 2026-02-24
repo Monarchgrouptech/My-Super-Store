@@ -1,5 +1,6 @@
 import { Edit, Trash2, Eye } from 'lucide-react';
 import { Product, ProductImage } from '../../types/vendor';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface ProductCardProps {
     product: Product & { product_images?: ProductImage[] };
@@ -11,6 +12,7 @@ interface ProductCardProps {
 export function ProductCard({ product, onEdit, onDelete, onView }: ProductCardProps) {
     const primaryImage = product.product_images?.[0];
     const hasImage = primaryImage?.url;
+    const { formatPrice } = useCurrency();
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col w-full max-w-[280px]">
@@ -76,7 +78,7 @@ export function ProductCard({ product, onEdit, onDelete, onView }: ProductCardPr
 
                 <div className="flex items-baseline gap-1.5 mb-1.5">
                     <span className="text-base font-bold text-[#D4AF37]">
-                        ${product.price.toFixed(2)}
+                        {formatPrice(product.price)}
                     </span>
                     <span className="text-[10px] text-gray-500">Stock: {product.stock}</span>
                 </div>

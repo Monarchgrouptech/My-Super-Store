@@ -3,6 +3,7 @@ import { CheckCircle, Loader2, AlertCircle, RefreshCw, Package, CreditCard, MapP
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Order {
     id: string;
@@ -64,6 +65,7 @@ export function OrderConfirmation() {
     const [payment, setPayment] = useState<Payment | null>(null);
     const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
     const [isPolling, setIsPolling] = useState(false);
+    const { formatPrice } = useCurrency();
 
     const fetchOrderData = useCallback(async () => {
         setLoading(true);
@@ -298,7 +300,7 @@ export function OrderConfirmation() {
                                 <div className="flex justify-between">
                                     <span>Amount</span>
                                     <span className="text-white">
-                                        {payment.currency} {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        {formatPrice(payment.amount)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -363,11 +365,11 @@ export function OrderConfirmation() {
                                     <h4 className="text-white font-semibold mb-1">{item.product?.name}</h4>
                                     <p className="text-muted text-sm">Quantity: {item.quantity}</p>
                                     <p className="text-[var(--gold-primary)] font-semibold">
-                                        ₦{(item.unit_price * item.quantity).toLocaleString()}
+                                        {formatPrice(item.unit_price * item.quantity)}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-white">₦{item.unit_price.toLocaleString()}</p>
+                                    <p className="text-white">{formatPrice(item.unit_price)}</p>
                                     <p className="text-muted text-sm">each</p>
                                 </div>
                             </div>
@@ -379,7 +381,7 @@ export function OrderConfirmation() {
                         <div className="flex justify-between items-center">
                             <span className="text-xl font-serif text-white">Total Amount</span>
                             <span className="text-2xl font-bold text-[var(--gold-primary)]">
-                                {order?.currency} {order?.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatPrice(order?.total_amount || 0)}
                             </span>
                         </div>
                     </div>
