@@ -95,8 +95,8 @@ export function VendorDashboard() {
     // Show setup prompt if user is not a vendor (regardless of loading state)
     if (!isVendor || !vendor) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-                <div className="max-w-lg w-full bg-white rounded-lg shadow-lg p-8 border-2 border-[#D4AF37] text-center">
+            <div className="max-w-2xl mx-auto px-4 py-12 text-center">
+                <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-[#D4AF37]">
                     <div className="w-16 h-16 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg
                             className="w-8 h-8 text-[#D4AF37]"
@@ -120,7 +120,7 @@ export function VendorDashboard() {
                     </p>
                     <button
                         onClick={() => navigate('/vendor/profile')}
-                        className="btn-primary inline-flex items-center justify-center gap-2 mx-auto"
+                        className="btn-primary inline-flex items-center gap-2"
                     >
                         <svg
                             className="w-5 h-5"
