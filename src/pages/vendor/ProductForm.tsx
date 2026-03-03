@@ -394,7 +394,7 @@ export function ProductForm() {
 
                                     {!isPriceRange ? (
                                         <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-gray-500">{currencySymbol}</span>
+                                            <span className="absolute left-3 top-2.5 text-gray-500">$</span>
                                             <input
                                                 type="number"
                                                 value={formData.price}

@@ -52,19 +52,18 @@ export function OrderList() {
                 return;
             }
 
-            // Step 2: Get orders by IDs, filter to 'paid' status
+            // Step 2: Get orders by IDs
             const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
                 .select('*')
-                .in('id', orderIds)
-                .eq('status', 'paid');
+                .in('id', orderIds);
 
             console.log('Step 2 - Orders:', { ordersData, error: ordersError });
 
             if (ordersError) throw ordersError;
 
             if (!ordersData || ordersData.length === 0) {
-                console.warn('No paid orders found');
+                console.warn('No orders found for vendor order items');
                 setOrders([]);
                 return;
             }
@@ -124,7 +123,7 @@ export function OrderList() {
             // Step 6: Combine all data
             const ordersMap = new Map<string, OrderWithDetails>();
 
-            // First, create order entries from paid orders
+            // First, create order entries from fetched orders
             ordersData.forEach((order: any) => {
                 const shippingAddress = addressesData.find(addr => addr.id === order.shipping_address_id);
 
@@ -152,8 +151,10 @@ export function OrderList() {
             let ordersList = Array.from(ordersMap.values());
 
             // Apply status filter if needed
-            if (filterStatus !== 'all' && filterStatus !== 'paid') {
-                ordersList = ordersList.filter((order) => order.status === filterStatus);
+            if (filterStatus !== 'all') {
+                ordersList = ordersList.filter(
+                    (order) => (order.status || '').toLowerCase() === filterStatus
+                );
             }
 
             console.log('Final orders list:', ordersList.length, ordersList);
@@ -174,9 +175,14 @@ export function OrderList() {
     }
 
     const getStatusIcon = (status: string) => {
-        switch (status) {
+        switch ((status || '').toLowerCase()) {
             case 'pending':
                 return <Clock className="text-yellow-600" size={20} />;
+            case 'paid':
+                return <CheckCircle className="text-green-600" size={20} />;
+            case 'processing':
+                return <Clock className="text-blue-600" size={20} />;
+            case 'delivered':
             case 'completed':
                 return <CheckCircle className="text-green-600" size={20} />;
             case 'shipped':
@@ -189,9 +195,14 @@ export function OrderList() {
     };
 
     const getStatusColor = (status: string) => {
-        switch (status) {
+        switch ((status || '').toLowerCase()) {
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800';
+            case 'paid':
+                return 'bg-green-100 text-green-800';
+            case 'processing':
+                return 'bg-blue-100 text-blue-800';
+            case 'delivered':
             case 'completed':
                 return 'bg-green-100 text-green-800';
             case 'shipped':
@@ -244,7 +255,7 @@ export function OrderList() {
             {/* Filters */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
                 <div className="flex gap-2 overflow-x-auto">
-                    {['all', 'pending', 'shipped', 'completed', 'cancelled'].map((status) => (
+                    {['all', 'pending', 'paid', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilterStatus(status)}
@@ -339,7 +350,7 @@ export function OrderList() {
                                                 </p>
                                             )}
                                             <p className="text-sm text-gray-600">
-                                                Quantity: {item.quantity} × {formatPrice(item.unit_price)}
+                                                Quantity: {item.quantity} x {formatPrice(item.unit_price)}
                                             </p>
                                         </div>
                                         <p className="font-semibold text-gray-900">
@@ -422,4 +433,5 @@ export function OrderList() {
         </div>
     );
 }
+
 
