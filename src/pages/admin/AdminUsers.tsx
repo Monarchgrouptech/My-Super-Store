@@ -21,6 +21,8 @@ export function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+    const [page, setPage] = useState(0);
+    const PAGE_SIZE = 10;
 
     useEffect(() => {
         if (isAdmin) {
@@ -33,6 +35,7 @@ export function AdminUsers() {
             user.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredUsers(filtered);
+        setPage(0); // reset page on search
     }, [searchTerm, users]);
 
     const fetchUsers = async () => {
@@ -230,7 +233,7 @@ export function AdminUsers() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {filteredUsers.map((user) => (
+                                    {filteredUsers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
@@ -271,6 +274,27 @@ export function AdminUsers() {
                         </div>
                     )}
                 </div>
+
+                {/* Pagination */}
+                {filteredUsers.length > PAGE_SIZE && (
+                    <div className="pagination-controls" style={{ justifyContent: 'flex-start', background: '#fff', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <button
+                            className="pagination-btn"
+                            style={{ color: '#374151', borderColor: '#D1D5DB', background: 'transparent' }}
+                            onClick={() => setPage(p => Math.max(0, p - 1))}
+                            disabled={page === 0}
+                        >← Prev</button>
+                        <span className="pagination-info" style={{ color: '#6B7280' }}>
+                            Page {page + 1} of {Math.ceil(filteredUsers.length / PAGE_SIZE)} ({filteredUsers.length} users)
+                        </span>
+                        <button
+                            className="pagination-btn"
+                            style={{ color: '#374151', borderColor: '#D1D5DB', background: 'transparent' }}
+                            onClick={() => setPage(p => Math.min(Math.ceil(filteredUsers.length / PAGE_SIZE) - 1, p + 1))}
+                            disabled={page >= Math.ceil(filteredUsers.length / PAGE_SIZE) - 1}
+                        >Next →</button>
+                    </div>
+                )}
 
                 {/* Stats */}
 

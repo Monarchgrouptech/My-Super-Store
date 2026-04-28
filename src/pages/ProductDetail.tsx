@@ -83,7 +83,7 @@ export function ProductDetail() {
   }
 
   return (
-    <div className="section relative">
+    <div className="section relative" style={{ overflowX: 'hidden', paddingLeft: 'clamp(1rem, 4vw, 1.5rem)', paddingRight: 'clamp(1rem, 4vw, 1.5rem)' }}>
 
       <div className="detail-grid relative z-10">
         {/* Product Images - Left Column on White */}
@@ -115,17 +115,17 @@ export function ProductDetail() {
         </div>
 
         {/* Product Info - Right Column Black Card */}
-        <div className="card-black">
-          <p className="text-muted mb-2">{product.category}</p>
-          <h1 className="text-white mb-6" style={{ fontSize: '2.5rem', fontFamily: "'Oswald', sans-serif" }}>{product.name}</h1>
+        <div className="card-black" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
+          <p className="text-muted mb-2" style={{ fontSize: 'clamp(0.75rem, 2vw, 0.875rem)' }}>{product.category}</p>
+          <h1 className="text-white mb-4" style={{ fontSize: 'clamp(1.25rem, 4vw, 2.5rem)', fontFamily: "'Oswald', sans-serif", lineHeight: 1.2 }}>{product.name}</h1>
 
           {/* Rating */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-4">
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  size={20}
+                  size={16}
                   strokeWidth={2.5}
                   style={{
                     fill: 'url(#gold-gradient)',
@@ -197,8 +197,8 @@ export function ProductDetail() {
           )}
 
           {/* Size Selection */}
-          <div className="mb-6">
-            <h4 className="text-white mb-4" style={{fontFamily: "'Oswald', sans-serif"}}>Select Size</h4>
+          <div className="mb-4">
+            <h4 className="text-white mb-3" style={{fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(0.875rem, 2vw, 1rem)'}}>Select Size</h4>
             <div className="size-grid">
               {sizes.map((size) => (
                 <button
@@ -213,8 +213,8 @@ export function ProductDetail() {
           </div>
 
           {/* Quantity */}
-          <div className="mb-12">
-            <h4 className="text-white mb-4" style={{fontFamily: "'Oswald', sans-serif"}}>Quantity</h4>
+          <div className="mb-6">
+            <h4 className="text-white mb-3" style={{fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(0.875rem, 2vw, 1rem)'}}>Quantity</h4>
             <div className="quantity-controls">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}

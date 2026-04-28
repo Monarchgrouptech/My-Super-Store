@@ -35,6 +35,7 @@ export function Shop({ onNavigate }: ShopProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [shopPage, setShopPage] = useState(0);
   const { formatPrice } = useCurrency();
 
 
@@ -52,6 +53,7 @@ export function Shop({ onNavigate }: ShopProps) {
 
     setSelectedCategory(categoryFromUrl ?? 'All');
     setSearchTerm(searchFromUrl ?? '');
+    setShopPage(0); // reset page when filters change
   }, [searchParams]);
 
 
@@ -117,6 +119,10 @@ export function Shop({ onNavigate }: ShopProps) {
       return 0; // 'featured' or 'newest' (assuming default order is fine for now)
     });
 
+  const SHOP_PAGE_SIZE = 12;
+  const totalShopPages = Math.ceil(filteredProducts.length / SHOP_PAGE_SIZE);
+  const pagedProducts = filteredProducts.slice(shopPage * SHOP_PAGE_SIZE, (shopPage + 1) * SHOP_PAGE_SIZE);
+
   if (loading) {
     return (
       <div className="section flex items-center justify-center min-h-[50vh]">
@@ -143,9 +149,9 @@ export function Shop({ onNavigate }: ShopProps) {
       </div>
 
       {/* Filters and Sort */}
-      <div className="filters-container">
+      <div className="filters-container" style={{ padding: '0 1rem', marginBottom: '1.5rem' }}>
         {/* Category Filters */}
-        <div className="filter-group">
+        <div className="filter-group" style={{ padding: '0' }}>
           {categories.map((category) => (
             <button
               key={category}
@@ -170,7 +176,7 @@ export function Shop({ onNavigate }: ShopProps) {
         </div>
 
         {/* Sort and Filter Toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', padding: '0 0.25rem' }}>
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className="link-gold"
@@ -258,8 +264,8 @@ export function Shop({ onNavigate }: ShopProps) {
       )}
 
       {/* Products Grid */}
-      <div className="grid grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' }}>
+        {pagedProducts.map((product) => (
           <div key={product.id}>
             <ProductCard
               product={product}
@@ -269,12 +275,26 @@ export function Shop({ onNavigate }: ShopProps) {
         ))}
       </div>
 
-      {/* Load More */}
-      <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-        <button className="load-more-btn">
-          Load More
-        </button>
-      </div>
+      {/* Pagination */}
+      {totalShopPages > 1 && (
+        <div className="pagination-controls" style={{ marginTop: '2rem' }}>
+          <button
+            className="pagination-btn"
+            onClick={() => { setShopPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            disabled={shopPage === 0}
+            style={{ color: '#000', borderColor: 'rgba(0,0,0,0.3)', background: 'transparent' }}
+          >← Prev</button>
+          <span style={{ fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap' }}>
+            Page {shopPage + 1} of {totalShopPages} &nbsp;({filteredProducts.length} items)
+          </span>
+          <button
+            className="pagination-btn"
+            onClick={() => { setShopPage(p => Math.min(totalShopPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            disabled={shopPage >= totalShopPages - 1}
+            style={{ color: '#000', borderColor: 'rgba(0,0,0,0.3)', background: 'transparent' }}
+          >Next →</button>
+        </div>
+      )}
     </div>
   );
 }

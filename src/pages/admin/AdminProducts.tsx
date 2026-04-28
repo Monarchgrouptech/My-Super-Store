@@ -14,6 +14,8 @@ export function AdminProducts() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [page, setPage] = useState(0);
+    const PAGE_SIZE = 10;
 
     useEffect(() => {
         if (isAdmin) {
@@ -27,6 +29,7 @@ export function AdminProducts() {
             product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredProducts(filtered);
+        setPage(0);
     }, [searchTerm, products]);
 
     const fetchProducts = async () => {
@@ -189,7 +192,7 @@ export function AdminProducts() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {filteredProducts.map((product) => (
+                                    {filteredProducts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((product) => (
                                         <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <span className="text-gray-900 font-medium">{product.name}</span>
@@ -246,6 +249,26 @@ export function AdminProducts() {
                         </div>
                     )}
                 </div>
+                {/* Pagination */}
+                {filteredProducts.length > PAGE_SIZE && (
+                    <div className="pagination-controls" style={{ justifyContent: 'flex-start', background: '#fff', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <button
+                            className="pagination-btn"
+                            style={{ color: '#374151', borderColor: '#D1D5DB', background: 'transparent' }}
+                            onClick={() => setPage(p => Math.max(0, p - 1))}
+                            disabled={page === 0}
+                        >? Prev</button>
+                        <span className="pagination-info" style={{ color: '#6B7280' }}>
+                            Page {page + 1} of {Math.ceil(filteredProducts.length / PAGE_SIZE)} ({filteredProducts.length} products)
+                        </span>
+                        <button
+                            className="pagination-btn"
+                            style={{ color: '#374151', borderColor: '#D1D5DB', background: 'transparent' }}
+                            onClick={() => setPage(p => Math.min(Math.ceil(filteredProducts.length / PAGE_SIZE) - 1, p + 1))}
+                            disabled={page >= Math.ceil(filteredProducts.length / PAGE_SIZE) - 1}
+                        >Next ?</button>
+                    </div>
+                )}
 
                 {/* Stats */}
 

@@ -304,12 +304,12 @@ export function Checkout() {
 
     if (cartItems.length === 0) {
         return (
-            <div className="section">
-                <div className="card-black p-24 text-center">
+            <div className="section" style={{ overflowX: 'hidden', paddingLeft: 'clamp(1rem, 4vw, 1.5rem)', paddingRight: 'clamp(1rem, 4vw, 1.5rem)' }}>
+                <div className="card-black text-center" style={{ padding: 'clamp(2rem, 8vw, 6rem) 1rem' }}>
                     <ShoppingBag size={64} className="mx-auto mb-6 text-[var(--gold-primary)]" />
                     <h3 className="text-white mb-4">Your cart is empty</h3>
                     <p className="text-muted mb-8">Add some items to proceed with checkout</p>
-                    <button onClick={() => navigate('/shop')} className="btn-primary">
+                    <button onClick={() => navigate('/shop')} className="btn-primary" style={{ padding: '0.75rem 2rem' }}>
                         Continue Shopping
                     </button>
                 </div>
@@ -318,10 +318,10 @@ export function Checkout() {
     }
 
     return (
-        <div className="section relative">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex items-center justify-between mb-12">
-                    <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif" }}>Checkout</h1>
+        <div className="section relative" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw', paddingLeft: 'clamp(0.75rem, 4vw, 1.5rem)', paddingRight: 'clamp(0.75rem, 4vw, 1.5rem)', boxSizing: 'border-box' }}>
+            <div style={{ maxWidth: '72rem', margin: '0 auto', width: '100%', minWidth: 0 }}>
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.5rem, 5vw, 3rem)', marginBottom: 0 }}>Checkout</h1>
                 </div>
 
                 {error && (
@@ -333,12 +333,12 @@ export function Checkout() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="card-black">
-                            <div className="flex items-center gap-3 mb-6">
-                                <MapPin className="text-[var(--gold-primary)]" size={24} />
-                                <h3 className="text-2xl font-serif text-[var(--gold-primary)]" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10">
+                    <div className="lg:col-span-2 space-y-6" style={{ minWidth: 0, width: '100%' }}>
+                        <div className="card-black" style={{ padding: 'clamp(1rem, 4vw, 2rem)', overflow: 'hidden' }}>
+                            <div className="flex items-center gap-2 mb-4">
+                                <MapPin className="text-[var(--gold-primary)] flex-shrink-0" size={20} />
+                                <h3 className="text-white font-bold" style={{ fontSize: 'clamp(1rem, 3vw, 1.5rem)', fontFamily: "'Oswald', sans-serif" }}>
                                     Shipping Address
                                 </h3>
                             </div>
@@ -370,71 +370,71 @@ export function Checkout() {
                             )}
                         </div>
 
-                        <div className="card-black">
-                            <h3 className="text-2xl font-serif mb-6 text-[var(--gold-primary)]" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                        <div className="card-black" style={{ padding: 'clamp(1rem, 4vw, 2rem)', overflow: 'hidden' }}>
+                            <h3 className="font-bold mb-4 text-[var(--gold-primary)]" style={{ fontSize: 'clamp(1rem, 3vw, 1.5rem)', fontFamily: "'Oswald', sans-serif" }}>
                                 Order Items
                             </h3>
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {cartItems.map((item) => (
-                                    <div key={item.id} className="flex gap-4 bg-white/5 p-4 rounded-lg">
-                                        <div className="w-20 h-20 flex-shrink-0">
+                                    <div key={item.id} className="flex gap-3 bg-white/5 rounded-lg" style={{ padding: 'clamp(0.5rem, 3vw, 1rem)', minWidth: 0 }}>
+                                        <div className="flex-shrink-0" style={{ width: 'clamp(48px, 12vw, 80px)', height: 'clamp(48px, 12vw, 80px)' }}>
                                             <ImageWithFallback
                                                 src={item.products?.product_images?.[0]?.url || 'https://via.placeholder.com/150'}
                                                 alt={item.products?.name}
                                                 className="w-full h-full object-cover rounded"
                                             />
                                         </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-white font-semibold mb-1">{item.products?.name}</h4>
-                                            <p className="text-muted text-sm">Quantity: {item.quantity}</p>
-                                            <p className="text-[var(--gold-primary)] font-semibold">
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <h4 className="text-white font-semibold mb-1 truncate" style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.9rem)' }}>{item.products?.name}</h4>
+                                            <p className="text-muted text-xs">Qty: {item.quantity}</p>
+                                            <p className="text-[var(--gold-primary)] font-semibold text-sm">
                                                 {formatCheckoutPrice((item.products?.price || item.price_at_time) * item.quantity)}
                                             </p>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-white">{formatCheckoutPrice(item.products?.price || item.price_at_time)}</p>
-                                            <p className="text-muted text-sm">each</p>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-white text-sm">{formatCheckoutPrice(item.products?.price || item.price_at_time)}</p>
+                                            <p className="text-muted text-xs">each</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <h3 className="text-xl font-serif text-[var(--gold-primary)] mb-4">Choose Payment Method</h3>
+                        <div className="space-y-4" style={{ padding: '0 clamp(0rem, 2vw, 1rem)' }}>
+                            <h3 className="text-lg font-serif text-[var(--gold-primary)] mb-4">Choose Payment Method</h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mx-auto w-full">
                                 <button
                                     onClick={handlePaystackPayment}
                                     disabled={processingPayment || !shippingAddress}
-                                    className="group relative overflow-hidden bg-black border-[4px] border-[#FFC92E]/20 hover:border-[#FFC92E] text-white py-5 px-6 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,201,46,0.6),0_0_80px_rgba(255,201,46,0.2)] hover:scale-[1.05] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="group relative overflow-hidden bg-black border-[4px] border-[#FFC92E]/20 hover:border-[#FFC92E] text-white py-4 px-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,201,46,0.6),0_0_80px_rgba(255,201,46,0.2)] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed w-full"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-[#FFC92E]/0 via-[#FFC92E]/5 to-[#FFC92E]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                    <div className="p-3 rounded-full bg-[#FFC92E]/10 group-hover:bg-[#FFC92E]/20 transition-colors duration-300">
-                                        <Wallet className="text-[#FFC92E]" size={28} />
+                                    <div className="p-2 rounded-full bg-[#FFC92E]/10 group-hover:bg-[#FFC92E]/20 transition-colors duration-300">
+                                        <Wallet className="text-[#FFC92E]" size={24} />
                                     </div>
-                                    <span className="text-white font-bold text-sm font-serif tracking-wide z-10">
+                                    <span className="text-white font-bold text-sm font-serif tracking-wide z-10 text-center">
                                         Pay in Naira (₦) — Paystack
                                     </span>
-                                    <span className="text-xs text-gray-400 z-10">
-                                        Paystack: Nigerian Naira payments
+                                    <span className="text-xs text-gray-400 z-10 text-center">
+                                        Nigerian Naira payments
                                     </span>
                                 </button>
 
                                 <button
                                     onClick={handleStripePayment}
                                     disabled={processingPayment || !shippingAddress}
-                                    className="group relative overflow-hidden bg-black border-[4px] border-[#FFC92E]/20 hover:border-[#FFC92E] text-white py-5 px-6 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,201,46,0.6),0_0_80px_rgba(255,201,46,0.2)] hover:scale-[1.05] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="group relative overflow-hidden bg-black border-[4px] border-[#FFC92E]/20 hover:border-[#FFC92E] text-white py-4 px-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,201,46,0.6),0_0_80px_rgba(255,201,46,0.2)] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed w-full"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-[#FFC92E]/0 via-[#FFC92E]/5 to-[#FFC92E]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                    <div className="p-3 rounded-full bg-[#FFC92E]/10 group-hover:bg-[#FFC92E]/20 transition-colors duration-300">
-                                        <CreditCard className="text-[#FFC92E]" size={28} />
+                                    <div className="p-2 rounded-full bg-[#FFC92E]/10 group-hover:bg-[#FFC92E]/20 transition-colors duration-300">
+                                        <CreditCard className="text-[#FFC92E]" size={24} />
                                     </div>
-                                    <span className="text-white font-bold text-sm font-serif tracking-wide z-10">
+                                    <span className="text-white font-bold text-sm font-serif tracking-wide z-10 text-center">
                                         Pay in Dollars ($) — Stripe
                                     </span>
-                                    <span className="text-xs text-gray-400 z-10">
-                                        Stripe: International Dollar payments
+                                    <span className="text-xs text-gray-400 z-10 text-center">
+                                        International Dollar payments
                                     </span>
                                 </button>
                             </div>
@@ -448,8 +448,8 @@ export function Checkout() {
                         </div>
                     </div>
 
-                    <div>
-                        <div className="card-black sticky top-24">
+                    <div style={{ minWidth: 0, width: '100%' }}>
+                        <div className="card-black sticky top-24" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
                             <h3 className="font-serif text-xl mb-6" style={{ fontFamily: "'Oswald', sans-serif" }}>Order Summary</h3>
                             <div className="space-y-4 text-gray-400">
                                 <div className="flex justify-between">

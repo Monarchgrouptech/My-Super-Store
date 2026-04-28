@@ -113,13 +113,20 @@ export function HeroCarousel() {
 
     return (
         <div
-            className="absolute inset-0 overflow-hidden bg-slate-900"
+            className="relative w-full overflow-hidden bg-slate-900"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
+            <img
+                src={slides[currentSlide].image}
+                alt=""
+                className="block w-full h-auto opacity-0 pointer-events-none select-none"
+                aria-hidden="true"
+            />
+
             {/* Carousel slides */}
             {slides.map((slide, index) => {
                 const isLoaded = loadedImages[slide.id];

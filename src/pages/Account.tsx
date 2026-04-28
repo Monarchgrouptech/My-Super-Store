@@ -14,6 +14,7 @@ export function Account() {
     const { formatPrice } = useCurrency();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('orders');
+    const [ordersPage, setOrdersPage] = useState(0);
     const [orders, setOrders] = useState<any[]>([]);
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [profile, setProfile] = useState<any>(null);
@@ -269,36 +270,39 @@ export function Account() {
         );
     }
 
+    const ORDERS_PER_PAGE = 5;
+    const totalOrderPages = Math.ceil(orders.length / ORDERS_PER_PAGE);
+    const pagedOrders = orders.slice(ordersPage * ORDERS_PER_PAGE, (ordersPage + 1) * ORDERS_PER_PAGE);
+
     return (
-        <div className="min-h-screen bg-black text-white">
-            <div className="section py-12">
-                <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-black text-white overflow-x-hidden">
+            <div className="w-full max-w-7xl mx-auto px-4 py-8">
                     {/* Welcome Header */}
-                    <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0B0B0B] via-[#111] to-[#0B0B0B] p-8 border border-[#FFC92E]/30 shadow-[0_0_30px_rgba(255,201,46,0.1)]">
+                    <div className="mb-6 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0B0B0B] via-[#111] to-[#0B0B0B] p-4 sm:p-6 border border-[#FFC92E]/30 shadow-[0_0_30px_rgba(255,201,46,0.1)]">
                         <div className="absolute inset-0 bg-gradient-to-r from-[#FEFDFE] via-[#FFC92E] to-[#DE9D0D] opacity-5"></div>
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFC92E] rounded-full blur-[80px] opacity-10"></div>
-                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-[#FFC92E]/10 rounded-full border border-[#FFC92E]/20">
-                                        <Crown className="text-[#FFC92E]" size={28} strokeWidth={1.5} />
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-[#FFC92E] rounded-full blur-[60px] opacity-10"></div>
+                        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="p-1.5 bg-[#FFC92E]/10 rounded-full border border-[#FFC92E]/20 flex-shrink-0">
+                                        <Crown className="text-[#FFC92E]" size={20} strokeWidth={1.5} />
                                     </div>
-                                    <h1 className="text-4xl font-serif font-bold bg-gradient-to-r from-[#FEFDFE] via-[#FFC92E] to-[#DE9D0D] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                                    <h1 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold bg-gradient-to-r from-[#FEFDFE] via-[#FFC92E] to-[#DE9D0D] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] truncate">
                                         Welcome Back
                                     </h1>
                                 </div>
-                                <p className="text-gray-400 text-lg">{profile?.display_name || user?.user_metadata?.full_name || 'Valued Customer'}</p>
+                                <p className="text-gray-400 text-sm sm:text-base truncate">{profile?.display_name || user?.user_metadata?.full_name || 'Valued Customer'}</p>
                             </div>
-                            <div className="flex items-center gap-8 bg-white/5 px-6 py-3 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl border border-white/5 flex-shrink-0">
                                 <div className="text-right">
-                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Total Orders</p>
-                                    <p className="text-2xl font-bold bg-gradient-to-b from-[#FFC92E] to-[#DE9D0D] bg-clip-text text-transparent">{orders.length}</p>
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5 font-bold">Orders</p>
+                                    <p className="text-lg font-bold bg-gradient-to-b from-[#FFC92E] to-[#DE9D0D] bg-clip-text text-transparent">{orders.length}</p>
                                 </div>
-                                <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+                                <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Member Tier</p>
-                                    <p className="text-lg font-semibold text-white flex items-center gap-1 justify-end">
-                                        <Star size={14} className="fill-[#FFC92E] text-[#FFC92E]" />
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5 font-bold">Tier</p>
+                                    <p className="text-sm font-semibold text-white flex items-center gap-1 justify-end">
+                                        <Star size={12} className="fill-[#FFC92E] text-[#FFC92E]" />
                                         Gold
                                     </p>
                                 </div>
@@ -306,11 +310,11 @@ export function Account() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-8">
                         {/* Sidebar */}
                         <div className="lg:col-span-1 space-y-6">
                             {/* User Card */}
-                            <div className="relative overflow-hidden rounded-2xl bg-[#0F0F0F] p-6 border border-[#FFC92E]/20 shadow-xl group">
+                            <div className="relative overflow-hidden rounded-2xl bg-[#0F0F0F] border border-[#FFC92E]/20 shadow-xl group" style={{ padding: 'clamp(1rem, 4vw, 1.5rem)' }}>
                                 <div className="absolute inset-0 bg-gradient-to-b from-[#FFC92E]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                                 <div className="relative z-10 flex flex-col items-center text-center">
@@ -396,7 +400,7 @@ export function Account() {
                         </div>
 
                         {/* Content Area */}
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-3" style={{ minWidth: 0, width: '100%' }}>
                             <div className="mb-6 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <h2 className="text-2xl font-serif font-bold text-white">
@@ -426,56 +430,74 @@ export function Account() {
                                             </div>
                                         </div>
                                     ) : (
-                                        orders.map((order) => (
+                                        <>
+                                        {pagedOrders.map((order) => (
                                             <div key={order.id} className="relative overflow-hidden rounded-2xl bg-[#0F0F0F] border border-white/5 shadow-lg hover:border-[#FFC92E]/30 transition-all duration-300 group">
                                                 <div className="absolute inset-0 bg-gradient-to-r from-[#FFC92E]/0 via-[#FFC92E]/5 to-[#FFC92E]/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                                                <div className="relative z-10 p-6 border-b border-white/5 bg-white/[0.02]">
-                                                    <div className="flex flex-wrap gap-6 justify-between items-center">
-                                                        <div className="flex gap-8">
+                                                <div className="relative z-10 p-4 border-b border-white/5 bg-white/[0.02]">
+                                                    <div className="flex flex-wrap gap-3 justify-between items-center">
+                                                        <div className="flex flex-wrap gap-4">
                                                             <div>
                                                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Order ID</p>
-                                                                <p className="font-mono text-white text-sm">#{order.id.slice(0, 8).toUpperCase()}</p>
+                                                                <p className="font-mono text-white text-xs sm:text-sm">#{order.id.slice(0, 8).toUpperCase()}</p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Date</p>
-                                                                <p className="text-gray-300 text-sm">{new Date(order.placed_at).toLocaleDateString()}</p>
+                                                                <p className="text-gray-300 text-xs sm:text-sm">{new Date(order.placed_at).toLocaleDateString()}</p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Total</p>
-                                                                <p className="text-lg font-bold text-[#FFC92E]">
+                                                                <p className="text-base font-bold text-[#FFC92E]">
                                                                     {formatPrice(order.total_amount)}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="px-3 py-1 rounded border border-[#FFC92E]/30 text-[10px] font-bold uppercase tracking-widest text-[#FFC92E] bg-[#FFC92E]/10">
+                                                        <div className="flex items-center">
+                                                            <span className="px-2 py-1 rounded border border-[#FFC92E]/30 text-[10px] font-bold uppercase tracking-widest text-[#FFC92E] bg-[#FFC92E]/10">
                                                                 {order.status}
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="relative z-10 p-6 space-y-4">
+                                                <div className="relative z-10 p-4 space-y-3">
                                                     {order.order_items?.map((item: any) => (
-                                                        <div key={item.id} className="flex gap-4 items-center p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
-                                                            <div className="w-16 h-16 bg-white/5 rounded overflow-hidden flex-shrink-0 border border-white/10">
+                                                        <div key={item.id} className="flex gap-3 items-center p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
+                                                            <div className="w-12 h-12 bg-white/5 rounded overflow-hidden flex-shrink-0 border border-white/10">
                                                                 {item.products?.product_images?.[0]?.url && (
                                                                     <img src={item.products.product_images[0].url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="" />
                                                                 )}
                                                             </div>
-                                                            <div className="flex-1">
-                                                                <h4 className="text-white font-medium mb-1">{item.products?.name}</h4>
+                                                            <div className="flex-1 min-w-0 pr-2">
+                                                                <h4 className="text-white text-sm font-medium mb-0.5 truncate">{item.products?.name}</h4>
                                                                 <p className="text-xs text-gray-500">Qty: {item.quantity} × {formatPrice(item.unit_price)}</p>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <p className="font-bold text-white">{formatPrice(item.quantity * item.unit_price)}</p>
+                                                            <div className="text-right flex-shrink-0">
+                                                                <p className="font-bold text-white text-sm">{formatPrice(item.quantity * item.unit_price)}</p>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
-                                        ))
+                                        ))}
+                                        {/* Pagination */}
+                                        {totalOrderPages > 1 && (
+                                            <div className="pagination-controls">
+                                                <button
+                                                    className="pagination-btn"
+                                                    onClick={() => setOrdersPage(p => Math.max(0, p - 1))}
+                                                    disabled={ordersPage === 0}
+                                                >← Prev</button>
+                                                <span className="pagination-info">Page {ordersPage + 1} of {totalOrderPages}</span>
+                                                <button
+                                                    className="pagination-btn"
+                                                    onClick={() => setOrdersPage(p => Math.min(totalOrderPages - 1, p + 1))}
+                                                    disabled={ordersPage >= totalOrderPages - 1}
+                                                >Next →</button>
+                                            </div>
+                                        )}
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -763,7 +785,6 @@ export function Account() {
                             )}
                         </div>
                     </div>
-                </div>
             </div>
 
             {/* Edit Profile Modal */}

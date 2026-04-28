@@ -15,6 +15,8 @@ export function AdminVendors() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredVendors, setFilteredVendors] = useState<Vendor[]>([]);
     const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'verified'>('all');
+    const [page, setPage] = useState(0);
+    const PAGE_SIZE = 10;
 
     useEffect(() => {
         if (isAdmin) {
@@ -36,6 +38,7 @@ export function AdminVendors() {
         }
 
         setFilteredVendors(filtered);
+        setPage(0); // reset page on filter change
     }, [searchTerm, vendors, statusFilter]);
 
     const fetchVendors = async () => {
@@ -215,7 +218,7 @@ export function AdminVendors() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {filteredVendors.map((vendor) => (
+                                    {filteredVendors.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((vendor) => (
                                         <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <span className="text-gray-900 font-medium">{vendor.business_name}</span>
@@ -280,6 +283,27 @@ export function AdminVendors() {
                         </div>
                     )}
                 </div>
+
+                {/* Pagination */}
+                {filteredVendors.length > PAGE_SIZE && (
+                    <div className="pagination-controls" style={{ justifyContent: 'flex-start', background: '#fff', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <button
+                            className="pagination-btn"
+                            style={{ color: '#374151', borderColor: '#D1D5DB', background: 'transparent' }}
+                            onClick={() => setPage(p => Math.max(0, p - 1))}
+                            disabled={page === 0}
+                        >← Prev</button>
+                        <span className="pagination-info" style={{ color: '#6B7280' }}>
+                            Page {page + 1} of {Math.ceil(filteredVendors.length / PAGE_SIZE)} ({filteredVendors.length} vendors)
+                        </span>
+                        <button
+                            className="pagination-btn"
+                            style={{ color: '#374151', borderColor: '#D1D5DB', background: 'transparent' }}
+                            onClick={() => setPage(p => Math.min(Math.ceil(filteredVendors.length / PAGE_SIZE) - 1, p + 1))}
+                            disabled={page >= Math.ceil(filteredVendors.length / PAGE_SIZE) - 1}
+                        >Next →</button>
+                    </div>
+                )}
 
                 {/* Stats */}
 

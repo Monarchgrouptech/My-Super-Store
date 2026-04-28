@@ -226,7 +226,7 @@ export function Home() {
       <div className="w-full lg:grid lg:grid-cols-12 lg:gap-4 lg:px-4 lg:py-4">
 
         {/* LEFT COLUMN: Hero Carousel - 50% on desktop */}
-        <section className="relative w-full h-[400px] sm:h-[450px] md:h-[550px] lg:col-span-6 lg:h-[600px] bg-gradient-to-br from-[#0F0F0F] via-[#1A1A1A] to-[#0F0F0F] overflow-hidden group lg:rounded-2xl">
+        <section className="relative w-full lg:col-span-6 bg-gradient-to-br from-[#0F0F0F] via-[#1A1A1A] to-[#0F0F0F] overflow-hidden group lg:rounded-2xl">
           {/* Auto-sliding carousel background */}
           <HeroCarousel />
 
@@ -369,7 +369,7 @@ export function Home() {
                       ))}
                     </div>
                   </div>
-
+ 
                   {/* Row 2 - Scroll Right (Reverse) */}
                   <div className="relative w-full overflow-hidden">
                     <div className="flex gap-4 animate-scroll-reverse w-max hover:pause">
@@ -383,7 +383,7 @@ export function Home() {
                             <img
                               src={product.image}
                               alt={product.name}
-                              className="w-30% h-20% object-contain group-hover:scale-110 transition-transform duration-500"
+                              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                             />
                           </div>
                           <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{product.name}</h3>
@@ -401,7 +401,7 @@ export function Home() {
               </div>
 
               {/* Flash Sales Banner - Right side */}
-              <div className="flex-shrink-0 w-20% lg:w-[280px] relative rounded-xl overflow-hidden border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 group cursor-pointer" style={{ minHeight: '300px' }}>
+              <div className="flex-shrink-0 w-full sm:w-[280px] lg:w-[280px] relative rounded-xl overflow-hidden border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 group cursor-pointer" style={{ minHeight: '300px' }}>
                 <img
                   src="https://via.placeholder.com/300x400?text=FLASH+SALES"
                   alt="Flash Sales & Offers"

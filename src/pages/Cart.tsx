@@ -27,27 +27,27 @@ export function Cart({ onNavigate }: CartProps) {
   }
 
   return (
-    <div className="page-fade section relative">
-      <h1 className="page-title mb-12" >Shopping Cart</h1>
+    <div className="page-fade section relative" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw', paddingLeft: 'clamp(0.75rem, 4vw, 1.5rem)', paddingRight: 'clamp(0.75rem, 4vw, 1.5rem)', boxSizing: 'border-box' }}>
+      <h1 className="page-title" style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', marginBottom: '1.5rem' }}>Shopping Cart</h1>
 
       {items.length === 0 ? (
-        <div className="card-black p-24 text-center">
-          <h3 className="text-white mb-6">Your cart is empty</h3>
-          <p className="text-muted mb-12">Discover our exceptional collection</p>
+        <div className="card-black text-center" style={{ padding: 'clamp(2rem, 8vw, 6rem) 1rem' }}>
+          <h3 className="text-white mb-6" style={{ fontSize: 'clamp(1rem, 4vw, 1.5rem)' }}>Your cart is empty</h3>
+          <p className="text-muted mb-8">Discover our exceptional collection</p>
           <button
             onClick={() => onNavigate('shop')}
             className="btn-primary"
-            style={{ padding: '1rem 3rem' }}
+            style={{ padding: '0.75rem 2rem' }}
           >
             Continue Shopping
           </button>
         </div>
       ) : (
-        <div className="cart-grid">
+        <div className="cart-grid" style={{ width: '100%', minWidth: 0 }}>
           {/* Cart Items */}
-          <div className="col-span-2 space-y-6">
+          <div className="col-span-2 space-y-4" style={{ minWidth: 0, width: '100%' }}>
             {items.map((item) => (
-              <div key={item.id} className="card-black p-6 flex gap-6">
+              <div key={item.id} className="card-black flex gap-3 sm:gap-6" style={{ padding: 'clamp(0.75rem, 3vw, 1.5rem)' }}>
                 {/* Image */}
                 <div className="cart-thumb">
                   <ImageWithFallback
@@ -58,11 +58,11 @@ export function Cart({ onNavigate }: CartProps) {
                 </div>
 
                 {/* Details */}
-                <div className="cart-details">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-white mb-2">{item.products?.name}</h4>
-                      <div className="text-white font-bold">
+                <div className="cart-details" style={{ minWidth: 0 }}>
+                  <div className="flex justify-between items-start gap-2">
+                    <div style={{ minWidth: 0, flex: 1, paddingRight: '0.5rem' }}>
+                      <h4 className="text-white mb-1 truncate" style={{ fontSize: 'clamp(0.8rem, 2.5vw, 1rem)' }}>{item.products?.name}</h4>
+                      <div className="text-white font-bold" style={{ fontSize: 'clamp(0.8rem, 2.5vw, 1rem)' }}>
                         {formatPrice(item.products?.price || 0)}
                       </div>
                     </div>
@@ -93,7 +93,7 @@ export function Cart({ onNavigate }: CartProps) {
                         <Plus size={14} strokeWidth={2.5} />
                       </button>
                     </div>
-                    <div className="bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent font-bold">
+                    <div className="bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent font-bold truncate ml-2">
                       {formatPrice((item.products?.price || 0) * item.quantity)}
                     </div>
                   </div>
@@ -103,8 +103,8 @@ export function Cart({ onNavigate }: CartProps) {
           </div>
 
           {/* Order Summary */}
-          <div>
-            <div className="card-black p-8 sticky top-24">
+          <div style={{ minWidth: 0 }}>
+            <div className="card-black sticky top-24" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
               <h3 className="text-white mb-8 font-serif" style={{fontFamily: "'Oswald', sans-serif"}}>Order Summary</h3>
 
               <div className="space-y-4 mb-8">
