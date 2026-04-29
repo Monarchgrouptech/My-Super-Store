@@ -53,7 +53,7 @@ export function LuxuryCategoryCard({ category, products }: LuxuryCategoryCardPro
     };
 
     return (
-        <button
+        <div
             onClick={() => navigate(`/shop?category=${category.name}`)}
             className="group relative rounded-[20px] overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 hover:-translate-y-2 bg-white border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] w-full h-full flex flex-col"
         >
@@ -139,6 +139,6 @@ export function LuxuryCategoryCard({ category, products }: LuxuryCategoryCardPro
                     )}
                 </div>
             </div>
-        </button>
+        </div>
     );
 }

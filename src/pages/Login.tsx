@@ -50,12 +50,25 @@ export function Login() {
                     .eq('user_id', authData.user.id)
                     .single();
 
-                // Route based on admin status
+                // Route based on role
                 if (profile?.is_admin === true) {
                     navigate('/admin');
-                } else {
-                    navigate('/account');
+                    return;
                 }
+
+                // Check for delivery partner role
+                const { data: partner } = await supabase
+                    .from('delivery_partners')
+                    .select('id')
+                    .eq('user_id', authData.user.id)
+                    .maybeSingle();
+
+                if (partner) {
+                    navigate('/delivery/dashboard');
+                    return;
+                }
+
+                navigate('/account');
             } else {
                 const { error } = await supabase.auth.signUp({
                     email,

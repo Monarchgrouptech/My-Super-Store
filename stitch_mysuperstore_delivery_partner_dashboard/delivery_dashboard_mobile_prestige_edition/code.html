@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MYSUPERSTORE Operations Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "primary": "#000000",
+                        "background": "#fbf9f9",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface-dim": "#dbdad9",
+                        "outline": "#7e7576",
+                        "surface-container-low": "#f5f3f3",
+                        "inverse-primary": "#c6c6c6",
+                        "secondary": "#735c00",
+                        "primary-container": "#1b1b1b",
+                        "secondary-fixed": "#ffe088",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-secondary-fixed-variant": "#574500",
+                        "inverse-on-surface": "#f2f0f0",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-high": "#e9e8e7",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#cfc4c5",
+                        "on-surface": "#1b1c1c",
+                        "surface-bright": "#fbf9f9",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efeded",
+                        "on-tertiary-container": "#838484",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "primary-fixed": "#e2e2e2",
+                        "tertiary-container": "#1a1c1c",
+                        "secondary-container": "#fed65b",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-secondary-fixed": "#241a00",
+                        "surface-tint": "#5e5e5e",
+                        "inverse-surface": "#303031",
+                        "surface": "#fbf9f9",
+                        "surface-container-highest": "#e3e2e2",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e3e2e2",
+                        "on-secondary-container": "#745c00",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#e9c349",
+                        "on-surface-variant": "#4c4546",
+                        "tertiary": "#000000",
+                        "on-primary-container": "#848484",
+                        "on-background": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#474747"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "stack-sm": "12px",
+                        "unit": "8px",
+                        "container-max": "1440px",
+                        "stack-lg": "48px",
+                        "stack-md": "24px",
+                        "margin": "48px",
+                        "stack-xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Work Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "label-sm": ["Work Sans"],
+                        "label-caps": ["Work Sans"],
+                        "headline-md": ["Work Sans"],
+                        "body-md": ["Work Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .metallic-gold {
+            background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white text-zinc-900 font-body-md antialiased selection:bg-secondary-container">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 right-0 h-20 bg-white z-50 flex items-center justify-between px-6 border-b border-zinc-100">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-zinc-950 flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">dataset</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-zinc-900 uppercase tracking-widest leading-none">MYSUPERSTORE</h1>
+<p class="text-[10px] font-bold text-zinc-400 tracking-widest mt-1">OPERATIONS CENTER</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-zinc-900 transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="relative w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-zinc-900 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 metallic-gold rounded-full border border-white"></span>
+</button>
+<img alt="User Profile" class="w-10 h-10 object-cover border border-zinc-200" data-alt="Close up professional portrait of a business executive with a clean minimalist aesthetic and soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz4-zgTT6rCn58BZ0e2Co6CCqu5WmKpGdtkv9_rmmxzoBVK7gtI9HMe01Fg_y9YfMlaI4db0eebQQCzou1Pu_5Lo673N5-eIFTTE_X7xtey5ehKlbaRW4VGNxvi5YSZpQ8noA9y9cbZWAGPHAct6juCxbA9Als_JS-T1i8LayfhXVhBA5ZcH-_6k7IKrOsH8mFJj9qKalfL03igwjLiQbApQoLPpbKzVJH96lNEDLHy3fqonLaCfRglkPWQpXsp8snflLXMuLsKQU"/>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto">
+<!-- Dashboard Summary Bento -->
+<section class="grid grid-cols-2 gap-4 mb-stack-lg">
+<div class="col-span-2 p-6 border-t-4 border-zinc-900 bg-zinc-50 flex flex-col justify-between aspect-video">
+<span class="font-label-caps text-zinc-500">OPERATIONAL INSIGHTS</span>
+<div>
+<h2 class="font-headline-lg text-zinc-900 leading-none">ACTIVE NOW</h2>
+<div class="flex items-end gap-2 mt-2">
+<span class="text-5xl font-black tracking-tighter">142</span>
+<span class="font-label-caps text-zinc-400 mb-2">+12% VS YESTERDAY</span>
+</div>
+</div>
+</div>
+<div class="p-4 border border-zinc-200 flex flex-col gap-4">
+<span class="material-symbols-outlined text-zinc-400">payments</span>
+<div>
+<p class="font-label-caps text-zinc-500">DAILY EARNINGS</p>
+<p class="font-headline-sm text-zinc-900 mt-1">$12,480.00</p>
+</div>
+</div>
+<div class="p-4 border border-zinc-200 flex flex-col gap-4 bg-zinc-950">
+<span class="material-symbols-outlined text-white">speed</span>
+<div>
+<p class="font-label-caps text-zinc-300">AVG SPEED</p>
+<p class="font-headline-sm text-white mt-1">24.2 MIN</p>
+</div>
+</div>
+</section>
+<!-- Active Shipments Header -->
+<div class="flex items-center justify-between mb-stack-md">
+<h3 class="font-label-caps text-zinc-900 text-lg">Active Shipments</h3>
+<button class="text-zinc-400 flex items-center gap-1">
+<span class="font-label-caps">Filter</span>
+<span class="material-symbols-outlined text-sm">tune</span>
+</button>
+</div>
+<!-- Shipment Cards -->
+<div class="space-y-4">
+<!-- Card 1 -->
+<div class="border border-zinc-200 p-5 group hover:border-zinc-900 transition-colors bg-white">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-caps text-zinc-400 text-[10px]">ORDER ID</p>
+<p class="font-headline-sm text-zinc-900">#PX-99210-B</p>
+</div>
+<span class="font-label-caps border border-zinc-900 px-2 py-1 text-[10px]">IN TRANSIT</span>
+</div>
+<div class="space-y-3 mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-zinc-300 text-sm">person</span>
+<p class="text-body-md font-medium">Alexander Wright</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-zinc-300 text-sm">schedule</span>
+<p class="text-body-md text-zinc-500">Scheduled for 14:30 PM</p>
+</div>
+</div>
+<div class="pt-4 border-t border-zinc-100 flex items-center justify-between">
+<div class="h-1 bg-zinc-100 flex-1 mr-4 overflow-hidden">
+<div class="h-full metallic-gold w-3/4"></div>
+</div>
+<span class="font-label-caps text-zinc-900">75%</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="border border-zinc-200 p-5 group hover:border-zinc-900 transition-colors bg-white">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-caps text-zinc-400 text-[10px]">ORDER ID</p>
+<p class="font-headline-sm text-zinc-900">#PX-99211-C</p>
+</div>
+<span class="font-label-caps border border-yellow-600 text-yellow-700 px-2 py-1 text-[10px]">PENDING</span>
+</div>
+<div class="space-y-3 mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-zinc-300 text-sm">person</span>
+<p class="text-body-md font-medium">Sarah Jenkins</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-zinc-300 text-sm">schedule</span>
+<p class="text-body-md text-zinc-500">Pickup in 5 mins</p>
+</div>
+</div>
+<div class="pt-4 border-t border-zinc-100 flex items-center justify-between">
+<div class="h-1 bg-zinc-100 flex-1 mr-4">
+<div class="h-full bg-zinc-200 w-1/4"></div>
+</div>
+<span class="font-label-caps text-zinc-400">10%</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="border border-zinc-200 p-5 group hover:border-zinc-900 transition-colors bg-white">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-caps text-zinc-400 text-[10px]">ORDER ID</p>
+<p class="font-headline-sm text-zinc-900">#PX-98842-A</p>
+</div>
+<span class="font-label-caps border border-zinc-900 text-zinc-900 px-2 py-1 text-[10px] metallic-gold border-none">COMPLETE</span>
+</div>
+<div class="space-y-3 mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-zinc-300 text-sm">person</span>
+<p class="text-body-md font-medium">Michael Ross</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-zinc-300 text-sm">schedule</span>
+<p class="text-body-md text-zinc-500">Delivered at 12:15 PM</p>
+</div>
+</div>
+<div class="pt-4 border-t border-zinc-100 flex items-center justify-between">
+<div class="h-1 bg-zinc-100 flex-1 mr-4">
+<div class="h-full bg-zinc-900 w-full"></div>
+</div>
+<span class="font-label-caps text-zinc-900">100%</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Create Shipment FAB -->
+<div class="fixed bottom-24 right-6 z-40">
+<button class="metallic-gold text-zinc-900 px-6 py-4 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all">
+<span class="font-label-caps text-sm tracking-widest">Create Shipment</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-100 h-20 flex items-center justify-around px-2 z-50">
+<!-- Dashboard / Home (Active) -->
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-zinc-900">
+<span class="material-symbols-outlined text-yellow-600" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-[9px] text-yellow-600">Dashboard</span>
+</button>
+<!-- Active Shipments -->
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-zinc-400 hover:text-zinc-900 transition-colors">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-caps text-[9px]">Shipments</span>
+</button>
+<!-- All Orders -->
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-zinc-400 hover:text-zinc-900 transition-colors">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-caps text-[9px]">Orders</span>
+</button>
+<!-- Tracking Updates -->
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-zinc-400 hover:text-zinc-900 transition-colors">
+<span class="material-symbols-outlined">notifications_active</span>
+<span class="font-label-caps text-[9px]">Updates</span>
+</button>
+<!-- Settings -->
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-zinc-400 hover:text-zinc-900 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-[9px]">Settings</span>
+</button>
+</nav>
+</body></html>

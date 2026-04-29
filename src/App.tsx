@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -42,14 +42,35 @@ import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminCategories } from './pages/admin/AdminCategories';
 import { AdminSettings } from './pages/admin/AdminSettings';
 
+// Delivery Dashboard Imports
+import { DeliveryLayout } from './components/delivery/DeliveryLayout';
+import { DeliveryDashboard } from './pages/delivery/DeliveryDashboard';
+import { DeliveryOrderDetail } from './pages/delivery/DeliveryOrderDetail';
+import { DeliveryProtectedRoute } from './components/delivery/DeliveryProtectedRoute';
+import { OrderTracking } from './pages/OrderTracking';
+
 // Header Wrapper to use Cart Context
 const HeaderWrapper = () => {
   const { itemCount } = useCart();
+  const location = useLocation();
+
+  // Don't show global header on dashboard routes
+  const isDashboardRoute = location.pathname.startsWith('/delivery') ||
+                          location.pathname.startsWith('/vendor') ||
+                          location.pathname.startsWith('/admin');
+
+  if (isDashboardRoute) return null;
+
   return <Header cartItemCount={itemCount} />;
 };
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isDashboardRoute = location.pathname.startsWith('/delivery') ||
+                          location.pathname.startsWith('/vendor') ||
+                          location.pathname.startsWith('/admin');
 
   const handleNavigate = (page: string, payload?: any) => {
     switch (page) {
@@ -104,7 +125,23 @@ export default function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Login />} />
                   <Route path="/account" element={<Account />} />
+                  <Route path="/track/:id" element={<OrderTracking />} />
                   <Route path="/about" element={<About onNavigate={handleNavigate} />} />
+
+                  {/* Delivery Partner Routes */}
+                  <Route path="/delivery/*" element={
+                    <DeliveryProtectedRoute>
+                      <DeliveryLayout>
+                        <Routes>
+                          <Route path="dashboard" element={<DeliveryDashboard />} />
+                          <Route path="orders" element={<DeliveryDashboard />} />
+                          <Route path="orders/:id" element={<DeliveryOrderDetail />} />
+                          <Route path="history" element={<DeliveryDashboard />} /> {/* For now using same dashboard */}
+                          <Route path="profile" element={<div>Profile coming soon</div>} />
+                        </Routes>
+                      </DeliveryLayout>
+                    </DeliveryProtectedRoute>
+                  } />
 
                   {/* Vendor Routes */}
                   <Route path="/vendor/*" element={
@@ -177,8 +214,8 @@ export default function App() {
                 </Routes>
               </main>
 
-              <Footer />
-              <MobileBottomNav />
+              {!isDashboardRoute && <Footer />}
+              {!isDashboardRoute && <MobileBottomNav />}
             </div>
             <ChatWidget />
           </SeasonProvider>

@@ -50,18 +50,19 @@ export function Header({ cartItemCount }: HeaderProps) {
 
   const isAccountPage = location.pathname.startsWith('/account');
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isDeliveryPage = location.pathname.startsWith('/delivery');
 
   // Header styling based on page
   const headerClass = isAdminPage
     ? 'sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm'
-    : isAccountPage
+    : (isAccountPage || isDeliveryPage)
     ? 'sticky top-0 z-50 w-full bg-[#0A0A0A] border-b border-white/10'
     : 'sticky top-0 z-50 w-full bg-white/30 backdrop-blur-md border-b border-[#f0f0f0]';
 
-  const textColorClass = isAdminPage ? 'text-slate-900' : isAccountPage ? 'text-white' : 'text-slate-900';
-  const textMutedClass = isAdminPage ? 'text-slate-700' : isAccountPage ? 'text-white/60' : 'text-slate-900/70';
-  const hoverBgClass = isAdminPage ? 'hover:bg-gray-100' : isAccountPage ? 'hover:bg-white/10' : 'hover:bg-slate-100';
-  const linkHoverClass = isAdminPage ? 'hover:text-slate-900' : isAccountPage ? 'hover:text-white' : 'hover:text-black';
+  const textColorClass = isAdminPage ? 'text-slate-900' : (isAccountPage || isDeliveryPage) ? 'text-white' : 'text-slate-900';
+  const textMutedClass = isAdminPage ? 'text-slate-700' : (isAccountPage || isDeliveryPage) ? 'text-white/60' : 'text-slate-900/70';
+  const hoverBgClass = isAdminPage ? 'hover:bg-gray-100' : (isAccountPage || isDeliveryPage) ? 'hover:bg-white/10' : 'hover:bg-slate-100';
+  const linkHoverClass = isAdminPage ? 'hover:text-slate-900' : (isAccountPage || isDeliveryPage) ? 'hover:text-white' : 'hover:text-black';
 
   return (
     <header className={headerClass}>
@@ -87,6 +88,12 @@ export function Header({ cartItemCount }: HeaderProps) {
                 <Link to="/admin/orders" className={`text-sm font-semibold transition-colors ${textMutedClass} ${linkHoverClass}`}>Orders</Link>
                 <Link to="/admin/categories" className={`text-sm font-semibold transition-colors ${textMutedClass} ${linkHoverClass}`}>Categories</Link>
                 <Link to="/admin/settings" className={`text-sm font-semibold transition-colors ${textMutedClass} ${linkHoverClass}`}>Settings</Link>
+              </>
+            ) : isDeliveryPage ? (
+              <>
+                <Link to="/delivery/dashboard" className={`text-sm font-semibold transition-colors ${textMutedClass} ${linkHoverClass}`}>Operations</Link>
+                <Link to="/delivery/orders" className={`text-sm font-semibold transition-colors ${textMutedClass} ${linkHoverClass}`}>Active Shipments</Link>
+                <Link to="/delivery/history" className={`text-sm font-semibold transition-colors ${textMutedClass} ${linkHoverClass}`}>Logistics History</Link>
               </>
             ) : (
               <>
@@ -144,7 +151,7 @@ export function Header({ cartItemCount }: HeaderProps) {
 
           {/* Icons / Actions - Right */}
           <div className="hidden md:flex items-center gap-3 sm:gap-4 md:gap-5 ml-auto">
-            {isAdminPage ? (
+            {isAdminPage || isDeliveryPage ? (
               <>
                 <Link 
                   to="/" 

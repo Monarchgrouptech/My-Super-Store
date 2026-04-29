@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Delivery Dashboard | MySuperStore</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f9f9f9",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-container-highest": "#e2e2e2",
+                    "inverse-primary": "#e9c349",
+                    "on-secondary-fixed-variant": "#474747",
+                    "tertiary-container": "#b2b3b3",
+                    "inverse-surface": "#2f3131",
+                    "on-surface-variant": "#4d4635",
+                    "tertiary-fixed": "#e2e2e2",
+                    "on-secondary-container": "#646464",
+                    "primary-fixed-dim": "#e9c349",
+                    "outline": "#7f7663",
+                    "secondary": "#5e5e5e",
+                    "surface-container-low": "#f3f3f3",
+                    "tertiary": "#5d5f5f",
+                    "primary-fixed": "#ffe088",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#d0c5af",
+                    "primary": "#735c00",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-container": "#434546",
+                    "on-secondary-fixed": "#1b1b1b",
+                    "surface-container": "#eeeeee",
+                    "on-primary-fixed": "#241a00",
+                    "secondary-container": "#e2e2e2",
+                    "on-primary-container": "#554300",
+                    "primary-container": "#d4af37",
+                    "on-tertiary-fixed-variant": "#454747",
+                    "inverse-on-surface": "#f1f1f1",
+                    "background": "#f9f9f9",
+                    "on-primary-fixed-variant": "#574500",
+                    "on-surface": "#1a1c1c",
+                    "on-background": "#1a1c1c",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#c6c6c7",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#735c00",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#c6c6c6",
+                    "on-tertiary-fixed": "#1a1c1c",
+                    "surface-dim": "#dadada",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-variant": "#e2e2e2",
+                    "surface": "#f9f9f9",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0px",
+                    "lg": "0px",
+                    "xl": "0px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "24px",
+                    "lg": "48px",
+                    "xs": "4px",
+                    "xl": "80px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "sm": "12px",
+                    "margin": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "body-md": ["Inter"],
+                    "button": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "button": ["14px", {"lineHeight": "1.0", "letterSpacing": "0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #D4AF37 0%, #F5E0A3 50%, #B8860B 100%);
+        }
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface-bright text-on-background font-body-md">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-zinc-200 flex justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black uppercase tracking-widest text-black">MySuperStore</span>
+<div class="hidden md:flex items-center bg-zinc-100 px-4 py-2 border-b border-black w-96">
+<span class="material-symbols-outlined text-zinc-400 mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full font-body-md" placeholder="Search order ID..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<h1 class="font-headline-md text-black hidden lg:block">Delivery Dashboard</h1>
+<div class="flex items-center gap-4">
+<button class="relative p-2 text-zinc-500 hover:text-black transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-[#D4AF37] rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 border-l border-zinc-200 pl-6">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold font-label-caps uppercase">Partner Portal</p>
+<p class="text-[10px] text-zinc-500 tracking-wider">PREMIUM DELIVERY</p>
+</div>
+<img alt="Partner avatar" class="w-10 h-10 object-cover grayscale border border-black" data-alt="Close-up portrait of a professional delivery operations manager in a well-lit office, sharp focus, professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm9y-Uf1Is6BhMN9UZ6SIIETIwPgV40ifZ14MQf58_PLMLtL6ucpTt2RmRB9LuK8SjxpAFrb_TG8K1VDU2xzw9mdayGWL0mFTWni5jeiAXUQJucYvZmze6bKAufTlNzPmATXnA6rki2TeYf5lSEyLGE6x0WFEefLx-icMBDAD_QHyJLXVh0BkWPt2LyesiREKEodMZk9Ycv6aJeaFWqfQGOr6rit12xqI0PTpiBW6QT6BcLfo_TICdj8dB57taS5JPS0wF_-BC_Lw"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Side Navigation Bar -->
+<nav class="fixed left-0 top-0 h-full flex flex-col pt-24 bg-white border-r border-zinc-200 w-64 z-40 transition-all duration-300 ease-in-out">
+<div class="flex flex-col gap-1 px-4">
+<a class="flex items-center gap-4 px-4 py-3 text-zinc-400 font-inter uppercase text-xs font-bold tracking-widest hover:bg-zinc-100 hover:text-black transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 bg-zinc-50 border-r-4 border-[#D4AF37] text-black font-inter uppercase text-xs font-bold tracking-widest transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+<span>Active Shipments</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-zinc-400 font-inter uppercase text-xs font-bold tracking-widest hover:bg-zinc-100 hover:text-black transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>All Orders</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-zinc-400 font-inter uppercase text-xs font-bold tracking-widest hover:bg-zinc-100 hover:text-black transition-all" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span>Tracking Updates</span>
+</a>
+<div class="mt-auto pt-8 pb-8">
+<a class="flex items-center gap-4 px-4 py-3 text-zinc-400 font-inter uppercase text-xs font-bold tracking-widest hover:bg-zinc-100 hover:text-black transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="pl-64 pt-20 min-h-screen">
+<div class="flex h-[calc(100vh-80px)] overflow-hidden">
+<!-- Left: Active Shipments List -->
+<section class="w-1/2 border-r border-zinc-200 overflow-y-auto bg-white p-8">
+<div class="flex justify-between items-end mb-8 border-b-2 border-black pb-4">
+<div>
+<span class="text-label-caps text-zinc-500 font-bold uppercase tracking-widest">Live Operations</span>
+<h2 class="font-headline-lg text-black">Active Shipments</h2>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-[#D4AF37] rounded-full animate-pulse"></span>
+<span class="text-xs font-bold uppercase tracking-widest">3 Priority Orders</span>
+</div>
+</div>
+<div class="space-y-6">
+<!-- Order Card 1 (Active/Selected) -->
+<div class="group relative border-2 border-black p-6 bg-white hover:bg-zinc-50 transition-colors cursor-pointer hard-shadow">
+<div class="absolute -top-1 -right-1 w-4 h-4 gold-gradient border border-black"></div>
+<div class="flex justify-between mb-4">
+<div>
+<p class="text-label-caps font-bold text-[#D4AF37]">#MS-94021</p>
+<h3 class="font-headline-md text-black">James Wilson</h3>
+<p class="text-zinc-500 text-sm">London, United Kingdom</p>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-black">$245.00</p>
+<span class="inline-block px-2 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-widest">Processing</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-zinc-100 pt-4">
+<div>
+<p class="text-[10px] text-zinc-400 font-bold uppercase mb-1">Tracking Number</p>
+<p class="text-xs font-mono font-bold">TRK-9001-XXXX-442</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-zinc-400 font-bold uppercase mb-1">Last Updated</p>
+<p class="text-xs font-bold">4 mins ago</p>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-2">
+<span class="px-3 py-1 border border-black text-[10px] font-bold uppercase">Ready for Pickup</span>
+<span class="material-symbols-outlined text-[#D4AF37] text-sm">chevron_right</span>
+</div>
+</div>
+<!-- Order Card 2 -->
+<div class="border border-zinc-200 p-6 bg-white hover:border-black transition-colors cursor-pointer">
+<div class="flex justify-between mb-4">
+<div>
+<p class="text-label-caps font-bold text-zinc-400">#MS-94018</p>
+<h3 class="font-headline-md text-zinc-800">Elena Petrov</h3>
+<p class="text-zinc-500 text-sm">Berlin, Germany</p>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-zinc-800">$1,120.00</p>
+<span class="inline-block px-2 py-1 bg-[#D4AF37] text-black text-[10px] font-bold uppercase tracking-widest">In Transit</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-zinc-100 pt-4">
+<div>
+<p class="text-[10px] text-zinc-400 font-bold uppercase mb-1">Tracking Number</p>
+<p class="text-xs font-mono font-bold">TRK-8812-XXXX-109</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-zinc-400 font-bold uppercase mb-1">Last Updated</p>
+<p class="text-xs font-bold">1 hour ago</p>
+</div>
+</div>
+</div>
+<!-- Order Card 3 -->
+<div class="border border-zinc-200 p-6 bg-white hover:border-black transition-colors cursor-pointer">
+<div class="flex justify-between mb-4">
+<div>
+<p class="text-label-caps font-bold text-zinc-400">#MS-93994</p>
+<h3 class="font-headline-md text-zinc-800">Marcus Chen</h3>
+<p class="text-zinc-500 text-sm">Singapore, Singapore</p>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-zinc-800">$89.00</p>
+<span class="inline-block px-2 py-1 bg-zinc-200 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Pending</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-zinc-100 pt-4">
+<div>
+<p class="text-[10px] text-zinc-400 font-bold uppercase mb-1">Tracking Number</p>
+<p class="text-xs font-mono font-bold">Pending Assignment</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-zinc-400 font-bold uppercase mb-1">Last Updated</p>
+<p class="text-xs font-bold">2 hours ago</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right: Order Details -->
+<section class="w-1/2 overflow-y-auto bg-zinc-50 p-8">
+<div class="flex flex-col gap-8 max-w-2xl mx-auto">
+<!-- Detail Header -->
+<div class="flex justify-between items-start">
+<div>
+<span class="text-label-caps text-[#D4AF37] font-bold uppercase tracking-widest">Order Details</span>
+<h2 class="font-headline-xl text-black">#MS-94021</h2>
+</div>
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 bg-black text-white text-xs font-bold uppercase tracking-widest mb-2">Payment Paid</span>
+<span class="text-xs text-zinc-400 font-label-caps uppercase">via Platinum Amex</span>
+</div>
+</div>
+<!-- Customer & Address Bento Card -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white border border-zinc-200 p-6">
+<p class="text-label-caps text-zinc-400 font-bold mb-4 uppercase">Recipient</p>
+<h4 class="font-headline-md mb-1">James Wilson</h4>
+<p class="text-zinc-600 text-sm">+44 7700 900077</p>
+<p class="text-zinc-600 text-sm">james.w@premium.mail</p>
+</div>
+<div class="bg-white border border-zinc-200 p-6">
+<p class="text-label-caps text-zinc-400 font-bold mb-4 uppercase">Shipping Address</p>
+<p class="text-zinc-800 text-sm font-bold">221B Baker Street</p>
+<p class="text-zinc-600 text-sm">Marylebone, London</p>
+<p class="text-zinc-600 text-sm">NW1 6XE, UK</p>
+</div>
+</div>
+<!-- Products Table -->
+<div class="bg-white border border-black">
+<div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50">
+<p class="text-label-caps text-black font-bold uppercase">Consignment List</p>
+</div>
+<div class="p-6 space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-zinc-100 border border-zinc-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-zinc-400">headphones</span>
+</div>
+<div>
+<p class="text-sm font-bold">Smart Wireless Headphones</p>
+<p class="text-xs text-zinc-500">SKU: WH-700-BL</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold">$199.00</p>
+<p class="text-xs text-zinc-500">Qty: 1</p>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-zinc-100 border border-zinc-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-zinc-400">power</span>
+</div>
+<div>
+<p class="text-sm font-bold">USB-C Fast Charger</p>
+<p class="text-xs text-zinc-500">SKU: PWR-65-FAST</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold">$46.00</p>
+<p class="text-xs text-zinc-500">Qty: 1</p>
+</div>
+</div>
+<div class="pt-4 border-t border-black flex justify-between items-center mt-4">
+<p class="font-headline-md">Total Value</p>
+<p class="font-headline-md text-[#D4AF37]">$245.00</p>
+</div>
+</div>
+</div>
+<!-- Tracking Timeline -->
+<div class="bg-white border border-zinc-200 p-8">
+<p class="text-label-caps text-zinc-400 font-bold mb-8 uppercase tracking-widest">Tracking History</p>
+<div class="space-y-8 relative">
+<div class="absolute left-[11px] top-2 bottom-2 w-[2px] bg-zinc-100"></div>
+<div class="relative flex gap-6 items-start">
+<div class="w-6 h-6 rounded-full bg-black border-4 border-zinc-50 z-10 flex items-center justify-center">
+<div class="w-2 h-2 bg-[#D4AF37] rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-black uppercase">Vendor ready for pickup</p>
+<p class="text-xs text-zinc-400">Oct 24, 2023 — 10:45 AM</p>
+</div>
+</div>
+<div class="relative flex gap-6 items-start">
+<div class="w-6 h-6 rounded-full bg-zinc-200 border-4 border-zinc-50 z-10"></div>
+<div>
+<p class="text-sm font-bold text-zinc-800 uppercase">Order paid &amp; verified</p>
+<p class="text-xs text-zinc-400">Oct 24, 2023 — 09:12 AM</p>
+</div>
+</div>
+<div class="relative flex gap-6 items-start opacity-40">
+<div class="w-6 h-6 rounded-full bg-zinc-100 border-4 border-zinc-50 z-10"></div>
+<div>
+<p class="text-sm font-bold text-zinc-800 uppercase">In Transit to Terminal</p>
+<p class="text-xs text-zinc-400">Scheduled</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="grid grid-cols-2 gap-4 mt-4">
+<button class="gold-gradient text-black font-button py-4 border border-black uppercase tracking-widest hover:brightness-110 transition-all active:opacity-80">
+                            Accept Order
+                        </button>
+<button class="bg-white text-black font-button py-4 border border-black uppercase tracking-widest hover:bg-black hover:text-white transition-all active:opacity-80">
+                            Mark Picked Up
+                        </button>
+<button class="bg-black text-white font-button py-4 border border-black uppercase tracking-widest hover:bg-zinc-800 transition-all active:opacity-80">
+                            Create Shipment
+                        </button>
+<button class="bg-white text-black font-button py-4 border border-black uppercase tracking-widest hover:bg-zinc-100 transition-all active:opacity-80">
+                            Mark In Transit
+                        </button>
+<button class="bg-white text-black font-button py-4 border border-black uppercase tracking-widest hover:bg-zinc-100 transition-all active:opacity-80">
+                            Out for Delivery
+                        </button>
+<button class="border-2 border-[#D4AF37] text-black font-button py-4 uppercase tracking-widest hover:bg-[#D4AF37] hover:text-white transition-all active:opacity-80">
+                            Mark Delivered
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Contextual Map Element (Floating Action Trigger Design) -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="gold-gradient w-16 h-16 hard-shadow border border-black flex items-center justify-center hover:-translate-y-1 transition-transform">
+<span class="material-symbols-outlined text-black text-3xl">map</span>
+</button>
+</div>
+</body></html>

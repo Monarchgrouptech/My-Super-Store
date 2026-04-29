@@ -57,24 +57,105 @@
 
 
 :root {
+  /* Gold Accent (brand identity) */
+  --gold-primary: #D4AF37;
+  --gold-light: #F5E0A3;
+  --gold-dark: #B8860B;
+  --gold-deep: #735C00;
+  --gold-mid: #FED65B;
+  --gold-dim: #E9C349;
+
+  /* Neutrals */
+  --black: #000000;
+  --near-black: #1A1C1C;
+  --white: #FFFFFF;
+
+  /* Zinc scale (UI grays) */
+  --zinc-50: #FAFAFA;
+  --zinc-100: #F4F4F5;
+  --zinc-200: #E4E4E7;
+  --zinc-300: #D4D4D8;
+  --zinc-400: #A1A1AA;
+  --zinc-500: #71717A;
+  --zinc-600: #52525B;
+  --zinc-800: #27272A;
+  --zinc-900: #18181B;
+
+  /* Semantic roles */
+  --color-surface: #F9F9F9;
+  --color-surface-low: #F3F3F3;
+  --color-on-surface: #1A1C1C;
+  --color-border: #E4E4E7;
+  --color-border-strong: #000000;
+  --color-accent: #D4AF37;
+  --color-accent-active: #735C00;
+
+  /* Legacy compatibility */
   --color-white: #FFFFFF;
-  --color-black: #0A0A0A;
+  --color-black: #000000;
   --color-gold: #D4AF37;
-  --color-gold-dark: #B8941F;
-  --color-gold-light: #E5C158;
-  --gradient-gold: linear-gradient(135deg, #F4E04D 0%, #D4AF37 50%, #B8941F 100%);
-  --gradient-gold-shine: linear-gradient(135deg, #FFE55C 0%, #F4D03F 25%, #D4AF37 50%, #C5A028 75%, #B8941F 100%);
+  --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F5E0A3 50%, #B8860B 100%);
+  --gradient-gold-dark: linear-gradient(135deg, #735C00 0%, #FED65B 50%, #E9C349 100%);
+}
+
+@layer components {
+  .gold-gradient {
+    background: var(--gradient-gold);
+  }
+
+  .gold-gradient-dark {
+    background: var(--gradient-gold-dark);
+  }
+
+  .hard-shadow {
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.10);
+  }
+
+  .metallic-shadow {
+    box-shadow: 4px 4px 0px 0px #735C00;
+  }
+
+  /* Prestige Button Styles */
+  .prestige-btn-primary {
+    @apply bg-black text-white font-bold uppercase tracking-[0.1em] px-6 py-3 transition-all duration-150 border border-black hover:bg-zinc-800 active:opacity-80;
+    border-radius: 0 !important;
+  }
+
+  .prestige-btn-secondary {
+    @apply bg-white text-black border border-zinc-200 font-bold uppercase tracking-[0.1em] px-6 py-3 transition-all duration-150 hover:border-black active:opacity-80;
+    border-radius: 0 !important;
+  }
+
+  .prestige-btn-gold {
+    @apply text-black font-bold uppercase tracking-[0.1em] px-6 py-3 transition-all duration-150 border border-black active:opacity-80;
+    background: var(--gradient-gold);
+    border-radius: 0 !important;
+  }
+
+  .prestige-input {
+    @apply bg-zinc-100 border-none text-[14px] focus:ring-1 focus:ring-black outline-none placeholder:text-zinc-400 p-3;
+    border-bottom: 1px solid #000 !important;
+    border-radius: 0 !important;
+  }
+
+  .label-caps {
+    @apply text-[11px] font-bold uppercase tracking-[0.15em];
+  }
+
+  .status-badge {
+    @apply inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em];
+    border-radius: 0 !important;
+  }
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Dosis';
+  font-family: 'Work Sans', 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-white);
-
-  color: var(--color-black);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
 }
 
 h1 {

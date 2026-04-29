@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { CreditCard, LogOut, ChevronRight, ShoppingBag, Loader2, Sparkles, Crown, Star, Package, X, MapPin } from 'lucide-react';
+import { CreditCard, LogOut, ChevronRight, ShoppingBag, Loader2, Sparkles, Crown, Star, Package, X, MapPin, Truck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAdmin } from '../context/AdminContext';
+import { useDeliveryPartner } from '../hooks/useDeliveryPartner';
 import { supabase } from '../lib/supabase';
 import { getAvatarUrl } from '../lib/avatarUtils';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { useCurrency } from '../context/CurrencyContext';
 export function Account() {
     const { user, signOut, loading: authLoading } = useAuth();
     const { isAdmin, loading: adminLoading } = useAdmin();
+    const { isPartner, loading: partnerLoading } = useDeliveryPartner();
     const { formatPrice } = useCurrency();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('orders');
@@ -49,6 +51,13 @@ export function Account() {
             navigate('/admin');
         }
     }, [user, isAdmin, authLoading, adminLoading, navigate]);
+
+    // Redirect delivery partners to delivery dashboard
+    useEffect(() => {
+        if (!authLoading && !partnerLoading && user && isPartner) {
+            navigate('/delivery/dashboard');
+        }
+    }, [user, isPartner, authLoading, partnerLoading, navigate]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -259,12 +268,12 @@ export function Account() {
         { id: 'profile', label: 'Profile', icon: Star, description: 'Personal info' },
     ];
 
-    if (authLoading || (loading && !profile && !orders.length)) {
+    if (authLoading || adminLoading || partnerLoading || (loading && !profile && !orders.length)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black">
                 <div className="text-center">
                     <Loader2 className="animate-spin text-[#FFC92E] mx-auto mb-4" size={48} />
-                    <p className="text-gray-500">Loading your dashboard...</p>
+                    <p className="text-gray-500">Verifying access...</p>
                 </div>
             </div>
         );
@@ -478,6 +487,18 @@ export function Account() {
                                                             </div>
                                                         </div>
                                                     ))}
+
+                                                    {/* Tracking Link */}
+                                                    <div className="pt-3 mt-3 border-t border-white/5 flex justify-end">
+                                                        <button 
+                                                            onClick={() => navigate(`/track/${order.id}`)}
+                                                            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#FFC92E] hover:text-[#FFE55C] transition-colors"
+                                                        >
+                                                            <Truck size={14} />
+                                                            Track Order Journey
+                                                            <ChevronRight size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

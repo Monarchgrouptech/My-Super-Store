@@ -1,5 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Package, Clock, CheckCircle, XCircle, Copy, CreditCard } from 'lucide-react';
+import { 
+    Loader2, 
+    Package, 
+    Clock, 
+    CheckCircle, 
+    XCircle, 
+    Copy, 
+    CreditCard, 
+    CheckCircle2, 
+    AlertCircle,
+    ChevronRight,
+    MapPin,
+    Calendar
+} from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useVendor } from '../../hooks/useVendor';
 import { OrderWithDetails } from '../../types/vendor';
@@ -12,6 +25,7 @@ export function OrderList() {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+    const [updating, setUpdating] = useState<string | null>(null);
 
     useEffect(() => {
         if (vendor) {
@@ -25,139 +39,96 @@ export function OrderList() {
         try {
             setLoading(true);
 
-            console.log('Fetching orders for vendor:', vendor.id);
-
-            // Step 1: Get order_items for this vendor (simple query, no joins)
+            // Get order_items for this vendor
             const { data: orderItems, error: orderItemsError } = await supabase
                 .from('order_items')
                 .select('*')
                 .eq('vendor_id', vendor.id);
 
-            console.log('Step 1 - Order items:', { orderItems, error: orderItemsError });
-
             if (orderItemsError) throw orderItemsError;
 
             if (!orderItems || orderItems.length === 0) {
-                console.warn('No order items found for vendor:', vendor.id);
                 setOrders([]);
                 return;
             }
 
-            // Get unique order IDs from order items
+            // Get unique order IDs
             const orderIds = [...new Set(orderItems.map(item => item.order_id).filter(Boolean))];
-            console.log('Order IDs from order_items:', orderIds);
 
             if (orderIds.length === 0) {
                 setOrders([]);
                 return;
             }
 
-            // Step 2: Get orders by IDs
+            // Get orders by IDs
             const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
                 .select('*')
-                .in('id', orderIds);
-
-            console.log('Step 2 - Orders:', { ordersData, error: ordersError });
+                .in('id', orderIds)
+                .order('placed_at', { ascending: false });
 
             if (ordersError) throw ordersError;
 
-            if (!ordersData || ordersData.length === 0) {
-                console.warn('No orders found for vendor order items');
-                setOrders([]);
-                return;
-            }
-
-            // Get product IDs from order items
+            // Get products with images
             const productIds = [...new Set(orderItems.map(item => item.product_id).filter(Boolean))];
-
-            // Step 3: Get products with images
             let productsData: any[] = [];
             if (productIds.length > 0) {
-                const { data: products, error: productsError } = await supabase
+                const { data: products } = await supabase
                     .from('products')
                     .select('id, name, price, sku, product_images(url, position)')
                     .in('id', productIds);
-
-                console.log('Step 3 - Products:', { products, error: productsError });
-
-                if (productsError) {
-                    console.error('Error fetching products:', productsError);
-                } else {
-                    productsData = products || [];
-                }
+                productsData = products || [];
             }
 
-            // Get address IDs from orders
+            // Get addresses
             const addressIds = [...new Set(ordersData.map(order => order.shipping_address_id).filter(Boolean))];
-
-            // Step 4: Get addresses
             let addressesData: any[] = [];
             if (addressIds.length > 0) {
-                const { data: addresses, error: addressError } = await supabase
+                const { data: addresses } = await supabase
                     .from('addresses')
                     .select('*')
                     .in('id', addressIds);
-
-                console.log('Step 4 - Addresses:', { addresses, error: addressError });
-
-                if (addressError) {
-                    console.error('Error fetching addresses:', addressError);
-                } else {
-                    addressesData = addresses || [];
-                }
+                addressesData = addresses || [];
             }
 
-            // Step 5: Get payments
-            const { data: paymentsData, error: paymentsError } = await supabase
+            // Get payments
+            const { data: paymentsData } = await supabase
                 .from('payments')
                 .select('*')
                 .in('order_id', orderIds.map(id => id as string));
 
-            console.log('Step 5 - Payments:', { paymentsData, error: paymentsError });
-
-            if (paymentsError) {
-                console.error('Error fetching payments:', paymentsError);
-            }
-
-            // Step 6: Combine all data
+            // Combine all data
             const ordersMap = new Map<string, OrderWithDetails>();
-
-            // First, create order entries from fetched orders
             ordersData.forEach((order: any) => {
-                const shippingAddress = addressesData.find(addr => addr.id === order.shipping_address_id);
-
                 ordersMap.set(order.id, {
                     ...order,
                     order_items: [],
                     payments: paymentsData?.filter(p => p.order_id === order.id) || [],
-                    shipping_address: shippingAddress || null,
+                    shipping_address: addressesData.find(addr => addr.id === order.shipping_address_id) || null,
                 });
             });
 
-            // Then, add order items to their respective orders
             orderItems.forEach((item: any) => {
                 const order = ordersMap.get(item.order_id);
                 if (order) {
-                    const product = productsData.find(p => p.id === item.product_id);
-                    order.order_items = order.order_items || [];
                     order.order_items.push({
                         ...item,
-                        products: product || null,
+                        products: productsData.find(p => p.id === item.product_id) || null,
                     });
                 }
             });
 
             let ordersList = Array.from(ordersMap.values());
-
-            // Apply status filter if needed
             if (filterStatus !== 'all') {
-                ordersList = ordersList.filter(
-                    (order) => (order.status || '').toLowerCase() === filterStatus
-                );
+                if (filterStatus === 'paid') {
+                    ordersList = ordersList.filter(o => (o.status || '').toLowerCase() === 'paid');
+                } else if (filterStatus === 'processing') {
+                    ordersList = ordersList.filter(o => (o.fulfillment_status || '').toLowerCase() === 'pending' || (o.fulfillment_status || '').toLowerCase() === 'packed');
+                } else {
+                    ordersList = ordersList.filter(o => (o.fulfillment_status || '').toLowerCase() === filterStatus);
+                }
             }
 
-            console.log('Final orders list:', ordersList.length, ordersList);
             setOrders(ordersList);
         } catch (err) {
             console.error('Error fetching orders:', err);
@@ -166,10 +137,60 @@ export function OrderList() {
         }
     };
 
+    const handleMarkReady = async (orderId: string) => {
+        try {
+            setUpdating(orderId);
+            const now = new Date().toISOString();
+
+            // Update order fulfillment_status to 'packed' (meaning ready for pickup)
+            const { error } = await supabase
+                .from('orders')
+                .update({ 
+                    fulfillment_status: 'packed',
+                    updated_at: now
+                })
+                .eq('id', orderId);
+
+            if (error) throw error;
+
+            // Log status change
+            await supabase.from('order_status_history').insert({
+                order_id: orderId,
+                status_type: 'fulfillment',
+                old_value: orders.find(o => o.id === orderId)?.fulfillment_status,
+                new_value: 'packed',
+                note: 'Vendor marked items as ready for pickup.',
+                changed_by: vendor?.user_id
+            });
+
+            // Create tracking event
+            await supabase.from('order_tracking_events').insert({
+                order_id: orderId,
+                status: 'packed',
+                location: vendor?.city || 'Vendor Location',
+                description: 'Items have been packed and are ready for pickup by the delivery partner.',
+                event_time: now
+            });
+
+            // Update local state instead of full refresh
+            setOrders(prev => prev.map(o => 
+                o.id === orderId 
+                    ? { ...o, fulfillment_status: 'packed', updated_at: now } 
+                    : o
+            ));
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert('Failed to update status.');
+        } finally {
+            setUpdating(null);
+        }
+    };
+
     if (vendorLoading || loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader2 className="animate-spin text-[#D4AF37]" size={48} />
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <Loader2 className="animate-spin text-[#D4AF37] mb-4" size={48} />
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Loading Orders...</p>
             </div>
         );
     }
@@ -243,193 +264,138 @@ export function OrderList() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="space-y-8 p-6 md:p-10">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Orders</h1>
-                <p className="text-gray-600">
-                    Manage orders containing your products
-                </p>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-                <div className="flex gap-2 overflow-x-auto">
-                    {['all', 'pending', 'paid', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'].map((status) => (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-serif font-bold text-[#0A0A0A]">Sales Orders</h2>
+                    <p className="text-gray-500 mt-1">Manage products sold and prepare them for delivery.</p>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+                    {['all', 'paid', 'processing', 'delivered'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilterStatus(status)}
-                            className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${filterStatus === status
-                                ? 'bg-[#D4AF37] text-black'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                            className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                filterStatus === status
+                                ? 'bg-[#0A0A0A] text-[#D4AF37] shadow-lg shadow-black/10'
+                                : 'bg-white text-gray-500 border border-gray-100 hover:border-[#D4AF37]'
+                            }`}
                         >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                            {status}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Orders List */}
-            {orders.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
-                    <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        No Orders Found
-                    </h3>
-                    <p className="text-gray-600">
-                        {filterStatus === 'all'
-                            ? 'No orders containing your products yet'
-                            : `No ${filterStatus} orders`}
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {orders.map((order) => (
-                        <div
-                            key={order.id}
-                            className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow"
-                        >
-                            {/* Order Header */}
-                            <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-200">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                            Order #{order.id.slice(0, 8)}
-                                        </h3>
-                                        <span
-                                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                                                order.status
-                                            )}`}
-                                        >
-                                            {getStatusIcon(order.status)}
-                                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600">
-                                        Placed on {new Date(order.placed_at).toLocaleDateString()} at{' '}
-                                        {new Date(order.placed_at).toLocaleTimeString()}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-2xl font-bold text-[#D4AF37]">
-                                        {formatPrice(order.total_amount)}
-                                    </p>
-                                    <p className="text-sm text-gray-600">{currency}</p>
-                                </div>
-                            </div>
-
-                            {/* Order Items */}
-                            <div className="space-y-3 mb-4">
-                                <h4 className="font-medium text-gray-900">Your Products in this Order:</h4>
-                                {order.order_items?.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center gap-4 py-2 px-3 bg-gray-50 rounded-lg"
-                                    >
-                                        {/* Product Image */}
-                                        {item.products?.product_images?.[0]?.url ? (
-                                            <img
-                                                src={item.products.product_images[0].url}
-                                                alt={item.products.name || 'Product'}
-                                                className="w-16 h-16 object-cover rounded flex-shrink-0"
-                                            />
-                                        ) : (
-                                            <div className="w-16 h-16 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center">
-                                                <Package className="text-gray-400" size={24} />
-                                            </div>
-                                        )}
-
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-900">
-                                                {item.products?.name || 'Unknown Product'}
-                                            </p>
-                                            {item.products?.sku && (
-                                                <p className="text-xs text-gray-500">
-                                                    SKU: {item.products.sku}
-                                                </p>
-                                            )}
-                                            <p className="text-sm text-gray-600">
-                                                Quantity: {item.quantity} x {formatPrice(item.unit_price)}
-                                            </p>
-                                        </div>
-                                        <p className="font-semibold text-gray-900">
-                                            {formatPrice(item.quantity * item.unit_price)}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Payment Information */}
-                            {order.payments && order.payments.length > 0 && (
-                                <div className="pt-4 border-t border-gray-200 mb-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <CreditCard className="text-gray-600" size={18} />
-                                        <h4 className="font-medium text-gray-900">Payment Information</h4>
-                                    </div>
-                                    {order.payments.map((payment) => (
-                                        <div key={payment.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">Provider</span>
-                                                <span className="text-sm font-medium text-gray-900 capitalize">
-                                                    {payment.provider}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">Status</span>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(payment.status)}`}>
-                                                    {payment.status.toUpperCase()}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">Amount</span>
-                                                <span className="text-sm font-semibold text-gray-900">
-                                                    {formatPrice(payment.amount)}
-                                                </span>
-                                            </div>
-                                            {payment.provider_payment_id && (
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-gray-600">Transaction ID</span>
-                                                    <span className="text-xs font-mono text-gray-700">
-                                                        {payment.provider_payment_id.slice(0, 20)}...
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Shipping Address */}
-                            {order.shipping_address && (
-                                <div className="pt-4 border-t border-gray-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="font-medium text-gray-900">Shipping Address</h4>
-                                        <button
-                                            onClick={() => copyShippingAddress(order.shipping_address, order.id)}
-                                            className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-                                        >
-                                            <Copy size={14} />
-                                            {copiedOrderId === order.id ? 'Copied!' : 'Copy'}
-                                        </button>
-                                    </div>
-                                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                                        <p className="text-gray-900">{order.shipping_address.line1}</p>
-                                        {order.shipping_address.line2 && (
-                                            <p className="text-gray-900">{order.shipping_address.line2}</p>
-                                        )}
-                                        <p className="text-gray-900">
-                                            {order.shipping_address.city}, {order.shipping_address.state}{' '}
-                                            {order.shipping_address.postal_code}
-                                        </p>
-                                        <p className="text-gray-900">{order.shipping_address.country}</p>
-                                    </div>
-                                </div>
-                            )}
+            {/* Orders Grid */}
+            <div className="grid grid-cols-1 gap-6">
+                {orders.length === 0 ? (
+                    <div className="text-center py-24 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-dashed border-gray-200">
+                            <Package className="text-gray-300" size={32} />
                         </div>
-                    ))}
-                </div>
-            )}
+                        <h3 className="text-xl font-bold text-gray-900">No Orders Found</h3>
+                        <p className="text-gray-500 mt-2">When customers buy your products, they will appear here.</p>
+                    </div>
+                ) : (
+                    orders.map((order) => (
+                        <div key={order.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden group">
+                            <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+                                {/* Order Summary Sidebar */}
+                                <div className="md:w-64 shrink-0 space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Order Ref</p>
+                                        <div className="flex items-center gap-2 group/id cursor-pointer" onClick={() => {
+                                            navigator.clipboard.writeText(order.id);
+                                            setCopiedOrderId(order.id);
+                                            setTimeout(() => setCopiedOrderId(null), 2000);
+                                        }}>
+                                            <span className="text-sm font-bold text-[#0A0A0A] font-mono">#{order.id.slice(0, 8).toUpperCase()}</span>
+                                            <Copy size={12} className={`transition-opacity ${copiedOrderId === order.id ? 'text-emerald-500' : 'text-[#D4AF37] opacity-0 group-hover/id:opacity-100'}`} />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                                        <div className="flex">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                                                order.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'
+                                            }`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-gray-50">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</p>
+                                        <p className="text-2xl font-serif font-bold text-[#0A0A0A]">{formatPrice(order.order_items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))}</p>
+                                    </div>
+                                </div>
+
+                                {/* Order Items Content */}
+                                <div className="flex-1 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-gray-500 text-xs font-medium">
+                                            <Calendar size={14} />
+                                            {new Date(order.placed_at).toLocaleDateString()} at {new Date(order.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                        {order.fulfillment_status === 'pending' && (
+                                            <button 
+                                                onClick={() => handleMarkReady(order.id)}
+                                                disabled={updating === order.id}
+                                                className="px-6 py-2 bg-[#0A0A0A] text-[#D4AF37] rounded-xl font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
+                                            >
+                                                {updating === order.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                                                Ready for Pickup
+                                            </button>
+                                        )}
+                                        {order.fulfillment_status === 'packed' && (
+                                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold border border-emerald-100">
+                                                <CheckCircle2 size={14} />
+                                                Ready for Dispatch
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {order.order_items.map((item) => (
+                                            <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-[#D4AF37]/10 transition-colors">
+                                                <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-gray-100 shrink-0">
+                                                    <img 
+                                                        src={item.products?.product_images?.[0]?.url || '/placeholder-product.png'} 
+                                                        alt={item.products?.name} 
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-bold text-[#0A0A0A] truncate">{item.products?.name}</h4>
+                                                    <p className="text-[10px] text-gray-500 font-mono mt-0.5 uppercase tracking-widest">SKU: {item.products?.sku || 'N/A'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-[#0A0A0A]">Qty: {item.quantity}</p>
+                                                    <p className="text-xs text-gray-500 font-medium">{formatPrice(item.unit_price)} ea</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Shipping Summary for Context */}
+                                    {order.shipping_address && (
+                                        <div className="pt-6 border-t border-gray-50 flex items-start gap-3">
+                                            <MapPin className="text-gray-400 shrink-0 mt-0.5" size={16} />
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Shipping To</p>
+                                                <p className="text-xs text-gray-600 font-medium">{order.shipping_address.city}, {order.shipping_address.country}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 }

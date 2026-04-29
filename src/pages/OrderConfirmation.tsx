@@ -218,6 +218,54 @@ export function OrderConfirmation() {
         fetchOrderData();
     };
 
+    const isPaid = order?.status === 'paid';
+    const isPending = order?.status === 'pending' || (!order && !!reference);
+
+    // Auto-create fulfillment record when order is paid
+    useEffect(() => {
+        const createFulfillment = async () => {
+            if (isPaid && order && !loading) {
+                // Check if fulfillment already exists
+                const { data: existingF } = await supabase
+                    .from('order_fulfillments')
+                    .select('id')
+                    .eq('order_id', order.id)
+                    .maybeSingle();
+
+                if (!existingF) {
+                    // Create new fulfillment record
+                    const { data: newF, error: fError } = await supabase
+                        .from('order_fulfillments')
+                        .insert({
+                            order_id: order.id,
+                            status: 'pending',
+                        })
+                        .select()
+                        .single();
+
+                    if (!fError && newF) {
+                        // Create initial tracking event
+                        await supabase.from('order_tracking_events').insert({
+                            order_id: order.id,
+                            fulfillment_id: newF.id,
+                            status: 'pending',
+                            description: 'Order paid successfully. Waiting for fulfillment processing.',
+                            event_time: new Date().toISOString()
+                        });
+                        
+                        // Update order fulfillment_status
+                        await supabase
+                            .from('orders')
+                            .update({ fulfillment_status: 'pending' })
+                            .eq('id', order.id);
+                    }
+                }
+            }
+        };
+
+        createFulfillment();
+    }, [isPaid, order, loading]);
+
     // UI rendering
     if (loading && !order) {
         return (
@@ -241,9 +289,6 @@ export function OrderConfirmation() {
             </div>
         );
     }
-
-    const isPaid = order?.status === 'paid';
-    const isPending = order?.status === 'pending' || (!order && !!reference);
 
     return (
         <div className="section relative">

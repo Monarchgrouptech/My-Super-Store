@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "primary": "#000000",
+                        "background": "#fbf9f9",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface-dim": "#dbdad9",
+                        "outline": "#7e7576",
+                        "surface-container-low": "#f5f3f3",
+                        "inverse-primary": "#c6c6c6",
+                        "secondary": "#735c00",
+                        "primary-container": "#1b1b1b",
+                        "secondary-fixed": "#ffe088",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-secondary-fixed-variant": "#574500",
+                        "inverse-on-surface": "#f2f0f0",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-high": "#e9e8e7",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#cfc4c5",
+                        "on-surface": "#1b1c1c",
+                        "surface-bright": "#fbf9f9",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efeded",
+                        "on-tertiary-container": "#838484",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "primary-fixed": "#e2e2e2",
+                        "tertiary-container": "#1a1c1c",
+                        "secondary-container": "#fed65b",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-secondary-fixed": "#241a00",
+                        "surface-tint": "#5e5e5e",
+                        "inverse-surface": "#303031",
+                        "surface": "#fbf9f9",
+                        "surface-container-highest": "#e3e2e2",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e3e2e2",
+                        "on-secondary-container": "#745c00",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#e9c349",
+                        "on-surface-variant": "#4c4546",
+                        "tertiary": "#000000",
+                        "on-primary-container": "#848484",
+                        "on-background": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#474747"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "stack-sm": "12px",
+                        "unit": "8px",
+                        "container-max": "1440px",
+                        "stack-lg": "48px",
+                        "stack-md": "24px",
+                        "margin": "48px",
+                        "stack-xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Work Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "label-sm": ["Work Sans"],
+                        "label-caps": ["Work Sans"],
+                        "headline-md": ["Work Sans"],
+                        "body-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "1.6", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-lg": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "letterSpacing": "0em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.15em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "letterSpacing": "0em", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .gold-gradient {
+            background: linear-gradient(135deg, #735c00 0%, #fed65b 50%, #735c00 100%);
+        }
+        .modal-ghost-shadow {
+            box-shadow: 4px 4px 0px 0px #fed65b;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background overflow-hidden">
+<!-- Dashboard Layout (Underlay) -->
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-72 border-r border-zinc-200 dark:border-zinc-800 rounded-none bg-white flex flex-col py-8 z-10">
+<div class="px-8 mb-12">
+<h1 class="text-lg font-black tracking-tighter text-zinc-900 uppercase">MYSUPERSTORE</h1>
+<p class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold text-zinc-400">OPERATIONS CENTER</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-8 py-4 text-zinc-900 border-r-4 border-yellow-500 bg-zinc-50 font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-all duration-200 font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="local_shipping">local_shipping</span>
+                    Active Shipments
+                </a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-all duration-200 font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="receipt_long">receipt_long</span>
+                    All Orders
+                </a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-all duration-200 font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="notifications_active">notifications_active</span>
+                    Tracking Updates
+                </a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-all duration-200 font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+                    Settings
+                </a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-72 flex-1 relative bg-surface-container-low">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-72 h-20 border-b border-zinc-100 bg-white flex items-center justify-between px-10 w-full z-40">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-zinc-400 mr-4" data-icon="search">search</span>
+<span class="font-bold text-zinc-900 uppercase tracking-widest text-sm font-['Work_Sans']">OPERATIONAL INSIGHTS</span>
+</div>
+<div class="flex items-center space-x-6">
+<span class="material-symbols-outlined text-zinc-500 cursor-pointer" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-zinc-500 cursor-pointer" data-icon="apps">apps</span>
+<button class="bg-primary text-on-primary px-6 py-2 text-label-caps uppercase tracking-widest hover:opacity-90 transition-opacity">
+                        Create Shipment
+                    </button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-zinc-200">
+<img alt="User Profile" data-alt="close-up portrait of a professional male operations manager in a minimalist white studio setting, clean lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABKrnDvEzRwy7WedElCliWcpqAGE9CLqNUH7dMP0Hu4eZ_mly4RDfTYJsfLtMyYt6gH0dU50Pbh4bdfTFjRYjDIIrkYq-FpEJ_clTbwnSPmqhOnoLLuhpiC3KdLTh1edsmdo0USbJRt3o40QrIe8Y6fC1urikTwO3H7dNHCJtd9cVBhbPmjsvN-eB1yeT8yD24C0AExQxzlODleMDK-A6MZbH3TRkax4Xx9A3GaxYZugHaAVJNPoSXxiq-DEKEqwC_8NGakOOFVJA"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content Mock -->
+<div class="pt-28 px-10 pb-10">
+<div class="grid grid-cols-12 gap-8">
+<!-- High-End Stats Cards -->
+<div class="col-span-4 border border-zinc-200 p-8 bg-white relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 gold-gradient"></div>
+<p class="font-label-caps text-zinc-400 mb-4">ACTIVE GLOBAL FREIGHT</p>
+<h2 class="font-headline-lg text-primary">1,284</h2>
+<div class="mt-8 h-1 w-full bg-surface-container">
+<div class="h-full gold-gradient w-3/4"></div>
+</div>
+</div>
+<div class="col-span-4 border border-zinc-200 p-8 bg-white">
+<p class="font-label-caps text-zinc-400 mb-4">TRANSIT EFFICIENCY</p>
+<h2 class="font-headline-lg text-primary">99.4%</h2>
+</div>
+<div class="col-span-4 border border-zinc-200 p-8 bg-white">
+<p class="font-label-caps text-zinc-400 mb-4">REVENUE AT RISK</p>
+<h2 class="font-headline-lg text-primary">$0.00</h2>
+</div>
+<!-- Asymmetric Content Block -->
+<div class="col-span-8 border border-zinc-200 bg-white p-8">
+<div class="flex justify-between items-center mb-10">
+<h3 class="font-headline-sm uppercase tracking-tight">Vessel Tracking Real-Time</h3>
+<span class="material-symbols-outlined text-zinc-400" data-icon="filter_list">filter_list</span>
+</div>
+<div class="h-64 bg-zinc-50 border border-zinc-100 flex items-center justify-center overflow-hidden">
+<img alt="Shipment Map" class="w-full h-full object-cover opacity-80" data-alt="stylized satellite view of global maritime trade routes with glowing gold lines on a deep black oceanic map" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-hC0Lsv1tpPpuutd7PrbNQ2Nv9sky5KVRBP_8KQSlRbjSlMXskMb530jb9fAU60sDR23X-L5aDVK7N4EEjBjUtshY-9eJGlpFjoT3ePccmjJ73xMys_KQMPcL7ntJ_jriO21IDXQUKh-vzJLFIvh0YujAcvHmF5KxmivV8sKFhxuxbzG1mKuoVq9MeidNGkBg2QxHe0vS-VPsMpNYcClB-cGlZN9RsmdJ_Jx-BHmdF0uFL_MvUHfOPfJrELJ-X6suITFRzgccNq0"/>
+</div>
+</div>
+<div class="col-span-4 border border-zinc-200 bg-white p-8">
+<h3 class="font-headline-sm uppercase tracking-tight mb-8">Recent Alerts</h3>
+<div class="space-y-6">
+<div class="border-b border-zinc-100 pb-4">
+<span class="font-label-caps text-secondary mb-1 block">URGENT</span>
+<p class="text-body-md font-medium">Customs clearance delayed - Tokyo Hub</p>
+</div>
+<div class="border-b border-zinc-100 pb-4">
+<span class="font-label-caps text-zinc-400 mb-1 block">INFO</span>
+<p class="text-body-md font-medium">Vessel 'Prestige-I' docked at Rotterdam</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p- gutter">
+<!-- Shipment Creation Modal -->
+<div class="bg-white w-full max-w-lg border-2 border-primary modal-ghost-shadow relative">
+<!-- Modal Header -->
+<div class="p-8 border-b border-zinc-100">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">NEW LOGISTICS ENTRY</p>
+<h2 class="font-headline-md uppercase tracking-tight">Create Shipment</h2>
+</div>
+<button class="text-zinc-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Modal Content -->
+<div class="p-8 space-y-stack-md">
+<!-- Field: Carrier Name -->
+<div class="space-y-stack-xs">
+<label class="font-label-caps text-primary">Carrier Name</label>
+<div class="relative">
+<input class="w-full border-zinc-200 border px-4 py-3 font-body-md focus:border-primary focus:ring-0 rounded-none transition-colors" placeholder="e.g., FedEx, DHL, Maersk" type="text"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-zinc-400 text-sm" data-icon="unfold_more">unfold_more</span>
+</div>
+</div>
+<!-- Field: Tracking Number -->
+<div class="space-y-stack-xs">
+<label class="font-label-caps text-primary">Tracking Number</label>
+<input class="w-full border-zinc-200 border px-4 py-3 font-body-md focus:border-primary focus:ring-0 rounded-none transition-colors" placeholder="Enter alphanumeric code" type="text"/>
+</div>
+<!-- Field: Tracking URL -->
+<div class="space-y-stack-xs">
+<div class="flex justify-between">
+<label class="font-label-caps text-primary">Tracking URL</label>
+<span class="font-label-caps text-zinc-400">OPTIONAL</span>
+</div>
+<div class="relative flex items-center">
+<span class="absolute left-4 material-symbols-outlined text-zinc-400" data-icon="link">link</span>
+<input class="w-full border-zinc-200 border pl-12 pr-4 py-3 font-body-md focus:border-primary focus:ring-0 rounded-none transition-colors" placeholder="https://..." type="url"/>
+</div>
+</div>
+<!-- Information Box -->
+<div class="bg-zinc-50 border border-zinc-100 p-4 flex gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="info" data-weight="fill" style="font-variation-settings: 'FILL' 1;">info</span>
+<p class="text-label-sm text-zinc-500 leading-normal">
+                        Providing a tracking URL allows the client to access a real-time white-labeled tracking dashboard immediately upon confirmation.
+                    </p>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-8 bg-white flex items-center justify-end space-x-4">
+<button class="px-8 py-3 border border-primary text-label-caps uppercase tracking-widest hover:bg-zinc-50 transition-colors">
+                    Cancel
+                </button>
+<button class="px-8 py-3 gold-gradient text-primary font-bold text-label-caps uppercase tracking-widest hover:opacity-90 transition-opacity border border-primary">
+                    Confirm Shipment
+                </button>
+</div>
+<!-- Decorative Element -->
+<div class="absolute bottom-0 left-0 w-full h-1 gold-gradient"></div>
+</div>
+</div>
+</body></html>

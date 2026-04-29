@@ -1,0 +1,399 @@
+/* Delivery dashboard visual system. Scoped to avoid storefront CSS collisions. */
+:root {
+  --delivery-gold-primary: #d4af37;
+  --delivery-gold-light: #f5e0a3;
+  --delivery-gold-dark: #b8860b;
+  --delivery-gold-deep: #735c00;
+  --delivery-gold-mid: #fed65b;
+  --delivery-gold-dim: #e9c349;
+  --delivery-black: #000000;
+  --delivery-near-black: #1a1c1c;
+  --delivery-white: #ffffff;
+  --delivery-zinc-50: #fafafa;
+  --delivery-zinc-100: #f4f4f5;
+  --delivery-zinc-200: #e4e4e7;
+  --delivery-zinc-300: #d4d4d8;
+  --delivery-zinc-400: #a1a1aa;
+  --delivery-zinc-500: #71717a;
+  --delivery-zinc-600: #52525b;
+  --delivery-zinc-800: #27272a;
+  --delivery-surface: #f9f9f9;
+  --delivery-surface-low: #f3f3f3;
+  --delivery-border: #e4e4e7;
+  --delivery-gradient-gold: linear-gradient(135deg, #d4af37 0%, #f5e0a3 50%, #b8860b 100%);
+  --delivery-gradient-gold-dark: linear-gradient(135deg, #735c00 0%, #fed65b 50%, #e9c349 100%);
+}
+
+.delivery-shell {
+  min-height: 100vh;
+  background: var(--delivery-surface);
+  color: var(--delivery-near-black);
+  font-family: Inter, "Work Sans", sans-serif;
+}
+
+.delivery-shell *,
+.delivery-shell *::before,
+.delivery-shell *::after {
+  border-radius: 0;
+}
+
+.delivery-shell h1,
+.delivery-shell h2,
+.delivery-shell h3,
+.delivery-shell h4,
+.delivery-shell h5,
+.delivery-shell h6,
+.delivery-shell p,
+.delivery-shell button,
+.delivery-shell input,
+.delivery-shell select,
+.delivery-shell textarea {
+  font-family: inherit;
+}
+
+.delivery-shell p {
+  line-height: 1.5;
+}
+
+.delivery-shell button {
+  font-size: inherit;
+}
+
+.delivery-shell button::after {
+  display: none;
+}
+
+.delivery-shell button:focus-visible,
+.delivery-shell a:focus-visible,
+.delivery-shell input:focus-visible,
+.delivery-shell select:focus-visible,
+.delivery-shell textarea:focus-visible {
+  outline: 2px solid var(--delivery-gold-primary);
+  outline-offset: 2px;
+}
+
+.delivery-shell .gap-2 {
+  gap: 0.5rem;
+}
+
+.delivery-shell .gap-3 {
+  gap: 0.75rem;
+}
+
+.delivery-shell .gap-4 {
+  gap: 1rem;
+}
+
+.delivery-shell .gap-6 {
+  gap: 1.5rem;
+}
+
+.delivery-shell .gap-8 {
+  gap: 2rem;
+}
+
+.delivery-shell .gap-12 {
+  gap: 3rem;
+}
+
+.gold-gradient {
+  background: var(--delivery-gradient-gold);
+}
+
+.gold-gradient-dark {
+  background: var(--delivery-gradient-gold-dark);
+}
+
+.hard-shadow {
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.metallic-shadow {
+  box-shadow: 4px 4px 0 0 var(--delivery-gold-deep);
+}
+
+.label-caps {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-processing {
+  background: var(--delivery-black);
+  color: var(--delivery-white);
+}
+
+.status-in-transit {
+  background: var(--delivery-gold-primary);
+  color: var(--delivery-black);
+}
+
+.status-pending {
+  background: var(--delivery-zinc-200);
+  color: var(--delivery-zinc-600);
+}
+
+.status-pickup {
+  background: transparent;
+  border: 1px solid var(--delivery-gold-deep);
+  color: var(--delivery-gold-deep);
+}
+
+.status-delivered {
+  background: var(--delivery-gradient-gold);
+  color: var(--delivery-black);
+}
+
+.status-out {
+  background: var(--delivery-white);
+  border: 1px solid var(--delivery-black);
+  color: var(--delivery-black);
+}
+
+.prestige-btn-primary,
+.prestige-btn-secondary,
+.prestige-btn-gold {
+  min-height: 44px;
+  padding: 12px 24px;
+  border: 1px solid var(--delivery-black);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, filter 150ms ease, opacity 150ms ease;
+}
+
+.prestige-btn-primary {
+  background: var(--delivery-black);
+  color: var(--delivery-white);
+}
+
+.prestige-btn-primary:hover:not(:disabled) {
+  background: var(--delivery-zinc-800);
+}
+
+.prestige-btn-secondary {
+  background: var(--delivery-white);
+  color: var(--delivery-black);
+  border-color: var(--delivery-zinc-200);
+}
+
+.prestige-btn-secondary:hover:not(:disabled) {
+  border-color: var(--delivery-black);
+  background: var(--delivery-zinc-50);
+}
+
+.prestige-btn-gold {
+  background: var(--delivery-gradient-gold);
+  color: var(--delivery-black);
+}
+
+.prestige-btn-gold:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.prestige-btn-primary:disabled,
+.prestige-btn-secondary:disabled,
+.prestige-btn-gold:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.delivery-topbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: 80px;
+  background: var(--delivery-white);
+  border-bottom: 1px solid var(--delivery-border);
+}
+
+.delivery-sidebar {
+  position: fixed;
+  top: 80px;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  width: 256px;
+  background: var(--delivery-white);
+  border-right: 1px solid var(--delivery-border);
+}
+
+.delivery-main {
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+.delivery-content-row {
+  display: flex;
+  height: calc(100vh - 80px);
+  overflow: hidden;
+}
+
+.delivery-panel-left {
+  width: 58.333333%;
+  overflow-y: auto;
+  background: var(--delivery-white);
+  border-right: 1px solid var(--delivery-border);
+}
+
+.delivery-panel-right {
+  width: 41.666667%;
+  overflow-y: auto;
+  background: var(--delivery-surface-low);
+}
+
+.delivery-card {
+  position: relative;
+  background: var(--delivery-white);
+  border: 1px solid var(--delivery-border);
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.delivery-card:hover {
+  border-color: var(--delivery-black);
+}
+
+.delivery-card-active {
+  border: 2px solid var(--delivery-black);
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.delivery-card-corner {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 10;
+  width: 16px;
+  height: 16px;
+  background: var(--delivery-gradient-gold);
+  border: 1px solid var(--delivery-black);
+}
+
+.delivery-timeline {
+  position: relative;
+}
+
+.delivery-timeline::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 11px;
+  width: 2px;
+  background: var(--delivery-zinc-100);
+}
+
+.delivery-timeline-dot {
+  z-index: 10;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 4px solid var(--delivery-zinc-50);
+  border-radius: 9999px;
+}
+
+.delivery-timeline-dot-active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--delivery-black);
+}
+
+.delivery-timeline-dot-active::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--delivery-gold-primary);
+  border-radius: 9999px;
+}
+
+.delivery-timeline-dot-done {
+  background: var(--delivery-zinc-200);
+}
+
+.delivery-timeline-dot-future {
+  background: var(--delivery-zinc-100);
+}
+
+.delivery-fab {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  z-index: 50;
+  display: flex;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  background: var(--delivery-gradient-gold);
+  border: 1px solid var(--delivery-black);
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.1);
+  color: var(--delivery-black);
+  cursor: pointer;
+  transition: transform 200ms ease;
+}
+
+.delivery-fab:hover {
+  transform: translateY(-4px);
+}
+
+@keyframes deliveryPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse-dot {
+  animation: deliveryPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (max-width: 1023px) {
+  .delivery-content-row {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    overflow: visible;
+  }
+
+  .delivery-panel-left,
+  .delivery-panel-right {
+    width: 100%;
+    overflow: visible;
+  }
+
+  .delivery-panel-right {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .delivery-main {
+    padding-bottom: 64px;
+  }
+
+  .delivery-fab {
+    right: 20px;
+    bottom: 84px;
+  }
+}

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "primary": "#000000",
+                    "background": "#fbf9f9",
+                    "on-tertiary-fixed-variant": "#454747",
+                    "surface-dim": "#dbdad9",
+                    "outline": "#7e7576",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-primary": "#c6c6c6",
+                    "secondary": "#735c00",
+                    "primary-container": "#1b1b1b",
+                    "secondary-fixed": "#ffe088",
+                    "on-primary-fixed": "#1b1b1b",
+                    "on-secondary-fixed-variant": "#574500",
+                    "inverse-on-surface": "#f2f0f0",
+                    "tertiary-fixed": "#e2e2e2",
+                    "surface-container-high": "#e9e8e7",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#cfc4c5",
+                    "on-surface": "#1b1c1c",
+                    "surface-bright": "#fbf9f9",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#efeded",
+                    "on-tertiary-container": "#838484",
+                    "tertiary-fixed-dim": "#c6c6c7",
+                    "on-tertiary-fixed": "#1a1c1c",
+                    "primary-fixed": "#e2e2e2",
+                    "tertiary-container": "#1a1c1c",
+                    "secondary-container": "#fed65b",
+                    "primary-fixed-dim": "#c6c6c6",
+                    "on-secondary-fixed": "#241a00",
+                    "surface-tint": "#5e5e5e",
+                    "inverse-surface": "#303031",
+                    "surface": "#fbf9f9",
+                    "surface-container-highest": "#e3e2e2",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#e3e2e2",
+                    "on-secondary-container": "#745c00",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-surface-variant": "#4c4546",
+                    "tertiary": "#000000",
+                    "on-primary-container": "#848484",
+                    "on-background": "#1b1c1c",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed-variant": "#474747"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "stack-sm": "12px",
+                    "unit": "8px",
+                    "container-max": "1440px",
+                    "stack-lg": "48px",
+                    "stack-md": "24px",
+                    "margin": "48px",
+                    "stack-xs": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Work Sans"],
+                    "headline-lg": ["Work Sans"],
+                    "headline-sm": ["Work Sans"],
+                    "label-sm": ["Work Sans"],
+                    "label-caps": ["Work Sans"],
+                    "headline-md": ["Work Sans"],
+                    "body-md": ["Work Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "1.6", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "headline-lg": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "1.4", "letterSpacing": "0em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.15em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "letterSpacing": "0em", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .gold-gradient {
+            background: linear-gradient(135deg, #735c00 0%, #fed65b 50%, #e9c349 100%);
+        }
+        .gold-border {
+            border-image: linear-gradient(135deg, #735c00, #fed65b) 1;
+        }
+        .metallic-shadow {
+            box-shadow: 4px 4px 0px 0px #735c00;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-72 border-r border-zinc-200 bg-white flex flex-col py-8 z-50">
+<div class="px-8 mb-12">
+<h1 class="text-lg font-black tracking-tighter text-zinc-900 uppercase">MYSUPERSTORE</h1>
+<p class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold text-zinc-400">OPERATIONS CENTER</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:bg-zinc-50 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>
+<span class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold">Dashboard</span>
+</a>
+<a class="flex items-center px-8 py-4 text-zinc-900 border-r-4 border-yellow-500 bg-zinc-50 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="local_shipping">local_shipping</span>
+<span class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold">Active Shipments</span>
+</a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:bg-zinc-50 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold">All Orders</span>
+</a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:bg-zinc-50 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="notifications_active">notifications_active</span>
+<span class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold">Tracking Updates</span>
+</a>
+<a class="flex items-center px-8 py-4 text-zinc-400 hover:bg-zinc-50 transition-all duration-200 group mt-auto" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span class="font-['Work_Sans'] tracking-tight uppercase text-xs font-semibold">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 left-72 h-20 bg-white border-b border-zinc-200 flex items-center justify-between px-10 z-40">
+<div class="flex items-center gap-8">
+<h2 class="font-['Work_Sans'] font-bold text-zinc-900 uppercase tracking-widest text-sm">Active Shipments</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-zinc-50 border-none text-sm w-80 focus:ring-1 focus:ring-primary" placeholder="Search orders, tracking IDs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="gold-gradient px-6 py-2.5 text-primary text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity">
+                Create Shipment
+            </button>
+<div class="flex items-center gap-4 border-l border-zinc-200 pl-6">
+<button class="text-zinc-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 bg-zinc-200 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional portrait of logistics manager in high-end office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7IamXtETf2eIpmsUthJm0J8ul2Ywyadn2WwiCQTZaBOFAa7gRNBdvKO8ec3IZmQLaHeOC1cqIZH61fJ8luUocbI_xo41HuLba5LBm5auMIsFXcdyfooL2kw6t-bGQbLHu5T4CoLs7BfHtU_a0ou8oZ2EC7puZTYisgBoiYS8yLXMLn9r84zKRlpbNfr8CmbH4lyJ1AitlcZL48OmP2WkcycsmOyMbUvQP_rW5eciD9mltrd0KRfYaiXehuznJBI0N3_Tj7dY3DSY"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 pt-20 p-stack-lg min-h-screen">
+<div class="max-w-[1440px] mx-auto grid grid-cols-12 gap-gutter">
+<!-- Left: Shipment List -->
+<section class="col-span-12 lg:col-span-7 space-y-stack-md">
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-caps text-on-surface-variant">24 ACTIVE SHIPMENTS</span>
+<div class="flex gap-2">
+<button class="px-4 py-1 border border-primary text-xs font-bold uppercase tracking-widest bg-white">Filters</button>
+<button class="px-4 py-1 border border-zinc-200 text-xs font-bold uppercase tracking-widest bg-white text-zinc-400 hover:text-primary hover:border-primary transition-all">Sort By Date</button>
+</div>
+</div>
+<!-- Shipment Card Loop -->
+<div class="space-y-4">
+<!-- Card 1 (Active/Selected) -->
+<div class="bg-white border-2 border-primary p-6 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-primary">#MS-94021</h3>
+<p class="text-zinc-400 text-xs uppercase tracking-tight">March 24, 2024 • 14:20 PM</p>
+</div>
+<span class="px-3 py-1 border border-secondary text-secondary font-label-caps">IN TRANSIT</span>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">CUSTOMER</p>
+<p class="font-body-md font-semibold">Julian Sterling</p>
+</div>
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">DESTINATION</p>
+<p class="font-body-md font-semibold">New York, NY</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-zinc-400 mb-1">AMOUNT</p>
+<p class="font-body-md font-bold text-primary">$245.00</p>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white border border-zinc-100 p-6 hover:border-zinc-300 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-primary">#MS-94022</h3>
+<p class="text-zinc-400 text-xs uppercase tracking-tight">March 24, 2024 • 15:45 PM</p>
+</div>
+<span class="px-3 py-1 border border-zinc-200 text-zinc-400 font-label-caps">PROCESSING</span>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">CUSTOMER</p>
+<p class="font-body-md font-semibold">Elena Rodriguez</p>
+</div>
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">DESTINATION</p>
+<p class="font-body-md font-semibold">Miami, FL</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-zinc-400 mb-1">AMOUNT</p>
+<p class="font-body-md font-bold text-primary">$1,120.00</p>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white border border-zinc-100 p-6 hover:border-zinc-300 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-primary">#MS-94023</h3>
+<p class="text-zinc-400 text-xs uppercase tracking-tight">March 24, 2024 • 16:10 PM</p>
+</div>
+<span class="px-3 py-1 border border-secondary text-secondary font-label-caps">READY FOR PICKUP</span>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">CUSTOMER</p>
+<p class="font-body-md font-semibold">Marcus Thorne</p>
+</div>
+<div>
+<p class="font-label-caps text-zinc-400 mb-1">DESTINATION</p>
+<p class="font-body-md font-semibold">Austin, TX</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-zinc-400 mb-1">AMOUNT</p>
+<p class="font-body-md font-bold text-primary">$89.00</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right: Order Details Panel -->
+<aside class="col-span-12 lg:col-span-5">
+<div class="bg-white border border-zinc-200 p-0 flex flex-col sticky top-28">
+<!-- Premium Header -->
+<div class="border-b border-zinc-100 p-8">
+<div class="flex justify-between items-center mb-4">
+<span class="font-label-caps text-secondary font-bold">ORDER DETAILS</span>
+<span class="material-symbols-outlined text-zinc-300" data-icon="open_in_new">open_in_new</span>
+</div>
+<h2 class="font-headline-md text-primary mb-2">Order #MS-94021</h2>
+<div class="flex gap-4">
+<div class="flex items-center gap-1 text-zinc-400 text-xs font-medium uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                MAR 24, 2024
+                            </div>
+<div class="flex items-center gap-1 text-zinc-400 text-xs font-medium uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm" data-icon="timer">timer</span>
+                                14:20
+                            </div>
+</div>
+</div>
+<!-- Customer & Shipping Info -->
+<div class="p-8 border-b border-zinc-100">
+<div class="grid grid-cols-2 gap-8">
+<div>
+<p class="font-label-caps text-zinc-400 mb-2">CUSTOMER INFO</p>
+<p class="font-body-md font-bold">Julian Sterling</p>
+<p class="text-zinc-500 text-sm">j.sterling@prestige.com</p>
+<p class="text-zinc-500 text-sm">+1 (555) 092-4822</p>
+</div>
+<div>
+<p class="font-label-caps text-zinc-400 mb-2">SHIPPING ADDRESS</p>
+<p class="font-body-md font-bold">The Penthouse, Unit 4B</p>
+<p class="text-zinc-500 text-sm">742 Fifth Avenue</p>
+<p class="text-zinc-500 text-sm">New York, NY 10019</p>
+</div>
+</div>
+</div>
+<!-- Items & Totals -->
+<div class="p-8 bg-zinc-50">
+<p class="font-label-caps text-zinc-400 mb-4">ORDER ITEMS</p>
+<div class="space-y-3 mb-6">
+<div class="flex justify-between items-center">
+<p class="text-sm font-medium">Bose QuietComfort Headphones <span class="text-zinc-400 ml-2">x1</span></p>
+<p class="text-sm font-bold">$199.00</p>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm font-medium">65W Rapid Wall Charger <span class="text-zinc-400 ml-2">x1</span></p>
+<p class="text-sm font-bold">$46.00</p>
+</div>
+</div>
+<div class="pt-4 border-t border-zinc-200 flex justify-between items-end">
+<p class="font-label-caps text-primary font-black">TOTAL AMOUNT</p>
+<p class="text-2xl font-black text-primary">$245.00</p>
+</div>
+</div>
+<!-- Vertical Timeline -->
+<div class="p-8">
+<p class="font-label-caps text-zinc-400 mb-6">LOGISTICS TIMELINE</p>
+<div class="relative space-y-8 pl-8">
+<div class="absolute left-[3px] top-0 bottom-0 w-[1px] bg-zinc-100"></div>
+<div class="relative">
+<div class="absolute -left-[33px] top-1 w-2 h-2 rounded-full gold-gradient ring-4 ring-white"></div>
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-bold">Order In Transit</p>
+<p class="text-xs text-zinc-500">Departure from Central Hub</p>
+</div>
+<p class="text-[10px] font-label-caps text-zinc-400">16:45</p>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[33px] top-1 w-2 h-2 rounded-full bg-zinc-300 ring-4 ring-white"></div>
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-medium">Ready for Pickup</p>
+<p class="text-xs text-zinc-500">Awaiting carrier assignment</p>
+</div>
+<p class="text-[10px] font-label-caps text-zinc-400">15:10</p>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[33px] top-1 w-2 h-2 rounded-full bg-zinc-300 ring-4 ring-white"></div>
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-medium">Order Paid</p>
+<p class="text-xs text-zinc-500">Transaction verified successfully</p>
+</div>
+<p class="text-[10px] font-label-caps text-zinc-400">14:20</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Grid -->
+<div class="p-8 bg-white grid grid-cols-2 gap-4">
+<button class="px-4 py-3 border border-zinc-200 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 transition-colors">Accept Order</button>
+<button class="px-4 py-3 border border-zinc-200 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 transition-colors">Mark Picked Up</button>
+<button class="px-4 py-3 border border-zinc-200 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 transition-colors">Create Shipment</button>
+<button class="px-4 py-3 border border-primary bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors">Mark In Transit</button>
+<button class="px-4 py-3 border border-zinc-200 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 transition-colors">Out for Delivery</button>
+<button class="px-4 py-3 gold-gradient border border-transparent text-[10px] font-black uppercase tracking-widest metallic-shadow">Mark Delivered</button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Contextual FAB (Restricted to Home/Dashboard contexts in rules, but we include if specific to primary action) -->
+<button class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-white rounded-none flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</body></html>
