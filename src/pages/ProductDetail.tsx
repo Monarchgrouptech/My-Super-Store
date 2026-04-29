@@ -27,7 +27,7 @@ export function ProductDetail() {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const productQuery = supabase
         .from('products')
         .select(`
           *,
@@ -36,14 +36,20 @@ export function ProductDetail() {
             categories ( name, slug )
           ),
           product_specs ( spec_key, spec_value )
-        `)
-        .eq('id', id)
-        .single();
+        `);
+
+      const uuidPattern =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+      const { data, error } = await (uuidPattern.test(id ?? '')
+        ? productQuery.eq('id', id).single()
+        : productQuery.eq('slug', id).single());
 
       if (error) throw error;
 
       setProduct({
         ...data,
+        slug: data.slug,
         image: data.product_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url,
         category: data.product_categories?.[0]?.categories?.name || 'Uncategorized',
         product_images: data.product_images?.sort((a: any, b: any) => a.position - b.position) || [],
@@ -117,7 +123,13 @@ export function ProductDetail() {
         {/* Product Info - Right Column Black Card */}
         <div className="card-black" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
           <p className="text-muted mb-2" style={{ fontSize: 'clamp(0.75rem, 2vw, 0.875rem)' }}>{product.category}</p>
-          <h1 className="text-white mb-4" style={{ fontSize: 'clamp(1.25rem, 4vw, 2.5rem)', fontFamily: "'Oswald', sans-serif", lineHeight: 1.2 }}>{product.name}</h1>
+          <h1
+            data-chat-product-name
+            className="text-white mb-4"
+            style={{ fontSize: 'clamp(1.25rem, 4vw, 2.5rem)', fontFamily: "'Oswald', sans-serif", lineHeight: 1.2 }}
+          >
+            {product.name}
+          </h1>
 
           {/* Rating */}
           <div className="flex items-center gap-2 mb-4">

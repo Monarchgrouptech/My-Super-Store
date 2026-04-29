@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 
 import { supabase } from '../lib/supabase';
 import { useCurrency } from '../context/CurrencyContext';
@@ -34,14 +34,21 @@ export function Shop({ onNavigate }: ShopProps) {
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 1000000 });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { categorySlug } = useParams<{ categorySlug?: string }>();
   const [searchTerm, setSearchTerm] = useState('');
   const [shopPage, setShopPage] = useState(0);
   const { formatPrice } = useCurrency();
-
-
-
-
   const categories = ['All', 'Cosmetics', 'Construction', 'Furniture', 'Clothing and Fashion', 'Events Tools', 'Electrical Appliances'];
+
+  const normalizeCategoryValue = (value: string) =>
+    decodeURIComponent(value).trim().toLowerCase().replace(/-/g, ' ');
+
+  const resolveCategoryName = (value: string | null) => {
+    if (!value) return 'All';
+    const normalizedValue = normalizeCategoryValue(value);
+    const matchedCategory = categories.find((category) => normalizeCategoryValue(category) === normalizedValue);
+    return matchedCategory ?? 'All';
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -51,10 +58,10 @@ export function Shop({ onNavigate }: ShopProps) {
     const categoryFromUrl = searchParams.get('category');
     const searchFromUrl = searchParams.get('search');
 
-    setSelectedCategory(categoryFromUrl ?? 'All');
+    setSelectedCategory(resolveCategoryName(categorySlug ?? categoryFromUrl));
     setSearchTerm(searchFromUrl ?? '');
     setShopPage(0); // reset page when filters change
-  }, [searchParams]);
+  }, [categorySlug, searchParams]);
 
 
 

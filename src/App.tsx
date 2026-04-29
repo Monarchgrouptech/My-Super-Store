@@ -19,6 +19,7 @@ import { SeasonProvider } from './context/SeasonContext';
 import { GlobalNotifications } from './components/GlobalNotifications';
 import { SeasonalOverlay } from './components/SeasonalOverlay';
 import { GreetingModal } from './components/GreetingModal';
+import { ChatWidget } from './components/chat/ChatWidget';
 
 // Vendor Dashboard Imports
 import { VendorLayout } from './components/vendor/VendorLayout';
@@ -92,11 +93,16 @@ export default function App() {
                   {/* Customer Routes */}
                   <Route path="/" element={<Home />} />
                   <Route path="/shop" element={<Shop onNavigate={handleNavigate} />} />
+                  <Route path="/products" element={<Shop onNavigate={handleNavigate} />} />
+                  <Route path="/categories" element={<Shop onNavigate={handleNavigate} />} />
+                  <Route path="/categories/:categorySlug" element={<Shop onNavigate={handleNavigate} />} />
                   <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/cart" element={<Cart onNavigate={handleNavigate} />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-confirmation" element={<OrderConfirmation />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Login />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/about" element={<About onNavigate={handleNavigate} />} />
 
@@ -174,6 +180,7 @@ export default function App() {
               <Footer />
               <MobileBottomNav />
             </div>
+            <ChatWidget />
           </SeasonProvider>
         </CartProvider>
       </AdminProvider>
