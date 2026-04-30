@@ -6,8 +6,8 @@ interface ImportMetaEnv {
     readonly VITE_SUPABASE_ANON_KEY: string;
     readonly VITE_IMGBB_API_KEY: string;
     readonly VITE_GROQ_API_KEY: string;
-    readonly VITE_GROQ_PRIMARY_MODEL: string;
-    readonly VITE_GROQ_FALLBACK_MODEL: string;
+    readonly VITE_GROQ_PRIMARY_MODEL?: string;
+    readonly VITE_GROQ_FALLBACK_MODEL?: string;
 }
 
 interface ImportMeta {

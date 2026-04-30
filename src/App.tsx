@@ -136,7 +136,8 @@ export default function App() {
                           <Route path="dashboard" element={<DeliveryDashboard />} />
                           <Route path="orders" element={<DeliveryDashboard />} />
                           <Route path="orders/:id" element={<DeliveryOrderDetail />} />
-                          <Route path="history" element={<DeliveryDashboard />} /> {/* For now using same dashboard */}
+                          <Route path="history" element={<DeliveryDashboard />} />
+                          <Route path="updates" element={<DeliveryDashboard />} />
                           <Route path="profile" element={<div>Profile coming soon</div>} />
                         </Routes>
                       </DeliveryLayout>

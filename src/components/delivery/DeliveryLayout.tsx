@@ -52,19 +52,11 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
         },
     ];
 
-    const isActiveShipmentPath = location.pathname === '/delivery/dashboard' ||
-        location.pathname === '/delivery/orders' ||
-        location.pathname.startsWith('/delivery/orders/');
-
     const getIsActive = (path: string) => {
-        if (path === '/delivery/orders') return isActiveShipmentPath;
-        if (path === '/delivery/dashboard') return false;
         return location.pathname === path;
     };
 
-    const activeItem = isActiveShipmentPath
-        ? { label: 'Delivery Dashboard' }
-        : navItems.find((item) => getIsActive(item.to)) || navItems[0];
+    const activeItem = navItems.find((item) => getIsActive(item.to)) || navItems[0];
 
     return (
         <div className="delivery-shell flex overflow-x-hidden">
@@ -142,18 +134,6 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                             </NavLink>
                         ))}
                     </div>
-
-                    <NavLink
-                        to="/delivery/settings"
-                        className={({ isActive }) =>
-                            `flex items-center gap-4 px-8 py-4 transition-all duration-150 mt-auto group ${isActive 
-                                ? 'text-black border-r-4 border-[#9f7418] bg-zinc-50' 
-                                : 'text-zinc-400 hover:bg-zinc-50 hover:text-black'}`
-                        }
-                    >
-                        <Settings size={18} />
-                        <span className="text-[12px] font-bold uppercase tracking-[0.1em]">Settings</span>
-                    </NavLink>
                 </nav>
             </aside>
 
