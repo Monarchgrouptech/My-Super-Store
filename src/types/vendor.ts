@@ -83,6 +83,8 @@ export interface Order {
     billing_address_id: string | null;
     placed_at: string;
     updated_at: string;
+    fulfillment_status?: string | null;
+    delivery_status?: string | null;
 }
 
 export interface OrderItem {

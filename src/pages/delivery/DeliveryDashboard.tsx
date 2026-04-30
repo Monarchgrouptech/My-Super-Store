@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     AlertCircle,
     ArrowRight,
+    Boxes,
     Headphones,
     Link as LinkIcon,
     Loader2,
-    Map as MapIcon,
     MapPin,
-    Package,
     Plug,
+    Search,
+    ShieldCheck,
     X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,12 +18,25 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useDeliveryPartner } from '../../hooks/useDeliveryPartner';
 
 interface Address {
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postal_code?: string;
+    id?: string | null;
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+    postal_code?: string | null;
+}
+
+interface UserProfileSummary {
+    user_id?: string | null;
+    display_name?: string | null;
+    email?: string | null;
+}
+
+interface ProductSummary {
+    name?: string | null;
+    sku?: string | null;
+    product_images?: { url: string; position?: number | null }[];
 }
 
 interface OrderItem {
@@ -30,728 +44,1014 @@ interface OrderItem {
     product_id: string;
     quantity: number;
     unit_price: number;
-    products?: {
-        name?: string;
-    };
+    products?: ProductSummary | null;
 }
 
-interface Order {
-    id: string;
-    status?: string;
-    total_amount: number;
-    placed_at: string;
-    fulfillment_status?: string;
-    delivery_status?: string;
-    user_profiles?: {
-        display_name?: string;
-        email?: string;
-    };
-    addresses?: Address | null;
-    order_items?: OrderItem[];
-}
-
-interface LocalTimelineEvent {
+interface Fulfillment {
     id: string;
     status: string;
-    description: string;
+    carrier_name?: string | null;
+    tracking_number?: string | null;
+    tracking_url?: string | null;
+    assigned_at?: string | null;
+    packed_at?: string | null;
+    shipped_at?: string | null;
+    delivered_at?: string | null;
+    estimated_delivery_at?: string | null;
+    last_status_note?: string | null;
+}
+
+interface TrackingEvent {
+    id: string;
+    status: string;
+    location?: string | null;
+    description?: string | null;
     event_time: string;
 }
 
-type TimelineState = 'active' | 'done' | 'future';
-
-interface TimelineRow {
+interface ShipmentOrder {
     id: string;
-    title: string;
-    timestamp: string;
-    description: string;
-    state: TimelineState;
+    user_id?: string | null;
+    status: string;
+    total_amount: number;
+    currency?: string | null;
+    shipping_address_id?: string | null;
+    placed_at: string;
+    updated_at?: string | null;
+    fulfillment_status?: string | null;
+    delivery_status?: string | null;
+    user_profiles?: UserProfileSummary | null;
+    addresses?: Address | null;
+    order_items?: OrderItem[];
+    order_fulfillments?: Fulfillment[];
+    order_tracking_events?: TrackingEvent[];
 }
+
+type Stage =
+    | 'vendor_packing'
+    | 'packed'
+    | 'assigned'
+    | 'processing'
+    | 'picked_up'
+    | 'shipped'
+    | 'in_transit'
+    | 'out_for_delivery'
+    | 'delivered'
+    | 'not_started'
+    | 'pending';
+
+const activeStages = new Set<Stage>(['vendor_packing', 'packed', 'assigned', 'processing', 'picked_up', 'shipped', 'in_transit', 'out_for_delivery', 'not_started', 'pending']);
 
 function normalizeStatus(status?: string | null) {
-    return (status || 'pending').replace(/_/g, ' ').toLowerCase();
+    return (status || 'pending').replace(/\s+/g, '_').toLowerCase();
 }
 
-function toDisplayStatus(status?: string | null) {
-    const normalized = normalizeStatus(status);
-    if (normalized === 'shipped') return 'IN TRANSIT';
-    return normalized.toUpperCase();
+function getFulfillment(order: ShipmentOrder) {
+    return order.order_fulfillments?.[0] || null;
 }
 
-function formatOrderId(orderId: string) {
-    return `#${orderId.slice(0, 8).toUpperCase()}`;
+function getStage(order: ShipmentOrder): Stage {
+    const deliveryStatus = normalizeStatus(order.delivery_status);
+    const fulfillmentStatus = normalizeStatus(order.fulfillment_status);
+    const fulfillment = getFulfillment(order);
+    const fulfillmentInternalStatus = normalizeStatus(fulfillment?.status);
+
+    // Primary driver: delivery_status from orders table (updated by partner)
+    if (deliveryStatus === 'assigned') return 'processing';
+    if (deliveryStatus === 'picked_up') return 'picked_up';
+    if (deliveryStatus === 'shipped') return 'shipped';
+    if (deliveryStatus === 'in_transit') return 'in_transit';
+    if (deliveryStatus === 'out_for_delivery') return 'out_for_delivery';
+    if (deliveryStatus === 'completed') return 'delivered';
+
+    // Secondary driver: fulfillment_status from orders table (updated by vendor)
+    if (fulfillmentStatus === 'packed' || fulfillmentStatus === 'ready_for_pickup') return 'packed';
+    
+    // Fallback to internal fulfillment status if available
+    if (fulfillmentInternalStatus === 'processing') return 'processing';
+    if (fulfillmentInternalStatus === 'packed' && deliveryStatus === 'picked_up') return 'picked_up';
+    if (fulfillmentInternalStatus === 'shipped') return 'shipped';
+    
+    if (fulfillmentStatus === 'pending') return 'vendor_packing';
+
+    return (deliveryStatus || fulfillmentStatus || 'pending') as Stage;
 }
 
-function formatRelativeTime(dateString: string) {
+function displayStage(stage: Stage) {
+    switch (stage) {
+        case 'vendor_packing':
+            return 'Vendor Packing';
+        case 'packed':
+            return 'Ready for Pickup';
+        case 'picked_up':
+            return 'Picked Up';
+        case 'in_transit':
+            return 'In Transit';
+        case 'out_for_delivery':
+            return 'Out for Delivery';
+        case 'not_started':
+            return 'Not Started';
+        case 'assigned':
+        case 'processing':
+            return 'Accepted';
+        default:
+            return stage.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+    }
+}
+
+function stageClass(stage: Stage) {
+    switch (stage) {
+        case 'packed':
+            return 'status-pickup';
+        case 'processing':
+        case 'assigned':
+            return 'status-processing';
+        case 'picked_up':
+            return 'status-processing';
+        case 'shipped':
+        case 'in_transit':
+            return 'status-in-transit';
+        case 'out_for_delivery':
+            return 'status-out';
+        case 'delivered':
+            return 'status-delivered';
+        default:
+            return 'status-pending';
+    }
+}
+
+function stageDescription(stage: Stage) {
+    switch (stage) {
+        case 'vendor_packing':
+            return 'Vendor is preparing the package. Delivery can monitor but not collect yet.';
+        case 'packed':
+            return 'Packed by vendor and ready for delivery partner pickup.';
+        case 'processing':
+        case 'assigned':
+            return 'Accepted by logistics. Partner is moving to collect the package.';
+        case 'picked_up':
+            return 'Package collected from vendor and is being processed for shipment.';
+        case 'shipped':
+            return 'Package collected and shipping details confirmed.';
+        case 'in_transit':
+            return 'Shipment is moving through the logistics network.';
+        case 'out_for_delivery':
+            return 'Courier is on the final delivery run.';
+        case 'delivered':
+            return 'Customer handoff completed.';
+        default:
+            return 'Waiting for logistics handoff.';
+    }
+}
+
+function shortOrderId(id: string) {
+    return `#${id.slice(0, 8).toUpperCase()}`;
+}
+
+function timeAgo(dateString?: string | null) {
+    if (!dateString) return 'just now';
     const diffMs = Date.now() - new Date(dateString).getTime();
     const minutes = Math.max(1, Math.round(diffMs / 60000));
-    if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+    if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.round(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-    const days = Math.round(hours / 24);
-    return `${days} day${days === 1 ? '' : 's'} ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.round(hours / 24)}d ago`;
 }
 
-function formatTimelineTimestamp(dateString: string) {
-    return new Date(dateString).toLocaleString([], {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+function eventLabel(status: string) {
+    return displayStage(normalizeStatus(status) as Stage);
 }
 
-function getTrackingNumber(order: Order) {
-    return `TRK-${order.id.slice(0, 4).toUpperCase()}-${order.id.slice(-4).toUpperCase()}`;
+async function hydrateShipmentOrders(orders: ShipmentOrder[]) {
+    const userIds = Array.from(new Set(orders.map((order) => order.user_id).filter(Boolean))) as string[];
+    const addressIds = Array.from(new Set(orders.map((order) => order.shipping_address_id).filter(Boolean))) as string[];
+    const profilesByUserId = new Map<string, UserProfileSummary>();
+    const addressesById = new Map<string, Address>();
+
+    if (userIds.length) {
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('user_id, display_name, email')
+            .in('user_id', userIds);
+
+        if (error) {
+            console.warn('Delivery dashboard could not hydrate customer profiles:', error);
+        } else {
+            (data || []).forEach((profile) => {
+                if (profile.user_id) profilesByUserId.set(profile.user_id, profile);
+            });
+        }
+    }
+
+    if (addressIds.length) {
+        const { data, error } = await supabase
+            .from('addresses')
+            .select('id, line1, line2, city, state, country, postal_code')
+            .in('id', addressIds);
+
+        if (error) {
+            console.warn('Delivery dashboard could not hydrate shipping addresses:', error);
+        } else {
+            (data || []).forEach((address) => {
+                if (address.id) addressesById.set(address.id, address);
+            });
+        }
+    }
+
+    return orders.map((order) => ({
+        ...order,
+        user_profiles: order.user_profiles || profilesByUserId.get(order.user_id || '') || null,
+        addresses: order.addresses || addressesById.get(order.shipping_address_id || '') || null,
+    }));
 }
 
 export function DeliveryDashboard() {
     const navigate = useNavigate();
     const { partner, loading: partnerLoading } = useDeliveryPartner();
     const { formatPrice } = useCurrency();
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [shipments, setShipments] = useState<ShipmentOrder[]>([]);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [query, setQuery] = useState('');
+    const [stageFilter, setStageFilter] = useState<'all' | Stage>('all');
+    const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+    const [shipmentModalOrder, setShipmentModalOrder] = useState<ShipmentOrder | null>(null);
     const [carrierName, setCarrierName] = useState('DHL EXPRESS');
     const [trackingNumber, setTrackingNumber] = useState('');
     const [trackingUrl, setTrackingUrl] = useState('');
-    const [creating, setCreating] = useState(false);
-    const [updatingStatus, setUpdatingStatus] = useState(false);
-    const [timelineEventsByOrderId, setTimelineEventsByOrderId] = useState<Record<string, LocalTimelineEvent[]>>({});
-    const detailsPanelRef = useRef<HTMLElement>(null);
+    const [statusError, setStatusError] = useState<string | null>(null);
 
     useEffect(() => {
         if (partnerLoading) return;
-        if (!partner) {
+        void fetchShipments();
+    }, [partnerLoading, partner?.id]);
+
+    async function fetchShipments() {
+        if (!partner && !partnerLoading) {
             setLoading(false);
             return;
         }
 
-        void fetchOrders();
-    }, [partner, partnerLoading]);
-
-    useEffect(() => {
-        detailsPanelRef.current?.scrollTo({ top: 0 });
-    }, [selectedOrder?.id]);
-
-    async function fetchOrders() {
         try {
             setLoading(true);
+            setStatusError(null);
+
+            // Fetch all paid orders that are not completed.
+            // We'll filter for assignment in memory or via a more complex query.
+            // For now, let's get orders that either have NO fulfillment OR are assigned to this partner.
             const { data, error } = await supabase
                 .from('orders')
                 .select(`
-                    *,
-                    user_profiles (*),
-                    addresses:shipping_address_id (*),
-                    order_items (*, products (*))
+                    id,
+                    user_id,
+                    status,
+                    total_amount,
+                    currency,
+                    shipping_address_id,
+                    placed_at,
+                    updated_at,
+                    fulfillment_status,
+                    delivery_status,
+                    order_items (
+                        id,
+                        product_id,
+                        quantity,
+                        unit_price,
+                        products (name, sku, product_images(url, position))
+                    ),
+                    order_fulfillments (
+                        id,
+                        status,
+                        delivery_partner_id,
+                        carrier_name,
+                        tracking_number,
+                        tracking_url,
+                        assigned_at,
+                        packed_at,
+                        shipped_at,
+                        delivered_at,
+                        estimated_delivery_at,
+                        last_status_note
+                    ),
+                    order_tracking_events (
+                        id,
+                        status,
+                        location,
+                        description,
+                        event_time
+                    )
                 `)
                 .eq('status', 'paid')
+                .or('delivery_status.is.null,delivery_status.neq.completed')
                 .order('placed_at', { ascending: false });
 
             if (error) throw error;
 
-            const nextOrders = (data || []) as Order[];
-            setOrders(nextOrders);
-            setSelectedOrder((current) => {
-                if (!nextOrders.length) return null;
-                if (!current) return nextOrders[0];
-                return nextOrders.find((order) => order.id === current.id) || nextOrders[0];
+            const hydratedOrders = await hydrateShipmentOrders((data || []) as ShipmentOrder[]);
+            
+            // Filter: 
+            // 1. Unassigned orders (delivery_partner_id is null in fulfillment)
+            // 2. Orders assigned to THIS partner
+            const filteredByPartner = hydratedOrders.filter(order => {
+                const fulfillment = getFulfillment(order);
+                return !fulfillment || !fulfillment.delivery_partner_id || fulfillment.delivery_partner_id === partner?.id;
             });
+
+            const nextShipments = filteredByPartner
+                .filter((order) => activeStages.has(getStage(order)))
+                .sort((a, b) => {
+                    const aStagePrio = bStagePriority(getStage(a));
+                    const bStagePrio = bStagePriority(getStage(b));
+                    return aStagePrio - bStagePrio || new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime();
+                });
+
+            setShipments(nextShipments);
+            setSelectedId((current) => current && nextShipments.some((order) => order.id === current)
+                ? current
+                : nextShipments[0]?.id || null);
         } catch (error) {
-            console.error('Error fetching orders:', error);
+            console.error('Error fetching delivery shipments:', error);
+            setStatusError('Delivery data could not be loaded. If rows exist, check the orders/fulfillment RLS policies for delivery partners.');
         } finally {
             setLoading(false);
         }
     }
 
-    async function handleQuickStatusUpdate(orderId: string, newStatus: string) {
-        if (!partner || updatingStatus) return;
-
-        try {
-            setUpdatingStatus(true);
-            const now = new Date().toISOString();
-            const eventDescription = `Shipment status updated to ${toDisplayStatus(newStatus)}`;
-
-            const { error: orderError } = await supabase
-                .from('orders')
-                .update({
-                    delivery_status: newStatus,
-                    updated_at: now,
-                })
-                .eq('id', orderId);
-
-            if (orderError) throw orderError;
-
-            const { error: trackingError } = await supabase.from('order_tracking_events').insert({
-                order_id: orderId,
-                status: newStatus,
-                location: partner.city || 'OPERATIONS CENTER',
-                description: eventDescription,
-                event_time: now,
-            });
-
-            if (trackingError) throw trackingError;
-
-            const optimisticEvent: LocalTimelineEvent = {
-                id: `${orderId}-${now}`,
-                status: newStatus,
-                description: eventDescription,
-                event_time: now,
-            };
-
-            setTimelineEventsByOrderId((current) => ({
-                ...current,
-                [orderId]: [optimisticEvent, ...(current[orderId] || [])],
-            }));
-            setOrders((current) => current.map((order) => (
-                order.id === orderId ? { ...order, delivery_status: newStatus } : order
-            )));
-            setSelectedOrder((current) => (
-                current?.id === orderId ? { ...current, delivery_status: newStatus } : current
-            ));
-
-            await fetchOrders();
-        } catch (error) {
-            console.error('Error updating status:', error);
-            alert('Status update failed. Please check permissions.');
-        } finally {
-            setUpdatingStatus(false);
-        }
+    function bStagePriority(stage: Stage): number {
+    switch (stage) {
+        case 'packed': return 0; // Highest priority (Ready for Pickup)
+        case 'processing': return 1;
+        case 'assigned': return 1;
+        case 'picked_up': return 2;
+        case 'shipped': return 3;
+        case 'in_transit': return 4;
+        case 'out_for_delivery': return 5;
+        case 'vendor_packing': return 6;
+        case 'delivered': return 7;
+        case 'not_started': return 8;
+        default: return 9;
     }
+}
 
-    async function handleCreateShipment() {
-        if (!selectedOrder || !partner || !trackingNumber.trim()) {
-            alert('Please provide a tracking number.');
-            return;
-        }
+    const filteredShipments = useMemo(() => {
+        const needle = query.trim().toLowerCase();
+        return shipments.filter((order) => {
+            const stage = getStage(order);
+            const matchesStage = stageFilter === 'all' || stage === stageFilter;
+            const matchesQuery = !needle ||
+                order.id.toLowerCase().includes(needle) ||
+                order.user_profiles?.display_name?.toLowerCase().includes(needle) ||
+                order.addresses?.city?.toLowerCase().includes(needle);
+            return matchesStage && matchesQuery;
+        });
+    }, [query, shipments, stageFilter]);
 
-        try {
-            setCreating(true);
-            const now = new Date().toISOString();
-            const { data: existingFulfillment } = await supabase
-                .from('order_fulfillments')
-                .select('id')
-                .eq('order_id', selectedOrder.id)
-                .maybeSingle();
+    const selectedOrder = shipments.find((order) => order.id === selectedId) || filteredShipments[0] || null;
+    const selectedStage = selectedOrder ? getStage(selectedOrder) : null;
+    const activeCount = shipments.filter((order) => getStage(order) !== 'vendor_packing').length;
+    const pickupCount = shipments.filter((order) => getStage(order) === 'packed').length;
+    const motionCount = shipments.filter((order) => ['processing', 'shipped', 'in_transit', 'out_for_delivery'].includes(getStage(order))).length;
 
-            let fulfillmentId: string | undefined = existingFulfillment?.id;
-
-            if (fulfillmentId) {
-                const { error } = await supabase
-                    .from('order_fulfillments')
-                    .update({
-                        carrier_name: carrierName,
-                        tracking_number: trackingNumber,
-                        tracking_url: trackingUrl,
-                        status: 'shipped',
-                        updated_at: now,
-                    })
-                    .eq('id', fulfillmentId);
-
-                if (error) throw error;
-            } else {
-                const { data: newFulfillment, error } = await supabase
-                    .from('order_fulfillments')
-                    .insert({
-                        order_id: selectedOrder.id,
-                        delivery_partner_id: partner.id,
-                        carrier_name: carrierName,
-                        tracking_number: trackingNumber,
-                        tracking_url: trackingUrl,
-                        status: 'shipped',
-                    })
-                    .select()
-                    .single();
-
-                if (error) throw error;
-                fulfillmentId = newFulfillment.id;
-            }
-
-            const { error: orderError } = await supabase
-                .from('orders')
-                .update({
-                    delivery_status: 'shipped',
-                    updated_at: now,
-                })
-                .eq('id', selectedOrder.id);
-
-            if (orderError) throw orderError;
-
-            const description = `Shipment initialized via ${carrierName}. Tracking: ${trackingNumber}`;
-            const { error: trackingError } = await supabase.from('order_tracking_events').insert({
-                order_id: selectedOrder.id,
-                fulfillment_id: fulfillmentId,
-                status: 'shipped',
-                location: partner.city || 'OPERATIONS CENTER',
-                description,
-                event_time: now,
-            });
-
-            if (trackingError) throw trackingError;
-
-            setTimelineEventsByOrderId((current) => ({
-                ...current,
-                [selectedOrder.id]: [
-                    {
-                        id: `${selectedOrder.id}-${now}`,
-                        status: 'shipped',
-                        description,
-                        event_time: now,
-                    },
-                    ...(current[selectedOrder.id] || []),
-                ],
-            }));
-            setSelectedOrder((current) => (
-                current?.id === selectedOrder.id ? { ...current, delivery_status: 'shipped' } : current
-            ));
-            setShowCreateModal(false);
-            setTrackingNumber('');
-            setTrackingUrl('');
-
-            await fetchOrders();
-        } catch (error) {
-            console.error('Error creating shipment:', error);
-            alert('Failed to initialize shipment.');
-        } finally {
-            setCreating(false);
-        }
-    }
-
-    function getDestination(order: Order) {
-        const city = order.addresses?.city || partner?.city || 'Lagos';
-        const country = order.addresses?.country || partner?.country || 'Nigeria';
+    function destination(order: ShipmentOrder) {
+        const city = order.addresses?.city || partner?.city || 'Unknown city';
+        const country = order.addresses?.country || partner?.country || 'Unknown country';
         return `${city}, ${country}`;
     }
 
-    function getAddressLines(order: Order) {
-        const address = order.addresses;
-        if (!address) {
-            return ['221B Baker Street', `${partner?.city || 'Lagos'}, ${partner?.country || 'Nigeria'}`, '101233, NG'];
-        }
+    function sortedEvents(order: ShipmentOrder): TrackingEvent[] {
+        const events = [...(order.order_tracking_events || [])].sort((a, b) => (
+            new Date(b.event_time).getTime() - new Date(a.event_time).getTime()
+        ));
+
+        if (events.length) return events;
 
         return [
-            address.line1 || 'Shipping address pending',
-            [address.line2, address.city, address.state].filter(Boolean).join(', '),
-            [address.postal_code, address.country].filter(Boolean).join(', '),
-        ].filter(Boolean);
-    }
-
-    function getStatusBadge(status?: string | null) {
-        const normalized = normalizeStatus(status);
-        switch (normalized) {
-            case 'processing':
-                return <span className="status-badge status-processing">PROCESSING</span>;
-            case 'in transit':
-            case 'shipped':
-                return <span className="status-badge status-in-transit">IN TRANSIT</span>;
-            case 'ready for pickup':
-                return <span className="status-badge status-pickup">READY FOR PICKUP</span>;
-            case 'out for delivery':
-                return <span className="status-badge status-out">OUT FOR DELIVERY</span>;
-            case 'delivered':
-                return <span className="status-badge status-delivered">DELIVERED</span>;
-            case 'pending':
-            default:
-                return <span className="status-badge status-pending">{toDisplayStatus(status)}</span>;
-        }
-    }
-
-    function buildTimelineEvents(order: Order, localEvents: LocalTimelineEvent[]): TimelineRow[] {
-        const eventRows: TimelineRow[] = localEvents.map((event, index) => ({
-            id: event.id,
-            title: toDisplayStatus(event.status),
-            timestamp: formatTimelineTimestamp(event.event_time),
-            description: event.description,
-            state: index === 0 ? 'active' : 'done',
-        }));
-
-        return [
-            ...eventRows,
             {
-                id: `${order.id}-pickup`,
-                title: 'VENDOR READY FOR PICKUP',
-                timestamp: formatTimelineTimestamp(new Date().toISOString()),
-                description: 'Awaiting carrier assignment',
-                state: eventRows.length ? 'done' : 'active',
-            },
-            {
-                id: `${order.id}-paid`,
-                title: 'ORDER PAID & VERIFIED',
-                timestamp: formatTimelineTimestamp(order.placed_at),
-                description: 'Transaction verified successfully',
-                state: 'done',
-            },
-            {
-                id: `${order.id}-terminal`,
-                title: 'IN TRANSIT TO TERMINAL',
-                timestamp: 'Scheduled',
-                description: 'Next logistics handoff',
-                state: 'future',
+                id: `${order.id}-synthetic-paid`,
+                status: 'pending',
+                description: 'Order paid successfully. Waiting for fulfillment processing.',
+                location: destination(order),
+                event_time: order.placed_at,
             },
         ];
     }
 
-    const selectedStatus = normalizeStatus(selectedOrder?.delivery_status);
-    const selectedTimelineEvents = selectedOrder
-        ? buildTimelineEvents(selectedOrder, timelineEventsByOrderId[selectedOrder.id] || [])
-        : [];
+    async function writeTrackingEvent(order: ShipmentOrder, status: string, description: string, fulfillmentId?: string) {
+        const now = new Date().toISOString();
+        const { error } = await supabase.from('order_tracking_events').insert({
+            order_id: order.id,
+            fulfillment_id: fulfillmentId,
+            status,
+            location: partner?.city || 'Delivery Operations',
+            description,
+            event_time: now,
+        });
+
+        if (error) throw error;
+
+        setShipments((current) => current.map((item) => item.id === order.id
+            ? {
+                ...item,
+                order_tracking_events: [
+                    {
+                        id: `${order.id}-${status}-${now}`,
+                        status,
+                        location: partner?.city || 'Delivery Operations',
+                        description,
+                        event_time: now,
+                    },
+                    ...(item.order_tracking_events || []),
+                ],
+            }
+            : item));
+    }
+
+    async function ensureFulfillment(order: ShipmentOrder, status: string, details: Partial<Fulfillment> = {}) {
+        const fulfillment = getFulfillment(order);
+        const now = new Date().toISOString();
+        const timestampFields = {
+            ...(status === 'processing' && !fulfillment?.assigned_at ? { assigned_at: now } : {}),
+            ...(status === 'packed' ? { packed_at: now } : {}),
+            ...(status === 'shipped' ? { shipped_at: now } : {}),
+            ...(status === 'delivered' ? { delivered_at: now } : {}),
+        };
+        const payload = {
+            status,
+            delivery_partner_id: partner?.id,
+            updated_at: now,
+            ...timestampFields,
+            ...details,
+        };
+
+        try {
+            if (fulfillment?.id) {
+                const { error } = await supabase
+                    .from('order_fulfillments')
+                    .update(payload)
+                    .eq('id', fulfillment.id);
+                if (error) throw error;
+                return fulfillment.id;
+            }
+
+            const { data, error } = await supabase
+                .from('order_fulfillments')
+                .insert({
+                    order_id: order.id,
+                    ...payload,
+                })
+                .select('id')
+                .single();
+
+            if (error) throw error;
+            return data.id as string;
+        } catch (error) {
+            console.warn('Fulfillment write failed; order/tracking update will continue if allowed by RLS.', error);
+            return fulfillment?.id;
+        }
+    }
+
+    async function updateShipmentStatus(order: ShipmentOrder, action: 'accept' | 'pickup' | 'transit' | 'out_for_delivery' | 'deliver' | 'shipped', details: Partial<Fulfillment> = {}) {
+        if (!partner) {
+            setStatusError('You must be logged in as a delivery partner to perform this action.');
+            return;
+        }
+
+        try {
+            setUpdatingOrderId(order.id);
+            setStatusError(null);
+            const now = new Date().toISOString();
+            const oldStage = getStage(order);
+
+            let newFulfillmentStatus: string = 'processing';
+            let orderDeliveryStatus = '';
+            let orderFulfillmentStatus = order.fulfillment_status;
+            let note = '';
+            let location = partner.city || 'OPERATIONS CENTER';
+            let description = '';
+
+            switch (action) {
+                case 'accept':
+                    newFulfillmentStatus = 'processing';
+                    orderDeliveryStatus = 'assigned';
+                    note = 'Delivery partner accepted order';
+                    description = 'Delivery partner accepted the order';
+                    location = 'dispatch center';
+                    break;
+                case 'pickup':
+                    newFulfillmentStatus = 'packed'; // Match matrix Step 3: status = 'packed' in order_fulfillments
+                    orderDeliveryStatus = 'picked_up';
+                    note = 'Package picked up from vendor';
+                    description = 'Package picked up from vendor';
+                    location = 'vendor warehouse';
+                    break;
+                case 'transit':
+                    newFulfillmentStatus = 'in_transit';
+                    orderDeliveryStatus = 'in_transit';
+                    note = 'Package is in transit';
+                    description = 'Package is in transit';
+                    break;
+                case 'out_for_delivery':
+                    newFulfillmentStatus = 'out_for_delivery';
+                    orderDeliveryStatus = 'out_for_delivery';
+                    note = 'Package is out for delivery';
+                    description = 'Package is out for delivery';
+                    break;
+                case 'deliver':
+                    newFulfillmentStatus = 'delivered';
+                    orderDeliveryStatus = 'completed';
+                    orderFulfillmentStatus = 'delivered';
+                    note = 'Order delivered successfully';
+                    description = 'Order delivered successfully';
+                    location = 'customer address';
+                    break;
+                case 'shipped':
+                    newFulfillmentStatus = 'shipped';
+                    orderDeliveryStatus = 'shipped';
+                    note = 'Shipment created with tracking';
+                    description = `Shipped via ${details.carrier_name || 'DHL'} — Tracking #${details.tracking_number || 'XXX'}`;
+                    location = 'sorting center';
+                    break;
+                default:
+                    newFulfillmentStatus = action;
+            }
+
+            const fulfillmentId = await ensureFulfillment(order, newFulfillmentStatus, details);
+
+            const { error: orderError } = await supabase
+                .from('orders')
+                .update({
+                    fulfillment_status: orderFulfillmentStatus,
+                    delivery_status: orderDeliveryStatus,
+                    updated_at: now,
+                })
+                .eq('id', order.id);
+
+            if (orderError) throw orderError;
+
+            // Insert Tracking Event
+            await supabase.from('order_tracking_events').insert({
+                order_id: order.id,
+                fulfillment_id: fulfillmentId,
+                status: newFulfillmentStatus,
+                location: location,
+                description,
+                event_time: now,
+            });
+
+            // Insert Status History
+            await supabase.from('order_status_history').insert({
+                order_id: order.id,
+                status_type: 'fulfillment',
+                old_value: oldStage,
+                new_value: newFulfillmentStatus,
+                note: note || description,
+                changed_by: partner.user_id,
+                created_at: now
+            });
+
+            // Update local state
+            setShipments((current) => current.map((item) => item.id === order.id
+                ? {
+                    ...item,
+                    fulfillment_status: orderFulfillmentStatus,
+                    delivery_status: orderDeliveryStatus,
+                    updated_at: now,
+                    order_fulfillments: [
+                        {
+                            ...(getFulfillment(item) || { id: fulfillmentId || `${order.id}-local`, status: newFulfillmentStatus }),
+                            ...details,
+                            status: newFulfillmentStatus,
+                        } as Fulfillment,
+                    ],
+                    order_tracking_events: [
+                        {
+                            id: `${order.id}-${newFulfillmentStatus}-${now}`,
+                            status: newFulfillmentStatus,
+                            location: location,
+                            description,
+                            event_time: now,
+                        },
+                        ...(item.order_tracking_events || []),
+                    ],
+                }
+                : item));
+        } catch (error) {
+            console.error('Shipment update failed:', error);
+            setStatusError('Status update failed. The UI is wired correctly, but the database policy may not allow this delivery partner to update the order yet.');
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    }
+
+    async function confirmShipment() {
+        if (!shipmentModalOrder || !carrierName.trim() || !trackingNumber.trim()) {
+            setStatusError('Carrier name and tracking number are required to confirm shipment.');
+            return;
+        }
+
+        await updateShipmentStatus(shipmentModalOrder, 'shipped', {
+            carrier_name: carrierName.trim(),
+            tracking_number: trackingNumber.trim(),
+            tracking_url: trackingUrl.trim() || null,
+        });
+        setShipmentModalOrder(null);
+        setTrackingNumber('');
+        setTrackingUrl('');
+    }
+
+    const filterOptions: Array<{ id: 'all' | Stage; label: string }> = [
+        { id: 'all', label: 'All' },
+        { id: 'packed', label: 'Pickup' },
+        { id: 'processing', label: 'Processing' },
+        { id: 'shipped', label: 'Shipped' },
+        { id: 'out_for_delivery', label: 'Final Mile' },
+    ];
 
     return (
-        <div className="delivery-content-row">
-            <section className="delivery-panel-left p-8 lg:p-12">
-                <div className="flex items-center justify-between border-b-2 border-black pb-4 mb-8">
-                    <div>
-                        <p className="label-caps text-zinc-500 mb-1">LIVE OPERATIONS</p>
-                        <h2 className="text-[32px] font-bold text-black tracking-tight leading-none">Active Shipments</h2>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <span className="pulse-dot w-2 h-2 bg-[#D4AF37] rounded-full" />
-                        <span className="label-caps text-black">{orders.length} ACTIVE SHIPMENTS</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2 mb-8">
-                    <button type="button" className="px-4 py-1 border border-black text-[12px] font-bold uppercase tracking-[0.1em] bg-white hover:bg-black hover:text-white transition-all">
-                        FILTERS
-                    </button>
-                    <button type="button" className="px-4 py-1 border border-zinc-200 text-[12px] font-bold uppercase tracking-[0.1em] bg-white text-zinc-400 hover:text-black hover:border-black transition-all">
-                        SORT BY DATE
-                    </button>
-                </div>
-
-                <div className="space-y-6">
-                    {loading ? (
-                        <div className="py-20 text-center border border-zinc-100">
-                            <Loader2 className="animate-spin text-[#D4AF37] mx-auto mb-4" size={32} />
-                            <p className="label-caps text-zinc-400">Synchronizing Manifest...</p>
+        <div className="delivery-page">
+            <div className="delivery-dashboard-grid">
+                <section className="space-y-5">
+                    <div className="delivery-command-card p-6">
+                        <div className="flex items-start justify-between gap-6">
+                            <div>
+                                <p className="label-caps text-[#80601a] mb-3">Operations Command</p>
+                                <h1 className="text-[34px] font-black tracking-[-0.03em] text-black leading-none">Shipment Flow</h1>
+                                <p className="text-[13px] text-zinc-600 mt-3 max-w-xl">
+                                    Live logistics queue from paid orders, vendor handoff, fulfillment records, and customer tracking events.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => void fetchShipments()}
+                                className="delivery-metal-gold px-5 py-3 text-[11px] font-black uppercase tracking-[0.14em]"
+                            >
+                                Refresh
+                            </button>
                         </div>
-                    ) : orders.length === 0 ? (
-                        <div className="py-20 text-center border border-zinc-100">
-                            <Package className="text-zinc-100 mx-auto mb-4" size={64} />
-                            <p className="label-caps text-zinc-400">No active shipments</p>
+
+                        <div className="grid grid-cols-3 gap-3 mt-6">
+                            <div className="delivery-metal-panel p-4">
+                                <p className="label-caps text-[#d7b65d] mb-3">Active</p>
+                                <p className="text-3xl font-black">{activeCount}</p>
+                            </div>
+                            <div className="bg-white border border-black/10 p-4">
+                                <p className="label-caps text-zinc-400 mb-3">Pickup Ready</p>
+                                <p className="text-3xl font-black text-black">{pickupCount}</p>
+                            </div>
+                            <div className="bg-white border border-black/10 p-4">
+                                <p className="label-caps text-zinc-400 mb-3">In Motion</p>
+                                <p className="text-3xl font-black text-black">{motionCount}</p>
+                            </div>
                         </div>
-                    ) : (
-                        orders.map((order) => {
-                            const isSelected = selectedOrder?.id === order.id;
+                    </div>
 
-                            return (
-                                <div
-                                    key={order.id}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => setSelectedOrder(order)}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter' || event.key === ' ') {
-                                            event.preventDefault();
-                                            setSelectedOrder(order);
-                                        }
-                                    }}
-                                    className={`delivery-card p-6 ${isSelected ? 'delivery-card-active' : ''}`}
-                                >
-                                    {isSelected && <div className="delivery-card-corner" />}
+                    <div className="delivery-command-card p-4">
+                        <div className="flex flex-col xl:flex-row gap-3">
+                            <label className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                                <input
+                                    value={query}
+                                    onChange={(event) => setQuery(event.target.value)}
+                                    placeholder="Search order, customer, city..."
+                                    className="delivery-soft-input w-full py-3 pl-11 pr-4 text-sm"
+                                />
+                            </label>
+                            <div className="flex gap-2 overflow-x-auto">
+                                {filterOptions.map((filter) => (
+                                    <button
+                                        key={filter.id}
+                                        type="button"
+                                        onClick={() => setStageFilter(filter.id)}
+                                        className={`px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] border ${
+                                            stageFilter === filter.id
+                                                ? 'bg-black text-white border-black'
+                                                : 'bg-white text-zinc-500 border-black/10 hover:border-black'
+                                        }`}
+                                    >
+                                        {filter.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-                                    <div className="flex justify-between items-start mb-4">
-                                        <p className={`label-caps ${isSelected ? 'text-[#D4AF37]' : 'text-zinc-400'}`}>
-                                            {formatOrderId(order.id)}
-                                        </p>
-                                        <p className="text-[20px] font-semibold text-black tracking-tight">
-                                            {formatPrice(order.total_amount)}
-                                        </p>
-                                    </div>
+                    {statusError && (
+                        <div className="bg-white border border-[#9f7418] p-4 flex gap-3 text-sm text-zinc-700">
+                            <AlertCircle className="text-[#9f7418] shrink-0" size={18} />
+                            <p>{statusError}</p>
+                        </div>
+                    )}
 
-                                    <div className="flex justify-between items-end">
-                                        <div>
-                                            <h3 className={`text-[20px] font-semibold tracking-tight leading-none mb-2 ${isSelected ? 'text-black' : 'text-zinc-800'}`}>
-                                                {order.user_profiles?.display_name || 'Guest User'}
-                                            </h3>
-                                            <div className="flex items-center gap-2 text-zinc-500 text-[14px]">
-                                                <MapPin size={14} />
-                                                <span>{getDestination(order)}</span>
+                    <div className="space-y-4">
+                        {loading ? (
+                            <div className="delivery-command-card py-24 text-center">
+                                <Loader2 className="animate-spin mx-auto mb-4 text-[#9f7418]" size={34} />
+                                <p className="label-caps text-zinc-400">Loading logistics queue</p>
+                            </div>
+                        ) : filteredShipments.length === 0 ? (
+                            <div className="delivery-command-card p-10 text-center">
+                                <Boxes className="mx-auto mb-5 text-zinc-300" size={54} />
+                                <h3 className="text-xl font-black text-black">No visible shipments yet</h3>
+                                <p className="text-sm text-zinc-500 mt-3 max-w-md mx-auto">
+                                    Paid orders will appear here once the database policies allow delivery partners to read them and vendors mark items packed.
+                                </p>
+                            </div>
+                        ) : (
+                            filteredShipments.map((order) => {
+                                const stage = getStage(order);
+                                const active = selectedOrder?.id === order.id;
+                                const fulfillment = getFulfillment(order);
+
+                                return (
+                                    <article
+                                        key={order.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setSelectedId(order.id)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                setSelectedId(order.id);
+                                            }
+                                        }}
+                                        className={`delivery-queue-card p-5 pl-7 cursor-pointer ${active ? 'delivery-queue-card-active' : ''}`}
+                                    >
+                                        <div className="delivery-stage-rail" />
+                                        <div className="flex items-start justify-between gap-5">
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <p className="font-mono text-sm font-black text-black">{shortOrderId(order.id)}</p>
+                                                    <span className={`status-badge ${stageClass(stage)}`}>{displayStage(stage)}</span>
+                                                </div>
+                                                <h2 className="text-[21px] font-black tracking-[-0.02em] text-black">
+                                                    {order.user_profiles?.display_name || 'Customer'}
+                                                </h2>
+                                                <p className="text-sm text-zinc-500 flex items-center gap-2 mt-1">
+                                                    <MapPin size={14} />
+                                                    {destination(order)}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[22px] font-black text-black">{formatPrice(order.total_amount)}</p>
+                                                <p className="label-caps text-zinc-400 mt-2">{timeAgo(order.updated_at || order.placed_at)}</p>
                                             </div>
                                         </div>
-                                        {getStatusBadge(order.delivery_status)}
-                                    </div>
 
-                                    <div className="mt-6 pt-4 border-t border-zinc-100 grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">TRACKING NUMBER</p>
-                                            <p className="text-[12px] font-bold text-black font-mono">{getTrackingNumber(order)}</p>
+                                        <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-zinc-100">
+                                            <div>
+                                                <p className="label-caps text-zinc-400 mb-1">Items</p>
+                                                <p className="text-sm font-black">{order.order_items?.length || 0}</p>
+                                            </div>
+                                            <div>
+                                                <p className="label-caps text-zinc-400 mb-1">Carrier</p>
+                                                <p className="text-sm font-black truncate">{fulfillment?.carrier_name || 'Unassigned'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="label-caps text-zinc-400 mb-1">Tracking</p>
+                                                <p className="text-sm font-black truncate">{fulfillment?.tracking_number || 'Pending'}</p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">LAST UPDATED</p>
-                                            <p className="text-[12px] font-bold text-black">{formatRelativeTime(order.placed_at)}</p>
-                                        </div>
-                                    </div>
 
-                                    {isSelected && (
-                                        <div className="mt-4 flex items-center gap-3">
-                                            <span className="px-3 py-2 border border-black text-[10px] font-bold uppercase tracking-[0.1em] leading-none">
-                                                Ready for Pickup
-                                            </span>
-                                            <ArrowRight size={14} className="text-[#D4AF37]" />
+                                        <div className="flex justify-between items-center mt-5">
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    navigate(`/delivery/orders/${order.id}`);
+                                                }}
+                                                className="text-[11px] font-black uppercase tracking-[0.14em] text-black flex items-center gap-2 hover:text-[#80601a]"
+                                            >
+                                                Details
+                                                <ArrowRight size={14} />
+                                            </button>
+                                            {stage === 'packed' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        void updateShipmentStatus(order, 'accept');
+                                                    }}
+                                                    disabled={updatingOrderId === order.id}
+                                                    className="delivery-metal-gold px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] disabled:opacity-50"
+                                                >
+                                                    Accept Order
+                                                </button>
+                                            )}
+                                        </div>
+                                    </article>
+                                );
+                            })
+                        )}
+                    </div>
+                </section>
+
+                <aside className="delivery-insight-card p-6 self-start sticky top-[104px] max-h-[calc(100vh-128px)] overflow-y-auto">
+                    {selectedOrder && selectedStage ? (
+                        <div className="space-y-7">
+                            <div className="delivery-metal-panel p-6">
+                                <p className="label-caps text-[#d7b65d] mb-3">Fulfillment Management</p>
+                                <div className="flex items-start justify-between gap-5">
+                                    <div>
+                                        <h2 className="text-4xl font-black tracking-[-0.04em]">{shortOrderId(selectedOrder.id)}</h2>
+                                        <p className="text-sm text-zinc-300 mt-2">{stageDescription(selectedStage)}</p>
+                                    </div>
+                                    <span className={`status-badge ${stageClass(selectedStage)}`}>{displayStage(selectedStage)}</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white border border-zinc-200 p-5">
+                                    <p className="label-caps text-zinc-400 mb-4">Customer</p>
+                                    <h3 className="text-xl font-black text-black">{selectedOrder.user_profiles?.display_name || 'Customer'}</h3>
+                                    <p className="text-sm text-zinc-500 mt-1">{selectedOrder.user_profiles?.email || 'No email available'}</p>
+                                </div>
+                                <div className="bg-white border border-zinc-200 p-5">
+                                    <p className="label-caps text-zinc-400 mb-4">Destination</p>
+                                    <h3 className="text-base font-black text-black">{selectedOrder.addresses?.line1 || 'Address pending'}</h3>
+                                    <p className="text-sm text-zinc-500 mt-1">{destination(selectedOrder)}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white border border-black">
+                                <div className="px-5 py-4 bg-zinc-50 border-b border-zinc-100 flex justify-between">
+                                    <p className="label-caps text-black">Consignment</p>
+                                    <p className="label-caps text-zinc-400">{selectedOrder.order_items?.length || 0} items</p>
+                                </div>
+                                <div className="divide-y divide-zinc-100">
+                                    {(selectedOrder.order_items || []).slice(0, 4).map((item, index) => (
+                                        <div key={item.id} className="p-5 flex gap-4">
+                                            <div className="w-12 h-12 bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0">
+                                                {index % 2 === 0 ? <Headphones size={19} className="text-zinc-400" /> : <Plug size={19} className="text-zinc-400" />}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex justify-between gap-4">
+                                                    <p className="text-sm font-black text-black truncate">{item.products?.name || 'Product'}</p>
+                                                    <p className="text-sm font-black text-black">{formatPrice(item.unit_price)}</p>
+                                                </div>
+                                                <p className="text-xs text-zinc-500 mt-1">SKU: {item.products?.sku || item.product_id.slice(0, 8).toUpperCase()} - Qty {item.quantity}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {!selectedOrder.order_items?.length && (
+                                        <div className="p-8 text-center">
+                                            <p className="label-caps text-zinc-400">No item rows visible</p>
                                         </div>
                                     )}
                                 </div>
-                            );
-                        })
-                    )}
-                </div>
-            </section>
+                            </div>
 
-            <aside ref={detailsPanelRef} className="delivery-panel-right p-8 lg:p-12">
-                {selectedOrder ? (
-                    <div className="space-y-12">
-                        <header>
-                            <p className="label-caps text-[#D4AF37] mb-2">ORDER DETAILS</p>
-                            <div className="flex justify-between items-start gap-6 mb-4">
-                                <h2 className="text-[48px] font-bold text-black tracking-tighter leading-none">
-                                    {formatOrderId(selectedOrder.id)}
-                                </h2>
-                                <div className="text-right shrink-0">
-                                    <span className="inline-block px-3 py-1 bg-black text-white text-[11px] font-bold uppercase tracking-[0.15em]">PAYMENT PAID</span>
-                                    <p className="text-[12px] text-zinc-400 uppercase font-bold mt-2">VIA PAYSTACK</p>
+                            <div className="bg-white border border-zinc-200 p-6">
+                                <p className="label-caps text-zinc-400 mb-7">Live Timeline</p>
+                                <div className="delivery-timeline space-y-8">
+                                    {sortedEvents(selectedOrder).slice(0, 5).map((event, index) => (
+                                        <div key={event.id} className="relative flex gap-5">
+                                            <div className={`delivery-timeline-dot ${index === 0 ? 'delivery-timeline-dot-active' : 'delivery-timeline-dot-done'}`} />
+                                            <div>
+                                                <p className="text-sm font-black uppercase text-black">{eventLabel(event.status)}</p>
+                                                <p className="text-xs text-zinc-500 mt-1">{event.description || stageDescription(normalizeStatus(event.status) as Stage)}</p>
+                                                <p className="label-caps text-zinc-400 mt-2">{new Date(event.event_time).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        </header>
 
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                            <div className="bg-white border border-zinc-200 p-6">
-                                <p className="label-caps text-zinc-400 mb-4">RECIPIENT</p>
-                                <h3 className="text-[20px] font-semibold text-black mb-2">{selectedOrder.user_profiles?.display_name || 'Guest User'}</h3>
-                                <p className="text-[14px] text-zinc-600 mb-1">+234 800 000 0000</p>
-                                <p className="text-[14px] text-zinc-600 truncate">{selectedOrder.user_profiles?.email || 'delivery@mysuperstore.com'}</p>
-                            </div>
-                            <div className="bg-white border border-zinc-200 p-6">
-                                <p className="label-caps text-zinc-400 mb-4">SHIPPING ADDRESS</p>
-                                {getAddressLines(selectedOrder).map((line, index) => (
-                                    <p
-                                        key={line}
-                                        className={`text-[14px] ${index === 0 ? 'font-bold text-zinc-800' : 'text-zinc-600'} mb-1`}
-                                    >
-                                        {line}
-                                    </p>
-                                ))}
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => void updateShipmentStatus(selectedOrder, 'accept')}
+                                    disabled={updatingOrderId === selectedOrder.id || selectedStage === 'processing'}
+                                    className="prestige-btn-secondary border-black"
+                                >
+                                    Accept Order
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void updateShipmentStatus(selectedOrder, 'pickup')}
+                                    disabled={updatingOrderId === selectedOrder.id || selectedStage !== 'processing'}
+                                    className="prestige-btn-secondary border-black"
+                                >
+                                    Mark Picked Up
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShipmentModalOrder(selectedOrder)}
+                                    disabled={updatingOrderId === selectedOrder.id || selectedStage === 'vendor_packing' || selectedStage === 'delivered'}
+                                    className="prestige-btn-primary"
+                                >
+                                    Confirm Shipment
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void updateShipmentStatus(selectedOrder, 'transit')}
+                                    disabled={updatingOrderId === selectedOrder.id || (selectedStage !== 'shipped' && selectedStage !== 'packed')}
+                                    className="prestige-btn-primary"
+                                >
+                                    In Transit
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void updateShipmentStatus(selectedOrder, 'out_for_delivery')}
+                                    disabled={updatingOrderId === selectedOrder.id || selectedStage !== 'in_transit'}
+                                    className="prestige-btn-secondary border-black"
+                                >
+                                    Out For Delivery
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void updateShipmentStatus(selectedOrder, 'deliver')}
+                                    disabled={updatingOrderId === selectedOrder.id || selectedStage !== 'out_for_delivery'}
+                                    className="delivery-metal-gold text-[12px] font-black uppercase tracking-[0.1em]"
+                                >
+                                    Mark Delivered
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(`/delivery/orders/${selectedOrder.id}`)}
+                                    className="prestige-btn-secondary border-black col-span-2"
+                                >
+                                    Open Full Logistics Details
+                                </button>
                             </div>
                         </div>
-
-                        <div className="border border-black bg-white overflow-hidden">
-                            <div className="bg-zinc-50 px-6 py-4 border-b border-zinc-100">
-                                <p className="label-caps text-black">CONSIGNMENT LIST</p>
-                            </div>
-                            <div className="divide-y divide-zinc-100">
-                                {selectedOrder.order_items?.length ? selectedOrder.order_items.map((item, index) => (
-                                    <div key={item.id} className="p-6 flex gap-4">
-                                        <div className="w-12 h-12 bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0">
-                                            {index === 0 ? (
-                                                <Headphones size={20} className="text-zinc-400" />
-                                            ) : (
-                                                <Plug size={20} className="text-zinc-400" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start gap-4 mb-1">
-                                                <p className="text-[14px] font-bold text-black">{item.products?.name || 'Manifest Item'}</p>
-                                                <p className="text-[14px] font-bold text-black shrink-0">{formatPrice(item.unit_price)}</p>
-                                            </div>
-                                            <div className="flex justify-between items-center text-[12px] text-zinc-500">
-                                                <p className="font-mono">SKU: {item.product_id.slice(0, 8).toUpperCase()}</p>
-                                                <p>QTY: {item.quantity}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <div className="p-6 text-center">
-                                        <p className="label-caps text-zinc-400">Consignment items unavailable</p>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="p-6 bg-white border-t border-black flex justify-between items-center">
-                                <p className="text-[16px] font-bold text-black">TOTAL VALUE</p>
-                                <p className="text-[20px] font-bold text-[#D4AF37]">{formatPrice(selectedOrder.total_amount)}</p>
-                            </div>
+                    ) : (
+                        <div className="min-h-[520px] flex flex-col items-center justify-center text-center">
+                            <ShieldCheck className="text-zinc-300 mb-5" size={58} />
+                            <h2 className="text-2xl font-black text-black">No shipment selected</h2>
+                            <p className="text-sm text-zinc-500 mt-3 max-w-sm">
+                                Select an order from the queue to inspect customer details, consignment, timeline, and available logistics actions.
+                            </p>
                         </div>
+                    )}
+                </aside>
+            </div>
 
-                        <div className="bg-white border border-zinc-200 p-8">
-                            <p className="label-caps text-zinc-400 mb-8 tracking-[0.2em]">TRACKING HISTORY</p>
-                            <div className="delivery-timeline space-y-12">
-                                {selectedTimelineEvents.map((event) => (
-                                    <div key={event.id} className={`relative flex gap-6 items-start ${event.state === 'future' ? 'opacity-40' : ''}`}>
-                                        <div className={`delivery-timeline-dot ${
-                                            event.state === 'active'
-                                                ? 'delivery-timeline-dot-active'
-                                                : event.state === 'future'
-                                                    ? 'delivery-timeline-dot-future'
-                                                    : 'delivery-timeline-dot-done'
-                                        }`} />
-                                        <div>
-                                            <p className={`text-[14px] font-bold uppercase mb-1 ${event.state === 'future' ? 'text-zinc-800' : 'text-black'}`}>
-                                                {event.title}
-                                            </p>
-                                            <p className="text-[12px] text-zinc-400">{event.timestamp}</p>
-                                            <p className="text-[12px] text-zinc-500 mt-1">{event.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                type="button"
-                                onClick={() => handleQuickStatusUpdate(selectedOrder.id, 'processing')}
-                                disabled={updatingStatus || selectedStatus === 'processing'}
-                                className="prestige-btn-gold py-4"
-                            >
-                                ACCEPT ORDER
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleQuickStatusUpdate(selectedOrder.id, 'ready for pickup')}
-                                disabled={updatingStatus || selectedStatus === 'ready for pickup'}
-                                className="prestige-btn-secondary py-4 border-black"
-                            >
-                                MARK PICKED UP
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowCreateModal(true)}
-                                className="prestige-btn-primary py-4"
-                            >
-                                CREATE SHIPMENT
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleQuickStatusUpdate(selectedOrder.id, 'in transit')}
-                                disabled={updatingStatus || selectedStatus === 'in transit' || selectedStatus === 'shipped'}
-                                className="prestige-btn-primary py-4"
-                            >
-                                MARK IN TRANSIT
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleQuickStatusUpdate(selectedOrder.id, 'out for delivery')}
-                                disabled={updatingStatus || selectedStatus === 'out for delivery'}
-                                className="prestige-btn-secondary py-4"
-                            >
-                                OUT FOR DELIVERY
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleQuickStatusUpdate(selectedOrder.id, 'delivered')}
-                                disabled={updatingStatus || selectedStatus === 'delivered'}
-                                className="prestige-btn-gold py-4 metallic-shadow"
-                            >
-                                MARK DELIVERED
-                            </button>
-                        </div>
-
+            {shipmentModalOrder && (
+                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white border-2 border-[#9f7418] ring-2 ring-black max-w-lg w-full p-8 relative">
                         <button
                             type="button"
-                            onClick={() => navigate(`/delivery/orders/${selectedOrder.id}`)}
-                            className="w-full prestige-btn-primary flex items-center justify-center gap-3"
+                            onClick={() => setShipmentModalOrder(null)}
+                            className="absolute top-6 right-6 text-zinc-400 hover:text-black"
+                            aria-label="Close shipment confirmation"
                         >
-                            FULL LOGISTICS PROFILE
-                            <ArrowRight size={18} />
+                            <X size={22} />
                         </button>
-                    </div>
-                ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                        <AlertCircle size={64} className="mb-4 text-zinc-400" />
-                        <p className="label-caps text-zinc-500">SELECT A SHIPMENT TO VIEW OPERATIONAL INSIGHTS</p>
-                    </div>
-                )}
-            </aside>
+                        <p className="label-caps text-zinc-400 mb-2">Carrier Handoff</p>
+                        <h2 className="text-3xl font-black tracking-[-0.03em] text-black mb-8">Confirm Shipment</h2>
 
-            <button type="button" className="delivery-fab" aria-label="Open delivery map">
-                <MapIcon size={30} />
-            </button>
-
-            {showCreateModal && (
-                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-lg border-2 border-[#D4AF37] ring-2 ring-black p-8 relative">
-                        <button
-                            type="button"
-                            onClick={() => setShowCreateModal(false)}
-                            className="absolute top-6 right-6 text-zinc-400 hover:text-black transition-colors"
-                            aria-label="Close create shipment modal"
-                        >
-                            <X size={24} />
-                        </button>
-
-                        <div className="mb-8">
-                            <p className="label-caps text-zinc-400 mb-1">NEW LOGISTICS ENTRY</p>
-                            <h2 className="text-[24px] font-bold text-black uppercase">CREATE SHIPMENT</h2>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-[14px] font-semibold text-black mb-2 uppercase">CARRIER NAME</label>
-                                <select
+                        <div className="space-y-5">
+                            <label className="block">
+                                <span className="text-sm font-black uppercase tracking-[0.08em]">Carrier Name</span>
+                                <input
                                     value={carrierName}
                                     onChange={(event) => setCarrierName(event.target.value)}
-                                    className="w-full p-4 bg-white border border-zinc-200 outline-none focus:border-black text-sm uppercase font-bold tracking-wider"
-                                >
-                                    <option>DHL EXPRESS</option>
-                                    <option>FEDEX PRIORITY</option>
-                                    <option>UPS WORLDWIDE</option>
-                                    <option>GIG LOGISTICS</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-[14px] font-semibold text-black mb-2 uppercase">TRACKING NUMBER</label>
+                                    className="delivery-soft-input w-full mt-2 p-4 text-sm font-bold uppercase"
+                                    placeholder="DHL, FedEx, GIG Logistics"
+                                />
+                            </label>
+                            <label className="block">
+                                <span className="text-sm font-black uppercase tracking-[0.08em]">Tracking Number</span>
                                 <input
-                                    type="text"
                                     value={trackingNumber}
                                     onChange={(event) => setTrackingNumber(event.target.value)}
-                                    className="w-full p-4 bg-white border border-zinc-200 outline-none focus:border-black text-sm uppercase font-bold tracking-wider font-mono"
-                                    placeholder="ENTER ALPHANUMERIC CODE"
+                                    className="delivery-soft-input w-full mt-2 p-4 text-sm font-mono font-bold uppercase"
+                                    placeholder="Enter tracking code"
                                 />
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="text-[14px] font-semibold text-black uppercase">TRACKING URL</label>
-                                    <span className="label-caps text-zinc-400">OPTIONAL</span>
-                                </div>
-                                <div className="relative">
-                                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                            </label>
+                            <label className="block">
+                                <span className="flex justify-between text-sm font-black uppercase tracking-[0.08em]">
+                                    Tracking URL
+                                    <span className="label-caps text-zinc-400">Optional</span>
+                                </span>
+                                <span className="relative block mt-2">
+                                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={17} />
                                     <input
-                                        type="text"
                                         value={trackingUrl}
                                         onChange={(event) => setTrackingUrl(event.target.value)}
-                                        className="w-full p-4 pl-12 bg-white border border-zinc-200 outline-none focus:border-black text-sm placeholder:text-zinc-300"
+                                        className="delivery-soft-input w-full p-4 pl-11 text-sm"
                                         placeholder="https://..."
                                     />
-                                </div>
-                            </div>
+                                </span>
+                            </label>
+                        </div>
 
-                            <div className="flex gap-4 p-4 bg-zinc-50 border border-zinc-200">
-                                <AlertCircle className="text-[#D4AF37] shrink-0" size={20} />
-                                <p className="text-[13px] text-zinc-600 leading-relaxed">
-                                    Providing a tracking URL allows the client to access a real-time white-labeled tracking dashboard immediately upon confirmation.
-                                </p>
-                            </div>
-
-                            <div className="flex gap-4 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="flex-1 py-4 border border-black font-bold uppercase tracking-widest text-[14px] hover:bg-zinc-50 transition-all"
-                                    disabled={creating}
-                                >
-                                    CANCEL
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCreateShipment}
-                                    className="flex-1 py-4 gold-gradient border border-black font-bold uppercase tracking-widest text-[14px] hover:brightness-105 transition-all flex items-center justify-center gap-2"
-                                    disabled={creating}
-                                >
-                                    {creating ? <Loader2 className="animate-spin" size={18} /> : 'CONFIRM SHIPMENT'}
-                                </button>
-                            </div>
+                        <div className="flex gap-3 mt-8">
+                            <button
+                                type="button"
+                                onClick={() => setShipmentModalOrder(null)}
+                                className="prestige-btn-secondary flex-1 border-black"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void confirmShipment()}
+                                disabled={updatingOrderId === shipmentModalOrder.id}
+                                className="delivery-metal-gold flex-1 text-[12px] font-black uppercase tracking-[0.1em] disabled:opacity-50"
+                            >
+                                {updatingOrderId === shipmentModalOrder.id ? 'Confirming...' : 'Confirm Shipment'}
+                            </button>
                         </div>
                     </div>
                 </div>

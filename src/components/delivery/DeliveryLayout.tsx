@@ -94,7 +94,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                     <div className="flex items-center gap-6">
                         <button type="button" className="relative text-black hover:text-zinc-600 transition-colors" aria-label="Delivery notifications">
                             <Bell size={20} />
-                            <span className="pulse-dot absolute top-0 right-0 w-2 h-2 bg-[#D4AF37] rounded-full ring-2 ring-white"></span>
+                            <span className="pulse-dot absolute top-0 right-0 w-2 h-2 bg-[#9f7418] rounded-full ring-2 ring-white"></span>
                         </button>
 
                         <div className="flex items-center gap-4 border-l border-zinc-200 pl-6">
@@ -133,7 +133,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                                 className={() => {
                                     const isCurrent = getIsActive(item.to);
                                     return `flex items-center gap-4 px-8 py-4 transition-all duration-150 group ${isCurrent
-                                        ? 'text-black border-r-4 border-[#D4AF37] bg-zinc-50' 
+                                        ? 'text-black border-r-4 border-[#9f7418] bg-zinc-50' 
                                         : 'text-zinc-400 hover:bg-zinc-50 hover:text-black'}`;
                                 }}
                             >
@@ -147,7 +147,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                         to="/delivery/settings"
                         className={({ isActive }) =>
                             `flex items-center gap-4 px-8 py-4 transition-all duration-150 mt-auto group ${isActive 
-                                ? 'text-black border-r-4 border-[#D4AF37] bg-zinc-50' 
+                                ? 'text-black border-r-4 border-[#9f7418] bg-zinc-50' 
                                 : 'text-zinc-400 hover:bg-zinc-50 hover:text-black'}`
                         }
                     >
@@ -176,7 +176,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
             </nav>
 
             {/* Main Content Area - Scrollable */}
-            <main className="delivery-main flex-1 md:ml-64 overflow-x-hidden">
+            <main className="delivery-main flex-1 overflow-x-hidden">
                 <div className="h-full">
                     {children}
                 </div>

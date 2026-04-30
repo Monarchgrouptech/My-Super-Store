@@ -11,8 +11,8 @@ export function DeliveryProtectedRoute({ children }: DeliveryProtectedRouteProps
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FA]">
-                <Loader2 className="animate-spin text-[#D4AF37] mb-4" size={48} />
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#f1eee7]">
+                <Loader2 className="animate-spin text-[#9f7418] mb-4" size={48} />
                 <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Verifying Credentials...</p>
             </div>
         );

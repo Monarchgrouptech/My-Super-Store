@@ -2,14 +2,8 @@ import { useState, useEffect } from 'react';
 import { 
     Loader2, 
     Package, 
-    Clock, 
-    CheckCircle, 
-    XCircle, 
     Copy, 
-    CreditCard, 
     CheckCircle2, 
-    AlertCircle,
-    ChevronRight,
     MapPin,
     Calendar
 } from 'lucide-react';
@@ -20,7 +14,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 
 export function OrderList() {
     const { vendor, loading: vendorLoading } = useVendor();
-    const { currency, formatPrice } = useCurrency();
+    const { formatPrice } = useCurrency();
     const [orders, setOrders] = useState<OrderWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -69,6 +63,11 @@ export function OrderList() {
 
             if (ordersError) throw ordersError;
 
+            if (!ordersData || ordersData.length === 0) {
+                setOrders([]);
+                return;
+            }
+
             // Get products with images
             const productIds = [...new Set(orderItems.map(item => item.product_id).filter(Boolean))];
             let productsData: any[] = [];
@@ -111,10 +110,12 @@ export function OrderList() {
             orderItems.forEach((item: any) => {
                 const order = ordersMap.get(item.order_id);
                 if (order) {
-                    order.order_items.push({
+                    const items = order.order_items || [];
+                    items.push({
                         ...item,
                         products: productsData.find(p => p.id === item.product_id) || null,
                     });
+                    order.order_items = items;
                 }
             });
 
@@ -141,23 +142,67 @@ export function OrderList() {
         try {
             setUpdating(orderId);
             const now = new Date().toISOString();
+            const currentOrder = orders.find(o => o.id === orderId);
 
             // Update order fulfillment_status to 'packed' (meaning ready for pickup)
             const { error } = await supabase
                 .from('orders')
                 .update({ 
                     fulfillment_status: 'packed',
+                    delivery_status: 'ready_for_pickup',
                     updated_at: now
                 })
                 .eq('id', orderId);
 
             if (error) throw error;
 
+            let fulfillmentId: string | null = null;
+
+            try {
+                const { data: existingFulfillment } = await supabase
+                    .from('order_fulfillments')
+                    .select('id')
+                    .eq('order_id', orderId)
+                    .maybeSingle();
+
+                if (existingFulfillment?.id) {
+                    fulfillmentId = existingFulfillment.id;
+
+                    const { error: fulfillmentError } = await supabase
+                        .from('order_fulfillments')
+                        .update({
+                            status: 'packed',
+                            packed_at: now,
+                            updated_at: now,
+                            last_status_note: 'Vendor packed order and marked it ready for pickup.'
+                        })
+                        .eq('id', existingFulfillment.id);
+
+                    if (fulfillmentError) throw fulfillmentError;
+                } else {
+                    const { data: insertedFulfillment, error: fulfillmentError } = await supabase
+                        .from('order_fulfillments')
+                        .insert({
+                            order_id: orderId,
+                            status: 'packed',
+                            packed_at: now,
+                            last_status_note: 'Vendor packed order and marked it ready for pickup.'
+                        })
+                        .select('id')
+                        .single();
+
+                    if (fulfillmentError) throw fulfillmentError;
+                    fulfillmentId = insertedFulfillment?.id || null;
+                }
+            } catch (fulfillmentError) {
+                console.warn('Order was marked ready, but fulfillment sync was blocked or unavailable:', fulfillmentError);
+            }
+
             // Log status change
             await supabase.from('order_status_history').insert({
                 order_id: orderId,
                 status_type: 'fulfillment',
-                old_value: orders.find(o => o.id === orderId)?.fulfillment_status,
+                old_value: currentOrder?.fulfillment_status,
                 new_value: 'packed',
                 note: 'Vendor marked items as ready for pickup.',
                 changed_by: vendor?.user_id
@@ -166,6 +211,7 @@ export function OrderList() {
             // Create tracking event
             await supabase.from('order_tracking_events').insert({
                 order_id: orderId,
+                ...(fulfillmentId ? { fulfillment_id: fulfillmentId } : {}),
                 status: 'packed',
                 location: vendor?.city || 'Vendor Location',
                 description: 'Items have been packed and are ready for pickup by the delivery partner.',
@@ -175,7 +221,7 @@ export function OrderList() {
             // Update local state instead of full refresh
             setOrders(prev => prev.map(o => 
                 o.id === orderId 
-                    ? { ...o, fulfillment_status: 'packed', updated_at: now } 
+                    ? { ...o, fulfillment_status: 'packed', delivery_status: 'ready_for_pickup', updated_at: now } 
                     : o
             ));
         } catch (err) {
@@ -194,74 +240,6 @@ export function OrderList() {
             </div>
         );
     }
-
-    const getStatusIcon = (status: string) => {
-        switch ((status || '').toLowerCase()) {
-            case 'pending':
-                return <Clock className="text-yellow-600" size={20} />;
-            case 'paid':
-                return <CheckCircle className="text-green-600" size={20} />;
-            case 'processing':
-                return <Clock className="text-blue-600" size={20} />;
-            case 'delivered':
-            case 'completed':
-                return <CheckCircle className="text-green-600" size={20} />;
-            case 'shipped':
-                return <Package className="text-blue-600" size={20} />;
-            case 'cancelled':
-                return <XCircle className="text-red-600" size={20} />;
-            default:
-                return null;
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch ((status || '').toLowerCase()) {
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'paid':
-                return 'bg-green-100 text-green-800';
-            case 'processing':
-                return 'bg-blue-100 text-blue-800';
-            case 'delivered':
-            case 'completed':
-                return 'bg-green-100 text-green-800';
-            case 'shipped':
-                return 'bg-blue-100 text-blue-800';
-            case 'cancelled':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const copyShippingAddress = async (address: any, orderId: string) => {
-        if (!address) return;
-
-        const formattedAddress = `${address.line1 || ''}${address.line2 ? '\n' + address.line2 : ''}\n${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}\n${address.country || ''}`;
-
-        try {
-            await navigator.clipboard.writeText(formattedAddress);
-            setCopiedOrderId(orderId);
-            setTimeout(() => setCopiedOrderId(null), 2000);
-        } catch (err) {
-            console.error('Failed to copy address:', err);
-        }
-    };
-
-    const getPaymentStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'success':
-            case 'paid':
-                return 'bg-green-100 text-green-800';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'failed':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
 
     return (
         <div className="space-y-8 p-6 md:p-10">
@@ -329,7 +307,7 @@ export function OrderList() {
 
                                     <div className="pt-6 border-t border-gray-50">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</p>
-                                        <p className="text-2xl font-serif font-bold text-[#0A0A0A]">{formatPrice(order.order_items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))}</p>
+                                        <p className="text-2xl font-serif font-bold text-[#0A0A0A]">{formatPrice((order.order_items || []).reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))}</p>
                                     </div>
                                 </div>
 
@@ -359,7 +337,7 @@ export function OrderList() {
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-3">
-                                        {order.order_items.map((item) => (
+                                        {(order.order_items || []).map((item) => (
                                             <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-[#D4AF37]/10 transition-colors">
                                                 <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-gray-100 shrink-0">
                                                     <img 
@@ -399,5 +377,4 @@ export function OrderList() {
         </div>
     );
 }
-
 

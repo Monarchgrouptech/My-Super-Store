@@ -1,11 +1,11 @@
 /* Delivery dashboard visual system. Scoped to avoid storefront CSS collisions. */
 :root {
-  --delivery-gold-primary: #d4af37;
-  --delivery-gold-light: #f5e0a3;
-  --delivery-gold-dark: #b8860b;
-  --delivery-gold-deep: #735c00;
-  --delivery-gold-mid: #fed65b;
-  --delivery-gold-dim: #e9c349;
+  --delivery-gold-primary: #9f7418;
+  --delivery-gold-light: #d7b65d;
+  --delivery-gold-dark: #5c3d08;
+  --delivery-gold-deep: #2f2106;
+  --delivery-gold-mid: #b88a24;
+  --delivery-gold-dim: #80601a;
   --delivery-black: #000000;
   --delivery-near-black: #1a1c1c;
   --delivery-white: #ffffff;
@@ -17,11 +17,12 @@
   --delivery-zinc-500: #71717a;
   --delivery-zinc-600: #52525b;
   --delivery-zinc-800: #27272a;
-  --delivery-surface: #f9f9f9;
-  --delivery-surface-low: #f3f3f3;
+  --delivery-surface: #f5f4f1;
+  --delivery-surface-low: #ece9e2;
   --delivery-border: #e4e4e7;
-  --delivery-gradient-gold: linear-gradient(135deg, #d4af37 0%, #f5e0a3 50%, #b8860b 100%);
-  --delivery-gradient-gold-dark: linear-gradient(135deg, #735c00 0%, #fed65b 50%, #e9c349 100%);
+  --delivery-gradient-gold: linear-gradient(135deg, #4a3106 0%, #9f7418 34%, #d7b65d 55%, #6b4909 100%);
+  --delivery-gradient-gold-dark: linear-gradient(135deg, #1b1304 0%, #6b4909 42%, #b88a24 72%, #3c2805 100%);
+  --delivery-gradient-metal: linear-gradient(135deg, #070707 0%, #171717 44%, #070707 100%);
 }
 
 .delivery-shell {
@@ -236,13 +237,100 @@
 
 .delivery-main {
   min-height: 100vh;
+  margin-left: 256px;
   padding-top: 80px;
+}
+
+.delivery-page {
+  min-height: calc(100vh - 80px);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(159, 116, 24, 0.14), transparent 28%),
+    linear-gradient(135deg, #f3f0e8 0%, #e6dfd2 100%);
 }
 
 .delivery-content-row {
   display: flex;
   height: calc(100vh - 80px);
   overflow: hidden;
+}
+
+.delivery-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(420px, 0.95fr) minmax(460px, 1.05fr);
+  gap: 24px;
+  min-height: calc(100vh - 80px);
+  padding: 28px;
+}
+
+.delivery-command-card,
+.delivery-queue-card,
+.delivery-insight-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+}
+
+.delivery-command-card {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 237, 229, 0.9)),
+    repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.04) 0 1px, transparent 1px 10px);
+}
+
+.delivery-metal-panel {
+  background: var(--delivery-gradient-metal);
+  color: var(--delivery-white);
+  border: 1px solid var(--delivery-gold-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 6px 6px 0 rgba(47, 33, 6, 0.28);
+}
+
+.delivery-metal-gold {
+  background: var(--delivery-gradient-gold);
+  color: var(--delivery-black);
+  border: 1px solid var(--delivery-gold-deep);
+  box-shadow: 4px 4px 0 rgba(47, 33, 6, 0.32);
+}
+
+.delivery-stage-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background: var(--delivery-gradient-gold-dark);
+}
+
+.delivery-queue-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.delivery-queue-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--delivery-black);
+}
+
+.delivery-queue-card-active {
+  border: 2px solid var(--delivery-black);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.08);
+}
+
+.delivery-soft-input {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  color: var(--delivery-black);
+}
+
+.delivery-soft-input:focus {
+  border-color: var(--delivery-black);
+  outline: 2px solid rgba(159, 116, 24, 0.3);
+  outline-offset: 0;
+}
+
+.delivery-detail-shell {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f2efe7, #e5ded0);
+  padding: 28px;
 }
 
 .delivery-panel-left {
@@ -369,6 +457,14 @@
 }
 
 @media (max-width: 1023px) {
+  .delivery-main {
+    margin-left: 0;
+  }
+
+  .delivery-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
   .delivery-content-row {
     flex-direction: column;
     height: auto;
@@ -389,7 +485,13 @@
 
 @media (max-width: 767px) {
   .delivery-main {
+    margin-left: 0;
     padding-bottom: 64px;
+  }
+
+  .delivery-dashboard-grid,
+  .delivery-detail-shell {
+    padding: 16px;
   }
 
   .delivery-fab {
