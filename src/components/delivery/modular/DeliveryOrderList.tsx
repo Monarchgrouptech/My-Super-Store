@@ -1,4 +1,3 @@
-import React from 'react';
 import { DeliveryOrder } from '../../../types/delivery';
 import { DeliveryOrderCard } from './DeliveryOrderCard';
 import { Loader2, Inbox } from 'lucide-react';

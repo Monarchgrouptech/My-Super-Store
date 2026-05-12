@@ -1,22 +1,25 @@
 import { useState, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useDeliveryOrders } from '../../hooks/useDeliveryOrders';
 import { getStage } from '../../lib/deliveryUtils';
-import { DeliveryOrder } from '../../types/delivery';
 import { DeliverySummaryCards } from '../../components/delivery/modular/DeliverySummaryCards';
 import { DeliveryOrderList } from '../../components/delivery/modular/DeliveryOrderList';
 import { DeliveryOrderDetailPanel } from '../../components/delivery/modular/DeliveryOrderDetailPanel';
 import { DeliveryTrackingFeed } from '../../components/delivery/modular/DeliveryTrackingFeed';
 import { ShipmentModal } from '../../components/delivery/modular/ShipmentModal';
-import { Search, Filter, SlidersHorizontal, LayoutGrid, List } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 export function DeliveryDashboard() {
     const location = useLocation();
-    const navigate = useNavigate();
-    const { orders, loading, updateOrderStatus, createShipment } = useDeliveryOrders();
+    const { orders, loading, updateOrderStatus, createShipment, refetch } = useDeliveryOrders();
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        refetch(searchQuery);
+    };
 
     // Determine current tab from URL
     const currentTab = useMemo(() => {
@@ -26,15 +29,17 @@ export function DeliveryDashboard() {
         return 'dashboard';
     }, [location.pathname]);
 
-    // Filter orders based on tab and search
+    // Filter orders based on tab
     const filteredOrders = useMemo(() => {
         let result = [...orders];
 
+        // Search is now handled server-side in the hook, but we can still do a local pass for display consistency
         if (searchQuery) {
             result = result.filter(o => 
                 o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                o.user_profiles?.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                o.order_fulfillments?.[0]?.tracking_number?.toLowerCase().includes(searchQuery.toLowerCase())
+                (o.user_profiles && o.user_profiles.display_name && o.user_profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (o.user_profiles && o.user_profiles.email && o.user_profiles.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (o.order_fulfillments && o.order_fulfillments[0] && o.order_fulfillments[0].tracking_number && o.order_fulfillments[0].tracking_number.toLowerCase().includes(searchQuery.toLowerCase()))
             );
         }
 
@@ -131,7 +136,7 @@ export function DeliveryDashboard() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-80px)] overflow-hidden">
+        <div className="flex h-full overflow-hidden">
             {/* Main Content Area */}
             <div className={`flex-1 flex flex-col min-w-0 ${selectedOrderId ? 'hidden lg:flex' : 'flex'}`}>
                 {/* Dashboard Toolbar */}
@@ -149,22 +154,6 @@ export function DeliveryDashboard() {
                                  currentTab === 'updates' ? 'Live event stream' : 'Full system record'}
                             </p>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                            <div className="relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-black transition-colors" size={18} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search by ID or Tracking..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="bg-white border-2 border-zinc-200 pl-12 pr-6 py-3 text-sm font-bold text-black focus:border-black outline-none w-full md:w-64 transition-all"
-                                />
-                            </div>
-                            <button className="w-12 h-12 flex items-center justify-center bg-white border-2 border-zinc-200 text-zinc-500 hover:border-black hover:text-black transition-all">
-                                <Filter size={20} />
-                            </button>
-                        </div>
                     </div>
 
                     {currentTab === 'dashboard' && (
@@ -180,16 +169,39 @@ export function DeliveryDashboard() {
                         <DeliveryTrackingFeed orders={orders} />
                     ) : (
                         <div className="max-w-5xl mx-auto">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[12px] font-black text-black uppercase tracking-widest">
-                                        Showing {filteredOrders.length} {filteredOrders.length === 1 ? 'Order' : 'Orders'}
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 bg-white p-4 md:p-6 border-2 border-zinc-100 shadow-xl rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-1.5 h-8 bg-[var(--delivery-gold-primary)] rounded-full"></div>
+                                    <span className="text-[14px] font-black text-black uppercase tracking-widest">
+                                        {filteredOrders.length} {filteredOrders.length === 1 ? 'Order' : 'Orders'}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-1 border-2 border-zinc-100 p-1">
-                                    <button className="p-2 bg-zinc-100 text-black shadow-sm"><LayoutGrid size={16} /></button>
-                                    <button className="p-2 text-zinc-400 hover:text-black"><List size={16} /></button>
-                                </div>
+                                
+                                <form onSubmit={handleSearch} className="flex flex-row items-center gap-2 flex-1 md:max-w-md w-full">
+                                    <div className="relative flex-1 group">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--delivery-gold-primary)] transition-colors" size={16} />
+                                        <input 
+                                            type="text" 
+                                            placeholder="ID or Email..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full bg-zinc-50 border-2 border-zinc-100 pl-10 pr-3 py-2.5 text-[13px] font-bold text-black focus:border-[var(--delivery-gold-primary)] focus:bg-white outline-none transition-all"
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit"
+                                        className="prestige-btn-gold !min-height-0 !py-2.5 !px-4 text-[11px] shrink-0"
+                                    >
+                                        Search
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => { setSearchQuery(''); refetch(); }}
+                                        className="w-10 h-10 shrink-0 flex items-center justify-center bg-zinc-50 border-2 border-zinc-100 text-zinc-400 hover:border-black hover:text-black transition-all rounded-lg"
+                                    >
+                                        <Filter size={18} />
+                                    </button>
+                                </form>
                             </div>
                             
                             <DeliveryOrderList 
@@ -203,14 +215,16 @@ export function DeliveryDashboard() {
                 </div>
             </div>
 
-            {/* Detail Panel */}
-            <div className={`w-full lg:w-[450px] xl:w-[500px] shrink-0 ${selectedOrderId ? 'block' : 'hidden lg:block'}`}>
-                <DeliveryOrderDetailPanel 
-                    order={selectedOrder}
-                    onClose={() => setSelectedOrderId(null)}
-                    onAction={handleAction}
-                />
-            </div>
+            {/* Detail Panel - Only show when an order is selected and not on 'updates' tab */}
+            {currentTab !== 'updates' && selectedOrderId && (
+                <div className="w-full lg:w-[450px] xl:w-[500px] shrink-0 border-l border-zinc-200 bg-white">
+                    <DeliveryOrderDetailPanel 
+                        order={selectedOrder}
+                        onClose={() => setSelectedOrderId(null)}
+                        onAction={handleAction}
+                    />
+                </div>
+            )}
 
             {/* Shipment Modal */}
             <ShipmentModal 

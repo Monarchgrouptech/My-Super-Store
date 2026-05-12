@@ -1,12 +1,10 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Truck,
     LogOut,
     Bell,
-    Settings,
-    Search,
     ClipboardList,
     TrendingUp
 } from 'lucide-react';
@@ -22,7 +20,6 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const { partner } = useDeliveryPartner();
-    const [searchQuery, setSearchQuery] = useState('');
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -64,18 +61,6 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
             <header className="delivery-topbar flex items-center justify-between px-8">
                 <div className="flex items-center gap-12">
                     <h1 className="text-[20px] font-black tracking-[0.1em] text-black uppercase">MYSUPERSTORE</h1>
-                    
-                    <div className="hidden md:flex relative w-96 bg-zinc-100 border-b border-black">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
-                        <input 
-                            type="text" 
-                            value={searchQuery}
-                            onChange={(event) => setSearchQuery(event.target.value)}
-                            placeholder="Search order ID..."
-                            className="w-full pl-14 pr-4 py-4 bg-transparent border-0 text-sm outline-none focus:ring-0 placeholder:text-zinc-500"
-                            aria-label="Search delivery orders"
-                        />
-                    </div>
                 </div>
 
                 <div className="flex items-center gap-8">

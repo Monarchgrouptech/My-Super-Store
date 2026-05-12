@@ -10,17 +10,17 @@ interface SummaryCardProps {
 
 function SummaryCard({ label, count, icon: Icon, description }: SummaryCardProps) {
     return (
-        <div className="bg-white border border-zinc-200 p-6 flex flex-col gap-4 shadow-sm">
+        <div className="bg-white border-2 border-zinc-100 p-6 flex flex-col gap-4 shadow-lg hover:shadow-2xl hover:border-[var(--delivery-gold-primary)] transition-all duration-300 group rounded-2xl">
             <div className="flex items-start justify-between">
                 <div>
-                    <p className="label-caps text-zinc-500 mb-1">{label}</p>
-                    <h3 className="text-3xl font-black text-black">{count}</h3>
+                    <p className="label-caps text-zinc-400 mb-1 group-hover:text-[var(--delivery-gold-dark)] transition-colors">{label}</p>
+                    <h3 className="text-3xl font-black text-black group-hover:scale-110 transition-transform origin-left">{count}</h3>
                 </div>
-                <div className="w-12 h-12 bg-zinc-50 border border-zinc-100 flex items-center justify-center">
-                    <Icon size={24} className="text-zinc-400" />
+                <div className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-xl flex items-center justify-center group-hover:bg-[var(--delivery-gradient-gold-shiny)] group-hover:rotate-12 transition-all duration-500">
+                    <Icon size={28} className="text-zinc-400 group-hover:text-black transition-colors" />
                 </div>
             </div>
-            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">{description}</p>
+            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-600">{description}</p>
         </div>
     );
 }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { MapPin, User, Package, ArrowRight } from 'lucide-react';
 import { DeliveryOrder } from '../../../types/delivery';
 import { 
@@ -25,10 +24,10 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
     return (
         <div 
             onClick={() => onClick(order)}
-            className={`group cursor-pointer border p-5 transition-all duration-200 ${
+            className={`group cursor-pointer border-2 p-5 transition-all duration-300 rounded-xl ${
                 isSelected 
-                    ? 'border-black bg-zinc-50 shadow-md ring-1 ring-black' 
-                    : 'border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-sm'
+                    ? 'border-[var(--delivery-gold-primary)] bg-[var(--delivery-gradient-gold-card)] shadow-xl ring-1 ring-[var(--delivery-gold-primary)] scale-[1.02]' 
+                    : 'border-zinc-100 bg-white hover:border-[var(--delivery-gold-primary)] hover:shadow-lg'
             }`}
         >
             <div className="flex justify-between items-start mb-4">
@@ -68,7 +67,7 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
                             {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                         </p>
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider">
-                            {order.currency || 'USD'} {order.total_amount.toLocaleString()}
+                            USD {order.total_amount.toLocaleString()}
                         </p>
                     </div>
                 </div>
@@ -84,7 +83,7 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
                 <ArrowRight 
                     size={18} 
                     className={`transition-transform duration-300 ${
-                        isSelected ? 'translate-x-1 text-black' : 'text-zinc-300 group-hover:text-zinc-500'
+                        isSelected ? 'translate-x-1 text-[var(--delivery-gold-primary)]' : 'text-zinc-300 group-hover:text-black'
                     }`} 
                 />
             </div>

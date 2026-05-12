@@ -1,5 +1,4 @@
-import React from 'react';
-import { Clock, MapPin, Activity, Package, CheckCircle, Truck, AlertCircle } from 'lucide-react';
+import { Clock, MapPin, Activity, Package, CheckCircle, Truck } from 'lucide-react';
 import { DeliveryOrder } from '../../../types/delivery';
 import { shortOrderId, formatTimeAgo } from '../../../lib/deliveryUtils';
 

@@ -1,26 +1,21 @@
-import React from 'react';
+import { useState } from 'react';
 import { 
     X, 
     User, 
     MapPin, 
     Package, 
-    Phone, 
-    Mail, 
     Clock, 
-    CreditCard,
     ChevronRight,
-    Truck,
     Info
 } from 'lucide-react';
-import { DeliveryOrder, DeliveryStage } from '../../../types/delivery';
+import { DeliveryOrder } from '../../../types/delivery';
 import { 
     getStage, 
     displayStage, 
     getStatusBadgeClass, 
     getStageDescription,
     shortOrderId,
-    formatTimeAgo,
-    isActionAllowed
+    formatTimeAgo
 } from '../../../lib/deliveryUtils';
 
 interface DeliveryOrderDetailPanelProps {
@@ -34,6 +29,8 @@ export function DeliveryOrderDetailPanel({
     onClose, 
     onAction 
 }: DeliveryOrderDetailPanelProps) {
+    const [expandedImage, setExpandedImage] = useState<string | null>(null);
+
     if (!order) {
         return (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-zinc-50 border-l border-zinc-200">
@@ -152,7 +149,7 @@ export function DeliveryOrderDetailPanel({
                 </div>
                 <button 
                     onClick={onClose}
-                    className="w-10 h-10 flex items-center justify-center border border-zinc-200 text-zinc-400 hover:text-black hover:border-black transition-all"
+                    className="w-10 h-10 flex items-center justify-center border border-zinc-200 text-zinc-400 hover:text-black hover:border-black transition-all hover:bg-[radial-gradient(circle_at_30%_30%,#fff6d5_0%,#e2c56d_20%,#c59a24_48%,#090909_100%)] hover:text-black"
                 >
                     <X size={20} />
                 </button>
@@ -215,12 +212,15 @@ export function DeliveryOrderDetailPanel({
                     <div className="space-y-4">
                         {items.map((item) => (
                             <div key={item.id} className="flex gap-4 group">
-                                <div className="w-14 h-14 bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden group-hover:border-black transition-colors">
+                                <div 
+                                    onClick={() => item.products?.product_images?.[0]?.url && setExpandedImage(item.products.product_images[0].url)}
+                                    className="w-14 h-14 bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden cursor-zoom-in group-hover:border-[var(--delivery-gold-primary)] transition-colors"
+                                >
                                     {item.products?.product_images?.[0]?.url ? (
                                         <img 
                                             src={item.products.product_images[0].url} 
                                             alt={item.products.name || 'Product'} 
-                                            className="w-full h-full object-cover grayscale"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <Package size={20} className="text-zinc-300" />
@@ -231,7 +231,7 @@ export function DeliveryOrderDetailPanel({
                                         {item.products?.name || 'Unknown Product'}
                                     </p>
                                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
-                                        Qty: {item.quantity} × {order.currency || 'USD'} {item.unit_price.toLocaleString()}
+                                        Qty: {item.quantity} × USD {item.unit_price.toLocaleString()}
                                     </p>
                                 </div>
                             </div>
@@ -245,7 +245,7 @@ export function DeliveryOrderDetailPanel({
                     <div className="space-y-2">
                         <div className="flex justify-between text-[12px] font-bold text-zinc-500 uppercase tracking-widest">
                             <span>Subtotal</span>
-                            <span>{order.currency || 'USD'} {order.total_amount.toLocaleString()}</span>
+                            <span>USD {order.total_amount.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-[12px] font-bold text-zinc-500 uppercase tracking-widest">
                             <span>Shipping</span>
@@ -254,7 +254,7 @@ export function DeliveryOrderDetailPanel({
                         <div className="flex justify-between pt-2 mt-2 border-t border-zinc-200">
                             <span className="text-[13px] font-black text-black uppercase tracking-tight">Total Amount</span>
                             <span className="text-[13px] font-black text-black">
-                                {order.currency || 'USD'} {order.total_amount.toLocaleString()}
+                                USD {order.total_amount.toLocaleString()}
                             </span>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export function DeliveryOrderDetailPanel({
                             events.map((event, idx) => (
                                 <div key={event.id} className="flex gap-4 relative z-10">
                                     <div className={`w-[15px] h-[15px] rounded-full border-2 border-white shrink-0 mt-1 shadow-sm ${
-                                        idx === 0 ? 'bg-black ring-2 ring-black/20' : 'bg-zinc-300'
+                                        idx === 0 ? 'bg-[var(--delivery-gold-primary)] ring-2 ring-[var(--delivery-gold-light)]/20' : 'bg-zinc-300'
                                     }`}></div>
                                     <div className="min-w-0">
                                         <p className="text-[11px] font-black text-black uppercase tracking-tight leading-none mb-1">
@@ -295,6 +295,26 @@ export function DeliveryOrderDetailPanel({
 
             {/* Action Section */}
             {renderActionButtons()}
+
+            {/* Image Expansion Overlay */}
+            {expandedImage && (
+                <div 
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md cursor-zoom-out"
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <button 
+                        className="absolute top-8 right-8 w-12 h-12 flex items-center justify-center bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20"
+                        onClick={() => setExpandedImage(null)}
+                    >
+                        <X size={24} />
+                    </button>
+                    <img 
+                        src={expandedImage} 
+                        alt="Product Expansion" 
+                        className="max-w-full max-h-full object-contain shadow-2xl border-2 border-[var(--delivery-gold-primary)]"
+                    />
+                </div>
+            )}
         </div>
     );
 }

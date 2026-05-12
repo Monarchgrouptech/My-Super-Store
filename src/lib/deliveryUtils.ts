@@ -1,4 +1,4 @@
-import { DeliveryOrder, DeliveryStage, DeliveryTrackingEvent } from '../types/delivery';
+import { DeliveryOrder, DeliveryStage } from '../types/delivery';
 
 export function normalizeStatus(status?: string | null): string {
     return (status || 'pending').replace(/\s+/g, '_').toLowerCase();
@@ -51,7 +51,7 @@ export function displayStage(stage: DeliveryStage): string {
         case 'packed':
             return 'Packed';
         default:
-            return stage.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+            return (stage as string).replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
     }
 }
 
@@ -116,19 +116,6 @@ export function formatTimeAgo(dateString?: string | null): string {
 }
 
 export function isActionAllowed(currentStage: DeliveryStage, action: string): boolean {
-    const stages: DeliveryStage[] = [
-        'pending',
-        'ready_for_pickup',
-        'picked_up',
-        'processing',
-        'shipped',
-        'in_transit',
-        'out_for_delivery',
-        'delivered'
-    ];
-    
-    const currentIndex = stages.indexOf(currentStage === 'packed' ? 'ready_for_pickup' : currentStage);
-    
     switch (action) {
         case 'ACCEPT':
             return currentStage === 'ready_for_pickup';

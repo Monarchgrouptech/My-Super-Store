@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { sendMessage as sendChatMessage } from './useChatApi';
@@ -76,9 +76,78 @@ export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
   const location = useLocation();
   const navigate = useNavigate();
   const messageListRef = useRef<HTMLDivElement | null>(null);
+
+  // Default position handling
+  useEffect(() => {
+    // Reset to default on mount/reload
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    // Only drag when closed
+    if (isOpen) return;
+
+    // Prevent dragging from the icon inside
+    if ((e.target as HTMLElement).closest('svg')) {
+      // Allow drag to continue but we'll check it in handleDrag
+    }
+
+    setIsDragging(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    // Get the current rect to handle initial offsets correctly
+    dragStart.current = { 
+      x: clientX - position.x, 
+      y: clientY - position.y 
+    };
+    
+    // Prevent default to avoid text selection/scrolling during drag
+    if (e.cancelable) e.preventDefault();
+  };
+
+  const handleDrag = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+
+    // Boundary checks (optional but recommended)
+    const newX = clientX - dragStart.current.x;
+    const newY = clientY - dragStart.current.y;
+
+    setPosition({ x: newX, y: newY });
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDrag, { passive: false });
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleDrag, { passive: false });
+      window.addEventListener('touchend', handleDragEnd);
+    } else {
+      window.removeEventListener('mousemove', handleDrag);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleDrag);
+      window.removeEventListener('touchend', handleDragEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleDrag);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleDrag);
+      window.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging, handleDrag, handleDragEnd]);
 
   useEffect(() => {
     if (messageListRef.current) {
@@ -164,11 +233,17 @@ export function ChatWidget() {
   return (
     <>
       <button
-        onClick={() => setIsOpen((open) => !open)}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        onClick={() => !isDragging && setIsOpen((open) => !open)}
         aria-label="Toggle AI assistant"
-        className={`chat-trigger-shell fixed bottom-[6.2rem] right-4 z-[80] flex h-[68px] w-[68px] items-center justify-center rounded-full border border-white/30 bg-[radial-gradient(circle_at_30%_30%,#fff6d5_0%,#e2c56d_20%,#c59a24_48%,#090909_100%)] text-black shadow-[0_24px_50px_rgba(0,0,0,0.42)] transition hover:scale-[1.06] md:bottom-6 md:right-6 ${
+        className={`chat-trigger-shell fixed bottom-[6.2rem] right-4 z-[80] flex h-[68px] w-[68px] items-center justify-center rounded-full border border-white/30 bg-[radial-gradient(circle_at_30%_30%,#fff6d5_0%,#e2c56d_20%,#c59a24_48%,#090909_100%)] text-black shadow-[0_24px_50px_rgba(0,0,0,0.42)] transition-opacity hover:scale-[1.06] md:bottom-6 md:right-6 ${
           isOpen ? 'opacity-0 pointer-events-none scale-0' : 'opacity-100'
-        }`}
+        } ${isDragging ? 'cursor-grabbing scale-110' : 'cursor-grab'}`}
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          touchAction: 'none'
+        }}
       >
         <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M8 10h8" strokeLinecap="round" />

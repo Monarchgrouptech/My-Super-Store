@@ -1,33 +1,29 @@
 /* Delivery dashboard visual system. Scoped to avoid storefront CSS collisions. */
 :root {
-  --delivery-gold-primary: #9f7418;
-  --delivery-gold-light: #d7b65d;
-  --delivery-gold-dark: #5c3d08;
-  --delivery-gold-deep: #2f2106;
-  --delivery-gold-mid: #b88a24;
-  --delivery-gold-dim: #80601a;
-  --delivery-black: #000000;
-  --delivery-near-black: #1a1c1c;
+  --delivery-gold-primary: #d4af37;
+  --delivery-gold-light: #fbf5e2;
+  --delivery-gold-dark: #735c00;
+  --delivery-black: #090909;
+  --delivery-near-black: #1a1a1a;
   --delivery-white: #ffffff;
+  --delivery-surface: #fafaf9;
   --delivery-zinc-50: #fafafa;
   --delivery-zinc-100: #f4f4f5;
   --delivery-zinc-200: #e4e4e7;
-  --delivery-zinc-300: #d4d4d8;
   --delivery-zinc-400: #a1a1aa;
   --delivery-zinc-500: #71717a;
-  --delivery-zinc-600: #52525b;
   --delivery-zinc-800: #27272a;
-  --delivery-surface: #f5f4f1;
-  --delivery-surface-low: #ece9e2;
   --delivery-border: #e4e4e7;
-  --delivery-gradient-gold: linear-gradient(135deg, #4a3106 0%, #9f7418 34%, #d7b65d 55%, #6b4909 100%);
-  --delivery-gradient-gold-dark: linear-gradient(135deg, #1b1304 0%, #6b4909 42%, #b88a24 72%, #3c2805 100%);
+  --delivery-gradient-gold: linear-gradient(135deg, #fff6d5 0%, #e2c56d 25%, #c59a24 50%, #735c00 75%, #090909 100%);
+  --delivery-gradient-gold-shiny: radial-gradient(circle at 30% 30%, #fff6d5 0%, #e2c56d 20%, #c59a24 48%, #090909 100%);
+  --delivery-gradient-gold-thick: linear-gradient(135deg, #fbf5e2 0%, #d4af37 35%, #b8860b 70%, #735c00 100%);
+  --delivery-gradient-gold-card: linear-gradient(135deg, #ffffff 0%, #fdfbf0 100%);
   --delivery-gradient-metal: linear-gradient(135deg, #070707 0%, #171717 44%, #070707 100%);
 }
 
 .delivery-shell {
   min-height: 100vh;
-  background: var(--delivery-surface);
+  background: #fdfdfb;
   color: var(--delivery-near-black);
   font-family: Inter, "Work Sans", sans-serif;
 }
@@ -35,7 +31,33 @@
 .delivery-shell *,
 .delivery-shell *::before,
 .delivery-shell *::after {
-  border-radius: 0;
+  border-radius: 4px;
+}
+
+.delivery-shell .prestige-btn-primary,
+.delivery-shell .prestige-btn-gold,
+.delivery-shell .status-badge,
+.delivery-shell input,
+.delivery-shell .bg-white,
+.delivery-shell .border,
+.delivery-shell .bg-zinc-50 {
+  border-radius: 12px !important;
+}
+
+.delivery-shell .border-2 {
+  border-width: 2px !important;
+  border-color: #f1f1f1 !important;
+}
+
+.delivery-topbar {
+  background: white;
+  border-bottom: 1px solid #f1f1f1;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.delivery-sidebar {
+  background: white;
+  border-right: 1px solid #f1f1f1;
 }
 
 .delivery-shell h1,
@@ -138,8 +160,9 @@
 }
 
 .status-in-transit {
-  background: var(--delivery-gold-primary);
+  background: var(--delivery-gradient-gold-thick);
   color: var(--delivery-black);
+  border: 1px solid var(--delivery-gold-dark);
 }
 
 .status-pending {
@@ -154,8 +177,9 @@
 }
 
 .status-delivered {
-  background: var(--delivery-gradient-gold);
+  background: var(--delivery-gradient-gold-shiny);
   color: var(--delivery-black);
+  border: 1px solid var(--delivery-gold-dark);
 }
 
 .status-out {
@@ -176,16 +200,31 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, filter 150ms ease, opacity 150ms ease;
+  transition: all 150ms ease;
+}
+
+.prestige-btn-gold {
+  background: var(--delivery-gradient-gold-thick);
+  color: var(--delivery-black);
+  box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
+}
+
+.prestige-btn-gold:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(184, 134, 11, 0.4);
 }
 
 .prestige-btn-primary {
   background: var(--delivery-black);
   color: var(--delivery-white);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .prestige-btn-primary:hover:not(:disabled) {
-  background: var(--delivery-zinc-800);
+  background: var(--delivery-gradient-gold-thick);
+  color: var(--delivery-black);
+  box-shadow: 0 6px 15px rgba(184, 134, 11, 0.3);
+  transform: translateY(-2px);
 }
 
 .prestige-btn-secondary {
