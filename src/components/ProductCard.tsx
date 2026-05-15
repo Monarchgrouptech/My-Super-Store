@@ -149,8 +149,9 @@ export function ProductCard({ product, onProductClick, variant = 'default' }: Pr
 
       {/* Product Info */}
       <div className="product-info">
-
-        <h3 className="product-name">{truncateText(product.name, 40)}</h3>
+           <h3 className="product-name">
+  {truncateText(product.name, window.innerWidth < 768 ? 20 : 40)}
+</h3>
 
         {/* Short Description */}
         {product.short_description && (

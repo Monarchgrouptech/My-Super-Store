@@ -271,16 +271,24 @@ export function Shop({ onNavigate }: ShopProps) {
       )}
 
       {/* Products Grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' }}>
-        {pagedProducts.map((product) => (
-          <div key={product.id}>
-            <ProductCard
-              product={product}
-              onProductClick={(id) => onNavigate('product', id)}
-            />
-          </div>
-        ))}
-      </div>
+ <div
+  className="grid gap-3 md:gap-4"
+  style={{
+    gridTemplateColumns:
+      window.innerWidth < 768
+        ? 'repeat(2, minmax(0, 1fr))'
+        : 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+  }}
+>
+  {pagedProducts.map((product) => (
+    <div key={product.id}>
+      <ProductCard
+        product={product}
+        onProductClick={(id) => onNavigate('product', id)}
+      />
+    </div>
+  ))}
+</div>
 
       {/* Pagination */}
       {totalShopPages > 1 && (
