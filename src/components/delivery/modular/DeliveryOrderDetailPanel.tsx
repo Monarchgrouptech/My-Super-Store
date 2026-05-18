@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { 
-    X, 
     User, 
     MapPin, 
     Package, 
     Clock, 
     ChevronRight,
-    Info
+    Info,
+    CheckCircle,
+    X
 } from 'lucide-react';
 import { DeliveryOrder } from '../../../types/delivery';
 import { 
@@ -133,9 +134,9 @@ export function DeliveryOrderDetailPanel({
     return (
         <div className="h-full flex flex-col bg-white border-l border-zinc-200 overflow-hidden shadow-2xl">
             {/* Header */}
-            <div className="p-6 border-b border-zinc-200 flex items-center justify-between sticky top-0 bg-white z-10">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
+            <div className="p-6 border-b border-zinc-200 flex items-center justify-between sticky top-0 bg-white z-[20]">
+                <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
                         <h2 className="text-[18px] font-black text-black tracking-tight uppercase">
                             {shortOrderId(order.id)}
                         </h2>
@@ -143,15 +144,21 @@ export function DeliveryOrderDetailPanel({
                             {displayStage(stage)}
                         </span>
                     </div>
-                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
+                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest truncate">
                         Placed on {new Date(order.placed_at).toLocaleDateString()} at {new Date(order.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                 </div>
-                <button 
+                
+                <button
                     onClick={onClose}
-                    className="w-10 h-10 flex items-center justify-center border border-zinc-200 text-zinc-400 hover:text-black hover:border-black transition-all hover:bg-[radial-gradient(circle_at_30%_30%,#fff6d5_0%,#e2c56d_20%,#c59a24_48%,#090909_100%)] hover:text-black"
+                    aria-label="Close"
+                    className="flex items-center justify-center w-12 h-12 rounded-xl bg-white border-2 border-black text-black hover:bg-zinc-100 active:scale-90 transition-all shadow-md shrink-0"
+                    style={{ 
+                        zIndex: 9999,
+                        position: 'relative'
+                    }}
                 >
-                    <X size={20} />
+                    <span className="text-3xl font-black leading-none select-none" style={{ marginTop: '-2px' }}>&times;</span>
                 </button>
             </div>
 
@@ -316,24 +323,5 @@ export function DeliveryOrderDetailPanel({
                 </div>
             )}
         </div>
-    );
-}
-
-function CheckCircle({ size, className }: { size: number, className?: string }) {
-    return (
-        <svg 
-            width={size} 
-            height={size} 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2.5" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            className={className}
-        >
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-        </svg>
     );
 }

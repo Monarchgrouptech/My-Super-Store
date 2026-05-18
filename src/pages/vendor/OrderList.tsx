@@ -5,21 +5,49 @@ import {
     Copy, 
     CheckCircle2, 
     MapPin,
-    Calendar
+    Calendar,
+    X,
+    AlertCircle
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useVendor } from '../../hooks/useVendor';
 import { OrderWithDetails } from '../../types/vendor';
-import { useCurrency } from '../../context/CurrencyContext';
+import { 
+    fetchVendorOrderFulfillments, 
+    updateVendorReadiness 
+} from '../../lib/vendorOrderFulfillments';
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: '₵', KES: 'KSh', ZAR: 'R',
+};
+function rawAmount(amount: number, currency: string | null): string {
+    const code = (currency ?? 'USD').toUpperCase();
+    const sym = CURRENCY_SYMBOLS[code] ?? `${code} `;
+    return `${sym}${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export function OrderList() {
     const { vendor, loading: vendorLoading } = useVendor();
-    const { formatPrice } = useCurrency();
     const [orders, setOrders] = useState<OrderWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
     const [updating, setUpdating] = useState<string | null>(null);
+
+    // Modal state for vendor readiness submission
+    const [showReadinessModal, setShowReadinessModal] = useState(false);
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [readinessForm, setReadinessForm] = useState({
+        pickup_contact_name: '',
+        pickup_contact_phone: '',
+        pickup_address: '',
+        pickup_city: '',
+        pickup_state: '',
+        pickup_country: '',
+        pickup_notes: '',
+    });
+    const [readinessErrors, setReadinessErrors] = useState<Record<string, string>>({});
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     useEffect(() => {
         if (vendor) {
@@ -96,6 +124,13 @@ export function OrderList() {
                 .select('*')
                 .in('order_id', orderIds.map(id => id as string));
 
+            // Get vendor order fulfillments for all these orders
+            const vendorFulfillmentsMap = new Map<string, any[]>();
+            for (const orderId of orderIds) {
+                const fulfillments = await fetchVendorOrderFulfillments(orderId);
+                vendorFulfillmentsMap.set(orderId, fulfillments);
+            }
+
             // Combine all data
             const ordersMap = new Map<string, OrderWithDetails>();
             ordersData.forEach((order: any) => {
@@ -104,6 +139,7 @@ export function OrderList() {
                     order_items: [],
                     payments: paymentsData?.filter(p => p.order_id === order.id) || [],
                     shipping_address: addressesData.find(addr => addr.id === order.shipping_address_id) || null,
+                    vendor_order_fulfillments: vendorFulfillmentsMap.get(order.id) || [],
                 });
             });
 
@@ -138,98 +174,117 @@ export function OrderList() {
         }
     };
 
-    const handleMarkReady = async (orderId: string) => {
+    const openReadinessModal = (orderId: string) => {
+        setSelectedOrderId(orderId);
+        setShowReadinessModal(true);
+        setReadinessErrors({});
+        setSubmitError(null);
+        // Reset form
+        setReadinessForm({
+            pickup_contact_name: '',
+            pickup_contact_phone: '',
+            pickup_address: '',
+            pickup_city: '',
+            pickup_state: '',
+            pickup_country: '',
+            pickup_notes: '',
+        });
+    };
+
+    const validateReadinessForm = (): boolean => {
+        const errors: Record<string, string> = {};
+
+        if (!readinessForm.pickup_contact_name.trim()) {
+            errors.pickup_contact_name = 'Contact name is required';
+        }
+
+        if (!readinessForm.pickup_contact_phone.trim()) {
+            errors.pickup_contact_phone = 'Contact phone is required';
+        }
+
+        if (!readinessForm.pickup_address.trim()) {
+            errors.pickup_address = 'Pickup address is required';
+        }
+
+        if (!readinessForm.pickup_city.trim()) {
+            errors.pickup_city = 'City is required';
+        }
+
+        if (!readinessForm.pickup_state.trim()) {
+            errors.pickup_state = 'State is required';
+        }
+
+        if (!readinessForm.pickup_country.trim()) {
+            errors.pickup_country = 'Country is required';
+        }
+
+        setReadinessErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleSubmitReadiness = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validateReadinessForm() || !selectedOrderId || !vendor) {
+            return;
+        }
+
         try {
-            setUpdating(orderId);
-            const now = new Date().toISOString();
-            const currentOrder = orders.find(o => o.id === orderId);
+            setUpdating(selectedOrderId);
+            setSubmitError(null);
 
-            // Update order fulfillment_status to 'packed' (meaning ready for pickup)
-            const { error } = await supabase
-                .from('orders')
-                .update({ 
-                    fulfillment_status: 'packed',
-                    delivery_status: 'ready_for_pickup',
-                    updated_at: now
-                })
-                .eq('id', orderId);
-
-            if (error) throw error;
-
-            let fulfillmentId: string | null = null;
-
-            try {
-                const { data: existingFulfillment } = await supabase
-                    .from('order_fulfillments')
-                    .select('id')
-                    .eq('order_id', orderId)
-                    .maybeSingle();
-
-                if (existingFulfillment?.id) {
-                    fulfillmentId = existingFulfillment.id;
-
-                    const { error: fulfillmentError } = await supabase
-                        .from('order_fulfillments')
-                        .update({
-                            status: 'packed',
-                            packed_at: now,
-                            updated_at: now,
-                            last_status_note: 'Vendor packed order and marked it ready for pickup.'
-                        })
-                        .eq('id', existingFulfillment.id);
-
-                    if (fulfillmentError) throw fulfillmentError;
-                } else {
-                    const { data: insertedFulfillment, error: fulfillmentError } = await supabase
-                        .from('order_fulfillments')
-                        .insert({
-                            order_id: orderId,
-                            status: 'packed',
-                            packed_at: now,
-                            last_status_note: 'Vendor packed order and marked it ready for pickup.'
-                        })
-                        .select('id')
-                        .single();
-
-                    if (fulfillmentError) throw fulfillmentError;
-                    fulfillmentId = insertedFulfillment?.id || null;
-                }
-            } catch (fulfillmentError) {
-                console.warn('Order was marked ready, but fulfillment sync was blocked or unavailable:', fulfillmentError);
-            }
-
-            // Log status change
-            await supabase.from('order_status_history').insert({
-                order_id: orderId,
-                status_type: 'fulfillment',
-                old_value: currentOrder?.fulfillment_status,
-                new_value: 'packed',
-                note: 'Vendor marked items as ready for pickup.',
-                changed_by: vendor?.user_id
+            // Update vendor_order_fulfillments table
+            // This will trigger database triggers to sync order state
+            await updateVendorReadiness(selectedOrderId, vendor.id, {
+                pickup_contact_name: readinessForm.pickup_contact_name,
+                pickup_contact_phone: readinessForm.pickup_contact_phone,
+                pickup_address: readinessForm.pickup_address,
+                pickup_city: readinessForm.pickup_city,
+                pickup_state: readinessForm.pickup_state,
+                pickup_country: readinessForm.pickup_country,
+                pickup_notes: readinessForm.pickup_notes || undefined,
             });
 
-            // Create tracking event
-            await supabase.from('order_tracking_events').insert({
-                order_id: orderId,
-                ...(fulfillmentId ? { fulfillment_id: fulfillmentId } : {}),
-                status: 'packed',
-                location: vendor?.city || 'Vendor Location',
-                description: 'Items have been packed and are ready for pickup by the delivery partner.',
-                event_time: now
-            });
+            // Refresh orders to show updated state
+            await fetchOrders();
 
-            // Update local state instead of full refresh
-            setOrders(prev => prev.map(o => 
-                o.id === orderId 
-                    ? { ...o, fulfillment_status: 'packed', delivery_status: 'ready_for_pickup', updated_at: now } 
-                    : o
-            ));
+            // Close modal
+            setShowReadinessModal(false);
+            setSelectedOrderId(null);
         } catch (err) {
-            console.error('Error updating status:', err);
-            alert('Failed to update status.');
+            console.error('Error updating vendor readiness:', err);
+            setSubmitError(err instanceof Error ? err.message : 'Failed to update readiness');
         } finally {
             setUpdating(null);
         }
+    };
+
+    const handleMarkReady = (orderId: string) => {
+        openReadinessModal(orderId);
+    };
+
+    const getVendorReadinessStatus = (orderId: string): 'not_ready' | 'ready' | null => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order || !vendor) return null;
+
+        const fulfillment = order.vendor_order_fulfillments?.find(f => f.vendor_id === vendor.id);
+        return fulfillment?.status || 'not_ready';
+    };
+
+    const isOrderGloballyReady = (order: OrderWithDetails): boolean => {
+        if (!order.vendor_order_fulfillments || order.vendor_order_fulfillments.length === 0) {
+            return false;
+        }
+        return order.vendor_order_fulfillments.every(f => f.status === 'ready');
+    };
+
+    const getOtherVendorsReadiness = (orderId: string): Array<{ vendor_id: string; status: string }> => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order || !vendor) return [];
+
+        return (order.vendor_order_fulfillments || [])
+            .filter(f => f.vendor_id !== vendor.id)
+            .map(f => ({ vendor_id: f.vendor_id, status: f.status }));
     };
 
     if (vendorLoading || loading) {
@@ -307,33 +362,54 @@ export function OrderList() {
 
                                     <div className="pt-6 border-t border-gray-50">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</p>
-                                        <p className="text-2xl font-serif font-bold text-[#0A0A0A]">{formatPrice((order.order_items || []).reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))}</p>
+                                        {order.payments && order.payments.length > 0 ? (
+                                            <p className="text-2xl font-serif font-bold text-[#0A0A0A]">
+                                                {rawAmount(
+                                                    Number(order.payments[0].amount ?? 0),
+                                                    order.payments[0].currency
+                                                )}
+                                            </p>
+                                        ) : (
+                                            <p className="text-2xl font-serif font-bold text-[#0A0A0A]">
+                                                ${(order.order_items || []).reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2)}
+                                                <span className="text-xs text-gray-400 ml-1 font-normal">USD</span>
+                                            </p>
+                                        )}
+                                        <p className="text-[10px] text-gray-400 mt-0.5">Actual amount paid</p>
                                     </div>
                                 </div>
 
                                 {/* Order Items Content */}
                                 <div className="flex-1 space-y-6">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-4">
                                         <div className="flex items-center gap-2 text-gray-500 text-xs font-medium">
                                             <Calendar size={14} />
                                             {new Date(order.placed_at).toLocaleDateString()} at {new Date(order.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
-                                        {order.fulfillment_status === 'pending' && (
-                                            <button 
-                                                onClick={() => handleMarkReady(order.id)}
-                                                disabled={updating === order.id}
-                                                className="px-6 py-2 bg-[#0A0A0A] text-[#D4AF37] rounded-xl font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
-                                            >
-                                                {updating === order.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                                                Ready for Pickup
-                                            </button>
-                                        )}
-                                        {order.fulfillment_status === 'packed' && (
-                                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold border border-emerald-100">
-                                                <CheckCircle2 size={14} />
-                                                Ready for Dispatch
-                                            </div>
-                                        )}
+                                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                                            {getVendorReadinessStatus(order.id) === 'ready' && (
+                                                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold border border-emerald-100">
+                                                    <CheckCircle2 size={14} />
+                                                    Your Items Ready
+                                                </div>
+                                            )}
+                                            {getVendorReadinessStatus(order.id) === 'not_ready' && (
+                                                <button 
+                                                    onClick={() => handleMarkReady(order.id)}
+                                                    disabled={updating === order.id}
+                                                    className="px-6 py-2 bg-[#0A0A0A] text-[#D4AF37] rounded-xl font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
+                                                >
+                                                    {updating === order.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                                                    Mark Ready
+                                                </button>
+                                            )}
+                                            {!isOrderGloballyReady(order) && getOtherVendorsReadiness(order.id).length > 0 && (
+                                                <div className="flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-bold border border-amber-100">
+                                                    <AlertCircle size={12} />
+                                                    Waiting for {getOtherVendorsReadiness(order.id).length} vendor(s)
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-3">
@@ -352,7 +428,7 @@ export function OrderList() {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm font-bold text-[#0A0A0A]">Qty: {item.quantity}</p>
-                                                    <p className="text-xs text-gray-500 font-medium">{formatPrice(item.unit_price)} ea</p>
+                                                    <p className="text-xs text-gray-500 font-medium">${Number(item.unit_price).toFixed(2)} <span className="text-[10px] text-gray-400">USD ea</span></p>
                                                 </div>
                                             </div>
                                         ))}
@@ -374,6 +450,312 @@ export function OrderList() {
                     ))
                 )}
             </div>
+
+            {/* Vendor Readiness Modal */}
+            {showReadinessModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 md:p-8 border-b border-gray-100">
+                            <h2 className="text-2xl font-serif font-bold text-[#0A0A0A]">
+                                Mark Items Ready for Pickup
+                            </h2>
+                            <button
+                                onClick={() => setShowReadinessModal(false)}
+                                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <form onSubmit={handleSubmitReadiness} className="p-6 md:p-8 space-y-6">
+                            {submitError && (
+                                <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                                    <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={18} />
+                                    <p className="text-sm text-red-800">{submitError}</p>
+                                </div>
+                            )}
+
+                            <p className="text-gray-600 text-sm">
+                                Please provide your pickup location and contact information. This will allow delivery partners to collect the order.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Contact Name */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Contact Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={readinessForm.pickup_contact_name}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_contact_name: e.target.value,
+                                            })
+                                        }
+                                        onBlur={() => {
+                                            setReadinessErrors((prev) => {
+                                                const next = { ...prev };
+                                                if (!readinessForm.pickup_contact_name.trim()) {
+                                                    next.pickup_contact_name = 'Contact name is required';
+                                                } else {
+                                                    delete next.pickup_contact_name;
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                            readinessErrors.pickup_contact_name
+                                                ? 'border-red-300 focus:ring-red-300'
+                                                : 'border-gray-200 focus:ring-[#D4AF37]'
+                                        }`}
+                                        placeholder="John Doe"
+                                    />
+                                    {readinessErrors.pickup_contact_name && (
+                                        <p className="text-red-600 text-xs mt-1">{readinessErrors.pickup_contact_name}</p>
+                                    )}
+                                </div>
+
+                                {/* Contact Phone */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Contact Phone *
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={readinessForm.pickup_contact_phone}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_contact_phone: e.target.value,
+                                            })
+                                        }
+                                        onBlur={() => {
+                                            setReadinessErrors((prev) => {
+                                                const next = { ...prev };
+                                                if (!readinessForm.pickup_contact_phone.trim()) {
+                                                    next.pickup_contact_phone = 'Contact phone is required';
+                                                } else {
+                                                    delete next.pickup_contact_phone;
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                            readinessErrors.pickup_contact_phone
+                                                ? 'border-red-300 focus:ring-red-300'
+                                                : 'border-gray-200 focus:ring-[#D4AF37]'
+                                        }`}
+                                        placeholder="+234 123 456 7890"
+                                    />
+                                    {readinessErrors.pickup_contact_phone && (
+                                        <p className="text-red-600 text-xs mt-1">{readinessErrors.pickup_contact_phone}</p>
+                                    )}
+                                </div>
+
+                                {/* Pickup Address */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Pickup Address *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={readinessForm.pickup_address}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_address: e.target.value,
+                                            })
+                                        }
+                                        onBlur={() => {
+                                            setReadinessErrors((prev) => {
+                                                const next = { ...prev };
+                                                if (!readinessForm.pickup_address.trim()) {
+                                                    next.pickup_address = 'Pickup address is required';
+                                                } else {
+                                                    delete next.pickup_address;
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                            readinessErrors.pickup_address
+                                                ? 'border-red-300 focus:ring-red-300'
+                                                : 'border-gray-200 focus:ring-[#D4AF37]'
+                                        }`}
+                                        placeholder="123 Business Street"
+                                    />
+                                    {readinessErrors.pickup_address && (
+                                        <p className="text-red-600 text-xs mt-1">{readinessErrors.pickup_address}</p>
+                                    )}
+                                </div>
+
+                                {/* City */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        City *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={readinessForm.pickup_city}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_city: e.target.value,
+                                            })
+                                        }
+                                        onBlur={() => {
+                                            setReadinessErrors((prev) => {
+                                                const next = { ...prev };
+                                                if (!readinessForm.pickup_city.trim()) {
+                                                    next.pickup_city = 'City is required';
+                                                } else {
+                                                    delete next.pickup_city;
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                            readinessErrors.pickup_city
+                                                ? 'border-red-300 focus:ring-red-300'
+                                                : 'border-gray-200 focus:ring-[#D4AF37]'
+                                        }`}
+                                        placeholder="Lagos"
+                                    />
+                                    {readinessErrors.pickup_city && (
+                                        <p className="text-red-600 text-xs mt-1">{readinessErrors.pickup_city}</p>
+                                    )}
+                                </div>
+
+                                {/* State */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        State *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={readinessForm.pickup_state}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_state: e.target.value,
+                                            })
+                                        }
+                                        onBlur={() => {
+                                            setReadinessErrors((prev) => {
+                                                const next = { ...prev };
+                                                if (!readinessForm.pickup_state.trim()) {
+                                                    next.pickup_state = 'State is required';
+                                                } else {
+                                                    delete next.pickup_state;
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                            readinessErrors.pickup_state
+                                                ? 'border-red-300 focus:ring-red-300'
+                                                : 'border-gray-200 focus:ring-[#D4AF37]'
+                                        }`}
+                                        placeholder="Lagos"
+                                    />
+                                    {readinessErrors.pickup_state && (
+                                        <p className="text-red-600 text-xs mt-1">{readinessErrors.pickup_state}</p>
+                                    )}
+                                </div>
+
+                                {/* Country */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Country *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={readinessForm.pickup_country}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_country: e.target.value,
+                                            })
+                                        }
+                                        onBlur={() => {
+                                            setReadinessErrors((prev) => {
+                                                const next = { ...prev };
+                                                if (!readinessForm.pickup_country.trim()) {
+                                                    next.pickup_country = 'Country is required';
+                                                } else {
+                                                    delete next.pickup_country;
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                            readinessErrors.pickup_country
+                                                ? 'border-red-300 focus:ring-red-300'
+                                                : 'border-gray-200 focus:ring-[#D4AF37]'
+                                        }`}
+                                        placeholder="Nigeria"
+                                    />
+                                    {readinessErrors.pickup_country && (
+                                        <p className="text-red-600 text-xs mt-1">{readinessErrors.pickup_country}</p>
+                                    )}
+                                </div>
+
+                                {/* Notes (Optional) */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Additional Notes (Optional)
+                                    </label>
+                                    <textarea
+                                        value={readinessForm.pickup_notes}
+                                        onChange={(e) =>
+                                            setReadinessForm({
+                                                ...readinessForm,
+                                                pickup_notes: e.target.value,
+                                            })
+                                        }
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-all resize-none"
+                                        rows={3}
+                                        placeholder="e.g., Best time to pick up, specific instructions, etc."
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="flex gap-4 pt-6 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReadinessModal(false)}
+                                    disabled={updating === selectedOrderId}
+                                    className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={updating === selectedOrderId || Object.keys(readinessErrors).length > 0}
+                                    className="flex-1 px-6 py-3 bg-[#0A0A0A] text-[#D4AF37] rounded-xl font-bold hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {updating === selectedOrderId ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 size={16} />
+                                            Submit Readiness
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

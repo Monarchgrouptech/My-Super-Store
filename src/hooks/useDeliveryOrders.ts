@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { DeliveryOrder } from '../types/delivery';
+import { fetchDeliveryOrders } from '../lib/deliveryOrders';
 import { useDeliveryPartner } from './useDeliveryPartner';
 
 export function useDeliveryOrders() {
@@ -13,75 +14,8 @@ export function useDeliveryOrders() {
         try {
             setLoading(true);
             setError(null);
-
-            let query = supabase
-                .from('orders')
-                .select(`
-                    *,
-                    order_items(*, products(name, sku, product_images(url, position))),
-                    order_fulfillments(*),
-                    order_tracking_events(*)
-                `)
-                .eq('status', 'paid');
-
-            if (searchQuery) {
-                // If it looks like a UUID (Order ID), query by ID
-                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(searchQuery);
-                if (isUuid) {
-                    query = query.eq('id', searchQuery);
-                } else {
-                    // Otherwise, we'll need to filter by email which requires hydrating user_profiles first or using a join if possible
-                    // But based on schema audit, we hydrate manually. 
-                    // So for email search, we first find the user_ids associated with that email.
-                    const { data: userRes } = await supabase
-                        .from('user_profiles')
-                        .select('user_id')
-                        .ilike('email', `%${searchQuery}%`);
-                    
-                    const matchedUserIds = userRes?.map(u => u.user_id) || [];
-                    if (matchedUserIds.length > 0) {
-                        query = query.in('user_id', matchedUserIds);
-                    } else if (!isUuid) {
-                        // If no users found and it's not a UUID, return empty
-                        setOrders([]);
-                        setLoading(false);
-                        return;
-                    }
-                }
-            }
-
-            const { data: rawOrders, error: ordersError } = await query.order('placed_at', { ascending: false });
-
-            if (ordersError) throw ordersError;
-
-            if (!rawOrders || rawOrders.length === 0) {
-                setOrders([]);
-                return;
-            }
-
-            // Manual hydration for user_profiles and addresses
-            const userIds = Array.from(new Set(rawOrders.map(o => o.user_id).filter(Boolean))) as string[];
-            const addressIds = Array.from(new Set(rawOrders.map(o => o.shipping_address_id).filter(Boolean))) as string[];
-
-            const [profilesRes, addressesRes] = await Promise.all([
-                userIds.length > 0 
-                    ? supabase.from('user_profiles').select('user_id, display_name, email').in('user_id', userIds)
-                    : Promise.resolve({ data: [] }),
-                addressIds.length > 0
-                    ? supabase.from('addresses').select('*').in('id', addressIds)
-                    : Promise.resolve({ data: [] })
-            ]);
-
-            const profilesMap = new Map(profilesRes.data?.map(p => [p.user_id, p]));
-            const addressesMap = new Map(addressesRes.data?.map(a => [a.id, a]));
-
-            const hydratedOrders = rawOrders.map(order => ({
-                ...order,
-                user_profiles: profilesMap.get(order.user_id) || null,
-                addresses: addressesMap.get(order.shipping_address_id) || null
-            }));
-
-            setOrders(hydratedOrders as DeliveryOrder[]);
+            const hydratedOrders = await fetchDeliveryOrders(searchQuery);
+            setOrders(hydratedOrders);
         } catch (err) {
             console.error('Error fetching delivery orders:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch orders');

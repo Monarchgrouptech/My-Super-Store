@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDeliveryOrders } from '../../hooks/useDeliveryOrders';
 import { getStage } from '../../lib/deliveryUtils';
@@ -28,6 +28,11 @@ export function DeliveryDashboard() {
         if (location.pathname.includes('/delivery/updates')) return 'updates';
         return 'dashboard';
     }, [location.pathname]);
+
+    // Close detail panel whenever the user switches tabs
+    useEffect(() => {
+        setSelectedOrderId(null);
+    }, [currentTab]);
 
     // Filter orders based on tab
     const filteredOrders = useMemo(() => {
@@ -215,15 +220,33 @@ export function DeliveryDashboard() {
                 </div>
             </div>
 
-            {/* Detail Panel - Only show when an order is selected and not on 'updates' tab */}
+            {/* Detail Panel */}
             {currentTab !== 'updates' && selectedOrderId && (
-                <div className="w-full lg:w-[450px] xl:w-[500px] shrink-0 border-l border-zinc-200 bg-white">
-                    <DeliveryOrderDetailPanel 
-                        order={selectedOrder}
-                        onClose={() => setSelectedOrderId(null)}
-                        onAction={handleAction}
-                    />
-                </div>
+                <>
+                    {/* Mobile: full-screen fixed overlay so it never bleeds under list content */}
+                    <div className="fixed inset-0 z-50 flex lg:hidden">
+                        {/* backdrop */}
+                        <div
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                            onClick={() => setSelectedOrderId(null)}
+                        />
+                        <div className="relative ml-auto w-full max-w-[480px] h-full bg-white shadow-2xl overflow-hidden">
+                            <DeliveryOrderDetailPanel
+                                order={selectedOrder}
+                                onClose={() => setSelectedOrderId(null)}
+                                onAction={handleAction}
+                            />
+                        </div>
+                    </div>
+                    {/* Desktop: side panel (no overlay needed, layout is flex row) */}
+                    <div className="hidden lg:block w-[450px] xl:w-[500px] shrink-0 border-l border-zinc-200 bg-white">
+                        <DeliveryOrderDetailPanel
+                            order={selectedOrder}
+                            onClose={() => setSelectedOrderId(null)}
+                            onAction={handleAction}
+                        />
+                    </div>
+                </>
             )}
 
             {/* Shipment Modal */}
