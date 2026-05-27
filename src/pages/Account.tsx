@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CreditCard, LogOut, ChevronRight, ShoppingBag, Loader2, Sparkles, Crown, Star, Package, X, MapPin, Truck } from 'lucide-react';
+import { CreditCard, LogOut, ChevronRight, ShoppingBag, Loader2, Sparkles, Crown, Star, Package, X, MapPin, Truck, CheckCircle2, Clock, XCircle, AlertCircle, RefreshCw, Receipt, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAdmin } from '../context/AdminContext';
 import { useDeliveryPartner } from '../hooks/useDeliveryPartner';
@@ -8,6 +8,20 @@ import { getAvatarUrl } from '../lib/avatarUtils';
 import { useNavigate } from 'react-router-dom';
 import { getAddressFromLocation } from '../lib/geolocationUtils';
 import { useCurrency } from '../context/CurrencyContext';
+import { fetchUserOrders, isSuccessfulPaymentStatus, UserOrderRecord } from '../lib/userOrders';
+import { buildUserPaymentsFromOrders, UserPaymentRecord } from '../lib/userPayments';
+
+// Raw payment display — reads currency symbol from DB, NO conversion applied
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: '₵',
+    KES: 'KSh', ZAR: 'R', CAD: 'CA$', AUD: 'A$', JPY: '¥',
+};
+function rawAmount(amount: number | null | undefined, currency: string | null | undefined): string {
+    const code = (currency ?? 'USD').toUpperCase();
+    const symbol = CURRENCY_SYMBOLS[code] ?? `${code} `;
+    const value = Number(amount ?? 0);
+    return `${symbol}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export function Account() {
     const { user, signOut, loading: authLoading } = useAuth();
@@ -17,7 +31,9 @@ export function Account() {
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('orders');
     const [ordersPage, setOrdersPage] = useState(0);
-    const [orders, setOrders] = useState<any[]>([]);
+    const [orders, setOrders] = useState<UserOrderRecord[]>([]);
+    const [payments, setPayments] = useState<UserPaymentRecord[]>([]);
+    const [paymentsLoading, setPaymentsLoading] = useState(false);
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [profile, setProfile] = useState<any>(null);
     const [addresses, setAddresses] = useState<any[]>([]);
@@ -61,13 +77,24 @@ export function Account() {
 
     const fetchData = async () => {
         setLoading(true);
+        setPaymentsLoading(true);
         try {
-            // Fetch user profile from user_profiles table
-            const { data: profileData } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('user_id', user!.id)
-                .single();
+            const [
+                { data: profileData },
+                { data: addressesData },
+                userOrders,
+            ] = await Promise.all([
+                supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .eq('user_id', user!.id)
+                    .single(),
+                supabase
+                    .from('addresses')
+                    .select('*')
+                    .eq('user_id', user!.id),
+                fetchUserOrders(user!.id),
+            ]);
 
             setProfile(profileData);
             setEditFormData({
@@ -84,37 +111,13 @@ export function Account() {
                 setAvatarUrl(url);
             }
 
-            // Fetch addresses for user
-            const { data: addressesData } = await supabase
-                .from('addresses')
-                .select('*')
-                .eq('user_id', user!.id);
             setAddresses(addressesData || []);
-
-            // 1️⃣ Fetch orders
-            const { data: orders } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('user_id', user!.id)
-                .order('placed_at', { ascending: false });
-
-            if (orders && orders.length > 0) {
-                // 2️⃣ Fetch order_items for all orders
-                const orderIds = orders.map(o => o.id);
-                const { data: orderItems } = await supabase
-                    .from('order_items')
-                    .select('*, products(name, product_images(url))')
-                    .in('order_id', orderIds);
-
-                // 3️⃣ Combine in JS
-                const ordersWithItems = orders.map(order => ({
-                    ...order,
-                    order_items: orderItems?.filter(oi => oi.order_id === order.id) || [],
-                }));
-                setOrders(ordersWithItems);
-            } else {
-                setOrders([]);
-            }
+            setOrders(userOrders);
+            setPayments(
+                buildUserPaymentsFromOrders(userOrders)
+                    .filter((payment) => isSuccessfulPaymentStatus(payment.status))
+                    .slice(0, 3)
+            );
 
             // Fetch user's cart from carts table, then get cart_items with products
             const { data: cartData } = await supabase
@@ -134,8 +137,11 @@ export function Account() {
             }
         } catch (error) {
             console.error('Error fetching data:', error);
+            setOrders([]);
+            setPayments([]);
             setCartItems([]);
         } finally {
+            setPaymentsLoading(false);
             setLoading(false);
         }
     };
@@ -456,10 +462,19 @@ export function Account() {
                                                                 <p className="text-gray-300 text-xs sm:text-sm">{new Date(order.placed_at).toLocaleDateString()}</p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Total</p>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Amount Paid</p>
                                                                 <p className="text-base font-bold text-[#FFC92E]">
-                                                                    {formatPrice(order.total_amount)}
+                                                                    {order.primary_payment
+                                                                        ? rawAmount(order.primary_payment.amount, order.primary_payment.currency)
+                                                                        : 'Awaiting payment'}
                                                                 </p>
+                                                                {order.primary_payment ? (
+                                                                    <p className="text-[10px] text-gray-600 uppercase">
+                                                                        {(order.primary_payment.currency ?? 'USD')} {order.primary_payment.provider ? `• ${order.primary_payment.provider}` : ''}
+                                                                    </p>
+                                                                ) : (
+                                                                    <p className="text-[10px] text-gray-600 uppercase">No successful payment yet</p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center">
@@ -468,6 +483,18 @@ export function Account() {
                                                             </span>
                                                         </div>
                                                     </div>
+                                                    {order.primary_payment && (
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            <span className="px-2 py-1 rounded border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-300 bg-white/5">
+                                                                Payment: {order.primary_payment.status ?? 'unknown'}
+                                                            </span>
+                                                            {order.primary_payment.provider && (
+                                                                <span className="px-2 py-1 rounded border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-300 bg-white/5">
+                                                                    Provider: {order.primary_payment.provider}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="relative z-10 p-4 space-y-3">
@@ -478,12 +505,9 @@ export function Account() {
                                                                     <img src={item.products.product_images[0].url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="" />
                                                                 )}
                                                             </div>
-                                                            <div className="flex-1 min-w-0 pr-2">
+                                                            <div className="flex-1 min-w-0">
                                                                 <h4 className="text-white text-sm font-medium mb-0.5 truncate">{item.products?.name}</h4>
-                                                                <p className="text-xs text-gray-500">Qty: {item.quantity} × {formatPrice(item.unit_price)}</p>
-                                                            </div>
-                                                            <div className="text-right flex-shrink-0">
-                                                                <p className="font-bold text-white text-sm">{formatPrice(item.quantity * item.unit_price)}</p>
+                                                                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -590,6 +614,136 @@ export function Account() {
                                                 </button>
                                             </div>
                                         </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Payment Section */}
+                            {activeSection === 'payment' && (
+                                <div className="space-y-5">
+                                    {paymentsLoading ? (
+                                        <div className="flex items-center justify-center py-20">
+                                            <Loader2 className="animate-spin text-[#FFC92E]" size={36} />
+                                        </div>
+                                    ) : payments.length === 0 ? (
+                                        <div className="relative overflow-hidden rounded-2xl bg-[#0F0F0F] p-16 text-center border border-dashed border-[#FFC92E]/20">
+                                            <div className="w-20 h-20 bg-[#FFC92E]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#FFC92E]/20">
+                                                <Receipt size={32} className="text-[#FFC92E]" strokeWidth={1.5} />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white mb-3">No payment records yet</h3>
+                                            <p className="text-gray-500 mb-8 max-w-md mx-auto">Complete a purchase to see your payment history here.</p>
+                                            <button
+                                                onClick={() => navigate('/shop')}
+                                                className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5"
+                                            >
+                                                <ShoppingBag size={18} />
+                                                Shop Now
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Summary strip */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {[
+                                                    { label: 'Total Transactions', value: payments.length + (payments.length >= 3 ? '+' : ''), icon: CreditCard },
+                                                    { label: 'Latest Amount', value: rawAmount(payments[0]?.amount, payments[0]?.currency), icon: Receipt },
+                                                    { label: 'Latest Status', value: (payments[0]?.status ?? 'N/A').charAt(0).toUpperCase() + (payments[0]?.status ?? '').slice(1), icon: CheckCircle2 },
+                                                ].map((stat) => (
+                                                    <div key={stat.label} className="relative overflow-hidden rounded-xl bg-[#0F0F0F] border border-white/5 p-4 group hover:border-[#FFC92E]/20 transition-all">
+                                                        <div className="absolute top-0 right-0 w-12 h-12 bg-[#FFC92E] rounded-full blur-[30px] opacity-0 group-hover:opacity-10 transition-opacity" />
+                                                        <stat.icon size={16} className="text-[#FFC92E] mb-2" strokeWidth={1.5} />
+                                                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">{stat.label}</p>
+                                                        <p className="text-lg font-bold text-white">{stat.value}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Recent payments list */}
+                                            <div className="relative overflow-hidden rounded-2xl bg-[#0F0F0F] border border-white/5 shadow-lg">
+                                                <div className="p-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                                                    <h3 className="text-base font-bold text-white">Recent Payments</h3>
+                                                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Preview — last 3</span>
+                                                </div>
+
+                                                <div className="divide-y divide-white/5">
+                                                    {payments.map((payment: any) => {
+                                                        const statusMap: Record<string, { icon: any; color: string; bg: string; border: string }> = {
+                                                            succeeded:  { icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
+                                                            success:    { icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
+                                                            paid:       { icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
+                                                            completed:  { icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
+                                                            pending:    { icon: Clock,        color: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/30' },
+                                                            processing: { icon: Clock,        color: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/30' },
+                                                            failed:     { icon: XCircle,      color: 'text-red-400',     bg: 'bg-red-400/10',     border: 'border-red-400/30' },
+                                                            refunded:   { icon: RefreshCw,    color: 'text-blue-400',    bg: 'bg-blue-400/10',    border: 'border-blue-400/30' },
+                                                        };
+                                                        const key = (payment.status ?? '').toLowerCase();
+                                                        const cfg = statusMap[key] ?? { icon: AlertCircle, color: 'text-gray-400', bg: 'bg-gray-400/10', border: 'border-gray-400/30' };
+                                                        const StatusIcon = cfg.icon;
+
+                                                        return (
+                                                            <div key={payment.id} className="flex flex-wrap sm:flex-nowrap items-center gap-4 p-5 hover:bg-white/[0.02] transition-colors group">
+                                                                {/* Status icon */}
+                                                                <div className={`p-2.5 rounded-xl ${cfg.bg} border ${cfg.border} flex-shrink-0`}>
+                                                                    <StatusIcon size={18} className={cfg.color} />
+                                                                </div>
+
+                                                                {/* Info */}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
+                                                                            {(payment.status ?? 'unknown').charAt(0).toUpperCase() + (payment.status ?? '').slice(1)}
+                                                                        </span>
+                                                                        {payment.provider && (
+                                                                            <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                                                                                {payment.provider.charAt(0).toUpperCase() + payment.provider.slice(1)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-xs text-gray-500 mt-1 font-mono">
+                                                                        Order #{payment.order_id?.slice(0, 8).toUpperCase()}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-gray-600 mt-0.5">
+                                                                        {new Date(payment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                                        {' · '}
+                                                                        {new Date(payment.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Amount — raw from DB, no conversion */}
+                                                                <div className="text-right flex-shrink-0">
+                                                                    <p className="text-lg font-bold text-white">{rawAmount(payment.amount, payment.currency)}</p>
+                                                                    <p className="text-[10px] text-gray-600 uppercase">{(payment.currency ?? 'USD').toUpperCase()}</p>
+                                                                </div>
+
+                                                                {/* Track link */}
+                                                                {payment.order_id && (
+                                                                    <button
+                                                                        onClick={() => navigate(`/track/${payment.order_id}`)}
+                                                                        className="flex-shrink-0 p-2 rounded-lg bg-white/5 hover:bg-[#FFC92E]/10 hover:text-[#FFC92E] text-gray-600 transition-all"
+                                                                        title="Track this order"
+                                                                    >
+                                                                        <ExternalLink size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                {/* View all CTA */}
+                                                <div className="p-5 border-t border-white/5 bg-white/[0.01]">
+                                                    <button
+                                                        onClick={() => navigate('/account/payments')}
+                                                        className="w-full py-3 flex items-center justify-center gap-2 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-xl hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5 text-sm"
+                                                    >
+                                                        <CreditCard size={16} />
+                                                        View Full Payment History
+                                                        <ChevronRight size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             )}

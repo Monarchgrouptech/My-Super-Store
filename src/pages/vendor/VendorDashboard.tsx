@@ -1,21 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, DollarSign, Eye, ShoppingCart, Plus, TrendingUp, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { Package, DollarSign, ShoppingCart, Plus, TrendingUp, Loader2 } from 'lucide-react';
 import { useVendor } from '../../hooks/useVendor';
-import { VendorStats } from '../../types/vendor';
-import { useCurrency } from '../../context/CurrencyContext';
+import { VendorAnalyticsSummary, fetchVendorAnalytics } from '../../lib/vendorAnalytics';
+
+// Raw display — no conversion, reads currency from payments table directly
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: '₵', KES: 'KSh', ZAR: 'R',
+};
+function rawAmount(amount: number, currency: string | null): string {
+    const code = (currency ?? 'USD').toUpperCase();
+    const sym = CURRENCY_SYMBOLS[code] ?? `${code} `;
+    return `${sym}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export function VendorDashboard() {
     const navigate = useNavigate();
     const { vendor, loading: vendorLoading, isVendor } = useVendor();
-    const { formatPrice } = useCurrency();
-    const [stats, setStats] = useState<VendorStats>({
+    const [stats, setStats] = useState<VendorAnalyticsSummary>({
         totalProducts: 0,
         publishedProducts: 0,
         pendingOrders: 0,
         totalRevenue: 0,
+        totalUnitsSold: 0,
         totalViews: 0,
+        revenueCurrency: 'USD',
     });
     const [loading, setLoading] = useState(true);
 
@@ -30,55 +39,8 @@ export function VendorDashboard() {
 
         try {
             setLoading(true);
-
-            // Fetch product statistics
-            const { data: products, error: productsError } = await supabase
-                .from('products')
-                .select('id, published, view_count')
-                .eq('seller_id', vendor.id);
-
-            if (productsError) throw productsError;
-
-            const totalProducts = products?.length || 0;
-            const publishedProducts = products?.filter((p) => p.published).length || 0;
-            const totalViews = products?.reduce((sum, p) => sum + (p.view_count || 0), 0) || 0;
-
-            const productIds = products?.map((p) => p.id) || [];
-            let pendingOrdersCount = 0;
-            let orderItems: any[] = [];
-
-            // Only fetch orders and revenue if vendor has products
-            if (productIds.length > 0) {
-                // Fetch order count (orders containing vendor's products)
-                const { count: count, error: ordersError } = await supabase
-                    .from('order_items')
-                    .select('order_id', { count: 'exact', head: true })
-                    .in('product_id', productIds)
-                    .eq('orders.status', 'pending');
-
-                if (ordersError) console.error('Error fetching orders:', ordersError);
-                pendingOrdersCount = count || 0;
-
-                // Calculate revenue (sum of order_items where product is vendor's)
-                const { data: items, error: revenueError } = await supabase
-                    .from('order_items')
-                    .select('quantity, unit_price')
-                    .in('product_id', productIds);
-
-                if (revenueError) console.error('Error fetching revenue:', revenueError);
-                orderItems = items || [];
-            }
-
-            const totalRevenue =
-                orderItems?.reduce((sum, item) => sum + item.quantity * item.unit_price, 0) || 0;
-
-            setStats({
-                totalProducts,
-                publishedProducts,
-                pendingOrders: pendingOrdersCount,
-                totalRevenue,
-                totalViews,
-            });
+            const analytics = await fetchVendorAnalytics(vendor.id);
+            setStats(analytics);
         } catch (err) {
             console.error('Error fetching stats:', err);
         } finally {
@@ -185,11 +147,11 @@ export function VendorDashboard() {
                             <DollarSign className="text-green-600" size={24} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                        {formatPrice(stats.totalRevenue)}
+                    <p className="text-xl font-bold text-gray-900 leading-tight">
+                        {rawAmount(stats.totalRevenue, stats.revenueCurrency)}
                     </p>
                     <p className="text-sm text-gray-600">Total Revenue</p>
-                    <p className="text-xs text-gray-500 mt-1">All-time sales</p>
+                    <p className="text-xs text-gray-500 mt-1">From vendor-owned sold order items</p>
                 </div>
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
@@ -206,12 +168,12 @@ export function VendorDashboard() {
                 <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-purple-100 rounded-lg">
-                            <Eye className="text-purple-600" size={24} />
+                            <Package className="text-purple-600" size={24} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{stats.totalViews}</p>
-                    <p className="text-sm text-gray-600">Total Views</p>
-                    <p className="text-xs text-gray-500 mt-1">Product page views</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalUnitsSold}</p>
+                    <p className="text-sm text-gray-600">Units Sold</p>
+                    <p className="text-xs text-gray-500 mt-1">Sum of vendor item quantities</p>
                 </div>
             </div>
 

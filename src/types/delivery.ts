@@ -53,6 +53,20 @@ export interface DeliveryFulfillment {
     last_status_note?: string | null;
 }
 
+export interface VendorReadiness {
+    id: string;
+    vendor_id: string;
+    status: 'not_ready' | 'ready';
+    pickup_contact_name: string | null;
+    pickup_contact_phone: string | null;
+    pickup_address: string | null;
+    pickup_city: string | null;
+    pickup_state: string | null;
+    pickup_country: string | null;
+    pickup_notes: string | null;
+    submitted_at: string | null;
+}
+
 export interface DeliveryTrackingEvent {
     id: string;
     order_id: string;
@@ -78,4 +92,5 @@ export interface DeliveryOrder {
     order_items?: DeliveryOrderItem[];
     order_fulfillments?: DeliveryFulfillment[];
     order_tracking_events?: DeliveryTrackingEvent[];
+    vendor_order_fulfillments?: VendorReadiness[];
 }

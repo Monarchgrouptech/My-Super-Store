@@ -1,4 +1,4 @@
-import { MapPin, User, Package, ArrowRight } from 'lucide-react';
+import { MapPin, User, Package, ArrowRight, Store } from 'lucide-react';
 import { DeliveryOrder } from '../../../types/delivery';
 import { 
     getStage, 
@@ -20,6 +20,10 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
     const customerName = order.user_profiles?.display_name || 'Anonymous Customer';
     const city = order.addresses?.city || 'Unknown City';
     const itemCount = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    
+    // Get vendor pickup info from vendor_order_fulfillments
+    const vendorPickupLocations = order.vendor_order_fulfillments?.map(vof => vof.pickup_city).filter(Boolean) || [];
+    const uniquePickupCities = Array.from(new Set(vendorPickupLocations)).join(', ') || 'Multiple Vendors';
 
     return (
         <div 
@@ -55,6 +59,20 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
                             <MapPin size={10} />
                             <span className="truncate">{city}</span>
                         </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
+                        <Store size={14} className="text-zinc-500" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-zinc-600">
+                            {order.vendor_order_fulfillments?.length || 0} {(order.vendor_order_fulfillments?.length || 0) === 1 ? 'Vendor' : 'Vendors'}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider truncate">
+                            Pickup: {uniquePickupCities}
+                        </p>
                     </div>
                 </div>
 

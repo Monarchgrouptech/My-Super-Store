@@ -121,6 +121,23 @@ export interface Payment {
     created_at: string;
 }
 
+export interface VendorOrderFulfillment {
+    id: string;
+    order_id: string;
+    vendor_id: string;
+    status: 'not_ready' | 'ready';
+    pickup_contact_name: string | null;
+    pickup_contact_phone: string | null;
+    pickup_address: string | null;
+    pickup_city: string | null;
+    pickup_state: string | null;
+    pickup_country: string | null;
+    pickup_notes: string | null;
+    submitted_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 // Form types
 export interface ProductFormData {
     name: string;
@@ -198,4 +215,6 @@ export interface OrderWithDetails extends Order {
     }>;
     shipping_address?: Address;
     payments?: Payment[];
+    vendor_order_fulfillments?: VendorOrderFulfillment[];
 }
+

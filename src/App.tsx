@@ -10,6 +10,7 @@ import { Checkout } from './pages/Checkout';
 import { OrderConfirmation } from './pages/OrderConfirmation';
 import { Login } from './pages/Login';
 import { Account } from './pages/Account';
+import { PaymentHistory } from './pages/PaymentHistory';
 import { About } from './pages/About';
 import { AuthProvider } from './context/AuthContext';
 import { AdminProvider } from './context/AdminContext';
@@ -125,6 +126,7 @@ export default function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Login />} />
                   <Route path="/account" element={<Account />} />
+                  <Route path="/account/payments" element={<PaymentHistory />} />
                   <Route path="/track/:id" element={<OrderTracking />} />
                   <Route path="/about" element={<About onNavigate={handleNavigate} />} />
 
