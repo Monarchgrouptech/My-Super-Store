@@ -74,6 +74,7 @@ export function OrderConfirmation() {
         try {
             // Determine the order id: direct param or via payment reference lookup
             let resolvedOrderId: string | null = null;
+            let resolvedPayment: Payment | null = null;
 
             if (orderIdParam) {
                 resolvedOrderId = orderIdParam;
@@ -91,6 +92,7 @@ export function OrderConfirmation() {
 
                 if (paymentData && paymentData.order_id) {
                     resolvedOrderId = paymentData.order_id;
+                    resolvedPayment = paymentData as Payment;
                     setPayment(paymentData as Payment);
                 } else {
                     // No payment yet — clear states and return. Polling will try again.
@@ -152,8 +154,8 @@ export function OrderConfirmation() {
             }));
             setOrderItems(combinedItems);
 
-            // If payment wasn't already set from reference lookup, try fetching by order_id
-            if (!payment) {
+            // Try fetching payment by order_id to keep latest state in sync
+            if (!resolvedPayment) {
                 const { data: paymentData2, error: paymentErr2 } = await supabase
                     .from('payments')
                     .select('*')
@@ -184,13 +186,13 @@ export function OrderConfirmation() {
         } finally {
             setLoading(false);
         }
-    }, [orderIdParam, reference, payment]);
+    }, [orderIdParam, reference]);
 
     // Initial fetch on mount and when params change
     useEffect(() => {
         fetchOrderData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fetchOrderData]);
+    }, [orderIdParam, reference]);
 
     // Polling effect:
     // Poll while:
@@ -211,7 +213,7 @@ export function OrderConfirmation() {
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [order, reference, fetchOrderData]);
+    }, [order, reference, fetchOrderData, payment]);
 
     const handleRefresh = () => {
         setLoading(true);
@@ -221,50 +223,7 @@ export function OrderConfirmation() {
     const isPaid = order?.status === 'paid';
     const isPending = order?.status === 'pending' || (!order && !!reference);
 
-    // Auto-create fulfillment record when order is paid
-    useEffect(() => {
-        const createFulfillment = async () => {
-            if (isPaid && order && !loading) {
-                // Check if fulfillment already exists
-                const { data: existingF } = await supabase
-                    .from('order_fulfillments')
-                    .select('id')
-                    .eq('order_id', order.id)
-                    .maybeSingle();
-
-                if (!existingF) {
-                    // Create new fulfillment record
-                    const { data: newF, error: fError } = await supabase
-                        .from('order_fulfillments')
-                        .insert({
-                            order_id: order.id,
-                            status: 'pending',
-                        })
-                        .select()
-                        .single();
-
-                    if (!fError && newF) {
-                        // Create initial tracking event
-                        await supabase.from('order_tracking_events').insert({
-                            order_id: order.id,
-                            fulfillment_id: newF.id,
-                            status: 'pending',
-                            description: 'Order paid successfully. Waiting for fulfillment processing.',
-                            event_time: new Date().toISOString()
-                        });
-                        
-                        // Update order fulfillment_status
-                        await supabase
-                            .from('orders')
-                            .update({ fulfillment_status: 'pending' })
-                            .eq('id', order.id);
-                    }
-                }
-            }
-        };
-
-        createFulfillment();
-    }, [isPaid, order, loading]);
+    // Backend triggers will handle auto-creation of fulfillment and tracking records on payment status transition
 
     // UI rendering
     if (loading && !order) {
