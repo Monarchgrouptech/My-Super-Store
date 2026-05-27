@@ -98,7 +98,7 @@ export async function fetchVendorFulfillmentForOrderAndVendor(
  */
 export async function updateVendorReadiness(
     orderId: string,
-    vendorId: string,
+    _vendorId: string,
     data: {
         pickup_contact_name: string;
         pickup_contact_phone: string;
@@ -109,57 +109,31 @@ export async function updateVendorReadiness(
         pickup_notes?: string;
     }
 ): Promise<VendorOrderFulfillment> {
-    // First check if a row exists
-    const existing = await fetchVendorFulfillmentForOrderAndVendor(orderId, vendorId);
-
-    let result;
-    if (existing) {
-        // Update existing row
-        const { data: updatedData, error } = await supabase
-            .from('vendor_order_fulfillments')
-            .update({
-                status: 'ready',
-                pickup_contact_name: data.pickup_contact_name,
-                pickup_contact_phone: data.pickup_contact_phone,
-                pickup_address: data.pickup_address,
-                pickup_city: data.pickup_city,
-                pickup_state: data.pickup_state,
-                pickup_country: data.pickup_country,
-                pickup_notes: data.pickup_notes || null,
-            })
-            .eq('id', existing.id)
-            .select()
-            .single();
-
-        if (error) {
-            throw error;
+    const { data: resData, error } = await supabase.functions.invoke('vendor-readiness-submit', {
+        body: {
+            orderId,
+            pickupContactName: data.pickup_contact_name,
+            pickupContactPhone: data.pickup_contact_phone,
+            pickupAddress: data.pickup_address,
+            pickupCity: data.pickup_city,
+            pickupState: data.pickup_state,
+            pickupCountry: data.pickup_country,
+            pickupNotes: data.pickup_notes || undefined,
+            markReady: true
         }
+    });
 
-        result = updatedData as VendorOrderFulfillmentRow;
-    } else {
-        // Insert new row
-        const { data: insertedData, error } = await supabase
-            .from('vendor_order_fulfillments')
-            .insert({
-                order_id: orderId,
-                vendor_id: vendorId,
-                status: 'ready',
-                pickup_contact_name: data.pickup_contact_name,
-                pickup_contact_phone: data.pickup_contact_phone,
-                pickup_address: data.pickup_address,
-                pickup_city: data.pickup_city,
-                pickup_state: data.pickup_state,
-                pickup_country: data.pickup_country,
-                pickup_notes: data.pickup_notes || null,
-            })
-            .select()
-            .single();
+    if (error) {
+        throw error;
+    }
 
-        if (error) {
-            throw error;
-        }
+    if (resData?.error) {
+        throw new Error(resData.error);
+    }
 
-        result = insertedData as VendorOrderFulfillmentRow;
+    const result = resData?.vendor_order_fulfillment;
+    if (!result) {
+        throw new Error('No vendor order fulfillment data returned from edge function');
     }
 
     return {

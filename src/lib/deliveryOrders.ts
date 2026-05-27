@@ -46,6 +46,7 @@ interface DeliveryFulfillmentRow {
     delivered_at: string | null;
     estimated_delivery_at: string | null;
     last_status_note: string | null;
+    delivery_partner_id: string | null;
 }
 
 interface DeliveryTrackingEventRow {
@@ -126,7 +127,7 @@ export async function fetchDeliveryOrders(searchQuery?: string): Promise<Deliver
             fulfillment_status,
             delivery_status
         `)
-        .eq('delivery_status', 'ready_for_pickup')
+        .in('delivery_status', ['ready_for_pickup', 'processing', 'picked_up', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'])
         .order('placed_at', { ascending: false });
 
     if (ordersError) {
@@ -176,7 +177,8 @@ export async function fetchDeliveryOrders(searchQuery?: string): Promise<Deliver
                 shipped_at,
                 delivered_at,
                 estimated_delivery_at,
-                last_status_note
+                last_status_note,
+                delivery_partner_id
             `)
             .in('order_id', orderIds),
         supabase
@@ -279,6 +281,7 @@ export async function fetchDeliveryOrders(searchQuery?: string): Promise<Deliver
             delivered_at: fulfillment.delivered_at,
             estimated_delivery_at: fulfillment.estimated_delivery_at,
             last_status_note: fulfillment.last_status_note,
+            delivery_partner_id: fulfillment.delivery_partner_id,
         });
         fulfillmentsByOrderId.set(fulfillment.order_id, currentFulfillments);
     }

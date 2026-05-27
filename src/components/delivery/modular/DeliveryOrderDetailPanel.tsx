@@ -7,7 +7,8 @@ import {
     ChevronRight,
     Info,
     CheckCircle,
-    X
+    X,
+    AlertCircle
 } from 'lucide-react';
 import { DeliveryOrder } from '../../../types/delivery';
 import { 
@@ -31,6 +32,22 @@ export function DeliveryOrderDetailPanel({
     onAction 
 }: DeliveryOrderDetailPanelProps) {
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleActionWithLoading = async (orderId: string, action: string) => {
+        if (actionLoading) return;
+        setActionLoading(true);
+        setActionError(null);
+        try {
+            await onAction(orderId, action);
+        } catch (err) {
+            console.error('Delivery action failed:', err);
+            setActionError(err instanceof Error ? err.message : 'Action failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     if (!order) {
         return (
@@ -52,63 +69,83 @@ export function DeliveryOrderDetailPanel({
     const profile = order.user_profiles;
     const items = order.order_items || [];
     const events = order.order_tracking_events || [];
+    const fulfillment = order.order_fulfillments?.[0];
 
     const renderActionButtons = () => {
         return (
             <div className="grid grid-cols-1 gap-3 p-6 bg-white border-t border-zinc-200">
+                {actionError && (
+                    <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl mb-2">
+                        <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={18} />
+                        <div className="flex-1">
+                            <p className="text-xs font-bold text-red-800 uppercase tracking-wider mb-1">Transition Error</p>
+                            <p className="text-[11px] text-red-700 leading-relaxed font-medium">{actionError}</p>
+                        </div>
+                        <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600">
+                            <X size={14} />
+                        </button>
+                    </div>
+                )}
+
                 <p className="label-caps text-zinc-400 mb-1">Available Actions</p>
                 
-                {stage === 'ready_for_pickup' && (
+                {stage === 'ready_for_pickup' && !fulfillment?.delivery_partner_id && (
                     <button 
-                        onClick={() => onAction(order.id, 'ACCEPT')}
-                        className="prestige-btn-primary w-full flex items-center justify-center gap-2"
+                        onClick={() => handleActionWithLoading(order.id, 'ACCEPT')}
+                        disabled={actionLoading}
+                        className="prestige-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Accept Order <ChevronRight size={16} />
+                        {actionLoading ? 'Processing...' : 'Accept Order'} <ChevronRight size={16} />
                     </button>
                 )}
 
-                {stage === 'processing' && (
+                {stage === 'ready_for_pickup' && fulfillment?.delivery_partner_id && (
                     <button 
-                        onClick={() => onAction(order.id, 'PICKUP')}
-                        className="prestige-btn-primary w-full flex items-center justify-center gap-2"
+                        onClick={() => handleActionWithLoading(order.id, 'PICKUP')}
+                        disabled={actionLoading}
+                        className="prestige-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Mark Picked Up <ChevronRight size={16} />
+                        {actionLoading ? 'Processing...' : 'Mark Picked Up'} <ChevronRight size={16} />
                     </button>
                 )}
 
                 {stage === 'picked_up' && (
                     <button 
-                        onClick={() => onAction(order.id, 'SHIP')}
-                        className="prestige-btn-primary w-full flex items-center justify-center gap-2"
+                        onClick={() => handleActionWithLoading(order.id, 'SHIP')}
+                        disabled={actionLoading}
+                        className="prestige-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Confirm Shipment <ChevronRight size={16} />
+                        {actionLoading ? 'Processing...' : 'Confirm Shipment'} <ChevronRight size={16} />
                     </button>
                 )}
 
                 {stage === 'shipped' && (
                     <button 
-                        onClick={() => onAction(order.id, 'TRANSIT')}
-                        className="prestige-btn-primary w-full flex items-center justify-center gap-2"
+                        onClick={() => handleActionWithLoading(order.id, 'TRANSIT')}
+                        disabled={actionLoading}
+                        className="prestige-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Mark In Transit <ChevronRight size={16} />
+                        {actionLoading ? 'Processing...' : 'Mark In Transit'} <ChevronRight size={16} />
                     </button>
                 )}
 
                 {stage === 'in_transit' && (
                     <button 
-                        onClick={() => onAction(order.id, 'OUT_FOR_DELIVERY')}
-                        className="prestige-btn-primary w-full flex items-center justify-center gap-2"
+                        onClick={() => handleActionWithLoading(order.id, 'OUT_FOR_DELIVERY')}
+                        disabled={actionLoading}
+                        className="prestige-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Out for Delivery <ChevronRight size={16} />
+                        {actionLoading ? 'Processing...' : 'Out for Delivery'} <ChevronRight size={16} />
                     </button>
                 )}
 
                 {stage === 'out_for_delivery' && (
                     <button 
-                        onClick={() => onAction(order.id, 'DELIVER')}
-                        className="prestige-btn-gold w-full flex items-center justify-center gap-2"
+                        onClick={() => handleActionWithLoading(order.id, 'DELIVER')}
+                        disabled={actionLoading}
+                        className="prestige-btn-gold w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Mark Delivered <CheckCircle size={16} />
+                        {actionLoading ? 'Processing...' : 'Mark Delivered'} <CheckCircle size={16} />
                     </button>
                 )}
 
@@ -170,14 +207,53 @@ export function DeliveryOrderDetailPanel({
                         <div className="w-10 h-10 bg-white border border-zinc-200 flex items-center justify-center shrink-0 shadow-sm">
                             <Clock size={18} className="text-black" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="text-[12px] font-black text-black uppercase tracking-tight mb-1">Current Status</p>
                             <p className="text-[13px] text-zinc-600 leading-relaxed font-medium italic">
                                 "{getStageDescription(stage)}"
                             </p>
+                            <div className="mt-3 flex items-center gap-2">
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded border ${
+                                    fulfillment?.delivery_partner_id 
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                                        : 'bg-amber-50 border-amber-200 text-amber-800'
+                                }`}>
+                                    {fulfillment?.delivery_partner_id ? 'Assigned to You' : 'Unassigned'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Vendor Pickup Details */}
+                {(order.vendor_order_fulfillments || []).length > 0 && (
+                    <section className="p-6 border-b border-zinc-200">
+                        <p className="label-caps text-zinc-400 mb-4">Vendor Pickup Details</p>
+                        <div className="space-y-4">
+                            {(order.vendor_order_fulfillments || []).map((row) => (
+                                <div key={row.id} className="bg-zinc-50 p-4 border border-zinc-200 space-y-3 rounded-lg">
+                                    <div className="flex items-center gap-2 text-[12px] font-black text-black uppercase tracking-tight">
+                                        <div className="w-2 h-2 rounded-full bg-[var(--delivery-gold-primary)]"></div>
+                                        <span>Pickup Contact</span>
+                                    </div>
+                                    <div className="text-[13px] text-zinc-700 space-y-1 font-bold tracking-tight">
+                                        <p className="text-black font-black">{row.pickup_contact_name || 'Unnamed Contact'}</p>
+                                        {row.pickup_contact_phone && <p className="text-zinc-500 font-medium">{row.pickup_contact_phone}</p>}
+                                        <div className="pt-2 border-t border-zinc-200 uppercase text-[11px] font-black text-zinc-600 leading-relaxed">
+                                            <p>{row.pickup_address}</p>
+                                            <p>{row.pickup_city}, {row.pickup_state} {row.pickup_country}</p>
+                                        </div>
+                                        {row.pickup_notes && (
+                                            <div className="mt-2 bg-amber-50/50 p-2.5 border border-amber-200/50 text-[11px] font-medium text-amber-800 italic normal-case rounded">
+                                                Note: "{row.pickup_notes}"
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* Customer & Shipping */}
                 <section className="p-6 border-b border-zinc-200 space-y-6">

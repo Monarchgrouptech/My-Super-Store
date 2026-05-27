@@ -16,37 +16,22 @@ export function DeliveryOrderDetail() {
     const handleAction = async (orderId: string, action: string) => {
         switch (action) {
             case 'ACCEPT':
-                await updateOrderStatus(orderId, { delivery_status: 'processing' }, {
-                    status: 'accepted',
-                    description: 'Delivery partner has accepted the order and is proceeding to pickup.',
-                });
+                await updateOrderStatus(orderId, 'accept_order');
                 break;
             case 'PICKUP':
-                await updateOrderStatus(orderId, { delivery_status: 'picked_up' }, {
-                    status: 'picked_up',
-                    description: 'Order has been successfully picked up from the vendor.',
-                });
+                await updateOrderStatus(orderId, 'mark_picked_up');
                 break;
             case 'SHIP':
                 setIsShipmentModalOpen(true);
                 break;
             case 'TRANSIT':
-                await updateOrderStatus(orderId, { delivery_status: 'in_transit' }, {
-                    status: 'in_transit',
-                    description: 'Shipment is now in transit to the destination.',
-                });
+                await updateOrderStatus(orderId, 'mark_in_transit');
                 break;
             case 'OUT_FOR_DELIVERY':
-                await updateOrderStatus(orderId, { delivery_status: 'out_for_delivery' }, {
-                    status: 'out_for_delivery',
-                    description: 'Courier is out for final delivery to the customer.',
-                });
+                await updateOrderStatus(orderId, 'out_for_delivery');
                 break;
             case 'DELIVER':
-                await updateOrderStatus(orderId, { delivery_status: 'delivered' }, {
-                    status: 'delivered',
-                    description: 'Order has been successfully delivered to the customer.',
-                });
+                await updateOrderStatus(orderId, 'mark_delivered');
                 break;
         }
     };

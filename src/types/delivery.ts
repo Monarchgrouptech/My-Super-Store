@@ -1,13 +1,11 @@
 export type DeliveryStage =
     | 'ready_for_pickup' // Vendor marked items as ready
     | 'picked_up'        // Delivery partner picked up the order
-    | 'processing'       // Delivery partner is processing
     | 'shipped'          // Shipment created (carrier/tracking info added)
     | 'in_transit'       // Package is moving
     | 'out_for_delivery' // On final delivery run
     | 'delivered'        // Completed handoff
-    | 'pending'          // Initial state before vendor readiness
-    | 'packed';          // Same as ready_for_pickup from vendor perspective
+    | 'pending';          // Initial state before vendor readiness
 
 export interface DeliveryAddress {
     id?: string | null;
@@ -38,7 +36,6 @@ export interface DeliveryOrderItem {
     unit_price: number;
     products?: DeliveryProduct | null;
 }
-
 export interface DeliveryFulfillment {
     id: string;
     status: string;
@@ -51,8 +48,8 @@ export interface DeliveryFulfillment {
     delivered_at?: string | null;
     estimated_delivery_at?: string | null;
     last_status_note?: string | null;
+    delivery_partner_id?: string | null;
 }
-
 export interface VendorReadiness {
     id: string;
     vendor_id: string;

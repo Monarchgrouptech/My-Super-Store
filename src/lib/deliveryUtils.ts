@@ -18,7 +18,6 @@ export function getStage(order: DeliveryOrder): DeliveryStage {
     if (deliveryStatus === 'in_transit') return 'in_transit';
     if (deliveryStatus === 'shipped') return 'shipped';
     if (deliveryStatus === 'picked_up') return 'picked_up';
-    if (deliveryStatus === 'processing' || deliveryStatus === 'assigned') return 'processing';
     if (deliveryStatus === 'ready_for_pickup') return 'ready_for_pickup';
     
     // Priority 2: Vendor readiness
@@ -36,8 +35,6 @@ export function displayStage(stage: DeliveryStage): string {
             return 'Ready for Pickup';
         case 'picked_up':
             return 'Picked Up';
-        case 'processing':
-            return 'Processing';
         case 'shipped':
             return 'Shipped';
         case 'in_transit':
@@ -48,8 +45,6 @@ export function displayStage(stage: DeliveryStage): string {
             return 'Delivered';
         case 'pending':
             return 'Pending Vendor';
-        case 'packed':
-            return 'Packed';
         default:
             return (stage as string).replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
     }
@@ -63,8 +58,6 @@ export function getStageDescription(stage: DeliveryStage): string {
             return 'Packed by vendor and ready for delivery partner pickup.';
         case 'picked_up':
             return 'Package collected from vendor.';
-        case 'processing':
-            return 'Order is being processed for shipment.';
         case 'shipped':
             return 'Shipment details confirmed.';
         case 'in_transit':
@@ -81,9 +74,7 @@ export function getStageDescription(stage: DeliveryStage): string {
 export function getStatusBadgeClass(stage: DeliveryStage): string {
     switch (stage) {
         case 'ready_for_pickup':
-        case 'packed':
             return 'status-pickup';
-        case 'processing':
         case 'picked_up':
             return 'status-processing';
         case 'shipped':
@@ -115,12 +106,12 @@ export function formatTimeAgo(dateString?: string | null): string {
     return `${Math.round(hours / 24)}d ago`;
 }
 
-export function isActionAllowed(currentStage: DeliveryStage, action: string): boolean {
+export function isActionAllowed(currentStage: DeliveryStage, action: string, hasPartner: boolean): boolean {
     switch (action) {
         case 'ACCEPT':
-            return currentStage === 'ready_for_pickup';
+            return currentStage === 'ready_for_pickup' && !hasPartner;
         case 'PICKUP':
-            return currentStage === 'processing';
+            return currentStage === 'ready_for_pickup' && hasPartner;
         case 'SHIP':
             return currentStage === 'picked_up';
         case 'TRANSIT':

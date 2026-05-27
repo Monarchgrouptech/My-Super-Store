@@ -15,7 +15,16 @@ export function useDeliveryOrders() {
             setLoading(true);
             setError(null);
             const hydratedOrders = await fetchDeliveryOrders(searchQuery);
-            setOrders(hydratedOrders);
+            
+            // Filter orders so delivery partners only see ready-for-pickup orders (unassigned)
+            // or orders explicitly assigned to them.
+            const filtered = hydratedOrders.filter(o => {
+                if (o.delivery_status === 'ready_for_pickup') return true;
+                const fulfillment = o.order_fulfillments?.[0];
+                return fulfillment?.delivery_partner_id === partner?.id;
+            });
+            
+            setOrders(filtered);
         } catch (err) {
             console.error('Error fetching delivery orders:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch orders');
@@ -24,90 +33,50 @@ export function useDeliveryOrders() {
         }
     }, [partner]);
 
-    const updateOrderStatus = async (orderId: string, status: Partial<DeliveryOrder>, event?: { status: string, description: string, location?: string }) => {
+    const updateOrderStatus = async (
+        orderId: string,
+        action: 'accept_order' | 'mark_picked_up' | 'confirm_shipment' | 'mark_in_transit' | 'out_for_delivery' | 'mark_delivered',
+        extra?: { carrierName?: string | null; trackingNumber?: string | null; trackingUrl?: string | null; location?: string | null; note?: string | null }
+    ) => {
         try {
-            const { error: updateError } = await supabase
-                .from('orders')
-                .update(status)
-                .eq('id', orderId);
+            setLoading(true);
+            setError(null);
 
-            if (updateError) throw updateError;
+            const { data, error: invokeError } = await supabase.functions.invoke('delivery-lifecycle', {
+                body: {
+                    orderId,
+                    action,
+                    carrierName: extra?.carrierName || null,
+                    trackingNumber: extra?.trackingNumber || null,
+                    trackingUrl: extra?.trackingUrl || null,
+                    location: extra?.location || null,
+                    note: extra?.note || null
+                }
+            });
 
-            if (event) {
-                const { error: eventError } = await supabase
-                    .from('order_tracking_events')
-                    .insert({
-                        order_id: orderId,
-                        status: event.status,
-                        description: event.description,
-                        location: event.location || 'Logistics Hub',
-                        event_time: new Date().toISOString()
-                    });
-                
-                if (eventError) throw eventError;
-            }
+            if (invokeError) throw invokeError;
 
-            // Also update fulfillment if needed
-            if (status.delivery_status === 'shipped' && status.order_fulfillments) {
-                // This is a bit simplified, usually you'd update the specific fulfillment record
+            if (data && data.ok === false) {
+                throw new Error(data.error || 'Action failed');
             }
 
             await fetchOrders();
             return { success: true };
         } catch (err) {
-            console.error('Error updating order status:', err);
-            return { success: false, error: err };
+            console.error('Error updating delivery status via edge function:', err);
+            const msg = err instanceof Error ? err.message : 'Action failed';
+            setError(msg);
+            throw err;
+        } finally {
+            setLoading(false);
         }
     };
 
     const createShipment = async (orderId: string, data: { carrierName: string, trackingNumber: string, trackingUrl: string }) => {
         try {
-            // 1. Update order status
-            const { error: orderError } = await supabase
-                .from('orders')
-                .update({ 
-                    delivery_status: 'shipped',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', orderId);
-
-            if (orderError) throw orderError;
-
-            // 2. Find and update the fulfillment record
-            const { data: fulfillmentData } = await supabase
-                .from('order_fulfillments')
-                .select('id')
-                .eq('order_id', orderId)
-                .maybeSingle();
-
-            if (fulfillmentData) {
-                await supabase
-                    .from('order_fulfillments')
-                    .update({
-                        carrier_name: data.carrierName,
-                        tracking_number: data.trackingNumber,
-                        tracking_url: data.trackingUrl,
-                        shipped_at: new Date().toISOString(),
-                        status: 'shipped'
-                    })
-                    .eq('id', fulfillmentData.id);
-            }
-
-            // 3. Add tracking event
-            await supabase
-                .from('order_tracking_events')
-                .insert({
-                    order_id: orderId,
-                    status: 'shipped',
-                    description: `Shipment created with ${data.carrierName}. Tracking: ${data.trackingNumber}`,
-                    location: 'Sorting Facility',
-                    event_time: new Date().toISOString()
-                });
-
-            await fetchOrders();
+            await updateOrderStatus(orderId, 'confirm_shipment', data);
             return { success: true };
         } catch (err) {
-            console.error('Error creating shipment:', err);
             return { success: false, error: err };
         }
     };

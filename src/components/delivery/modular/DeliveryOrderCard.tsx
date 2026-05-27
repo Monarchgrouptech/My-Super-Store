@@ -20,6 +20,8 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
     const customerName = order.user_profiles?.display_name || 'Anonymous Customer';
     const city = order.addresses?.city || 'Unknown City';
     const itemCount = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const readinessRows = order.vendor_order_fulfillments || [];
+    const pickupSummary = readinessRows[0];
 
     return (
         <div 
@@ -53,10 +55,24 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
                         <p className="text-[12px] font-bold text-black truncate">{customerName}</p>
                         <div className="flex items-center gap-1 text-[11px] text-zinc-500">
                             <MapPin size={10} />
-                            <span className="truncate">{city}</span>
+                            <span className="truncate">Drop-off: {city}</span>
                         </div>
                     </div>
                 </div>
+
+                {pickupSummary && (
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                            <MapPin size={14} className="text-[var(--delivery-gold-primary)]" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-black truncate">Pickup: {pickupSummary.pickup_contact_name || 'Vendor'}</p>
+                            <p className="text-[10px] text-zinc-500 truncate">
+                                {pickupSummary.pickup_city || 'Unknown City'}, {pickupSummary.pickup_state || 'Unknown State'}
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
@@ -67,7 +83,7 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
                             {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                         </p>
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider">
-                            USD {order.total_amount.toLocaleString()}
+                            {itemCount} {itemCount === 1 ? 'unit queued' : 'units queued'}
                         </p>
                     </div>
                 </div>
