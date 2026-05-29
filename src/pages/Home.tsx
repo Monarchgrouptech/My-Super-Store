@@ -114,8 +114,8 @@ export function Home() {
 
   // Process products after fetching
   const processProducts = (products: Product[]) => {
-    // Filter products with images only
-    const productsWithImages = products.filter(p => p.image && p.image.trim() !== '');
+    // Filter products with images only and validate they are valid listing
+    const productsWithImages = products.filter(p => p.image && p.image.trim() !== '' && p.name && p.price > 0);
 
     // Trending: sorted by view_count
     const trending = [...productsWithImages]
@@ -123,15 +123,20 @@ export function Home() {
       .slice(0, PRODUCTS_PER_SECTION);
     setTrendingProducts(trending);
 
-    // Seasonal: duplicate of trending (same logic)
-    const seasonal = [...productsWithImages]
-      .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
-      .slice(0, PRODUCTS_PER_SECTION);
+    // Deduplicate: exclude trending products from seasonal and recommended pools
+    const trendingIds = new Set(trending.map(p => p.id));
+    const remainingProducts = productsWithImages.filter(p => !trendingIds.has(p.id));
+
+    // Seasonal: slice from the remaining arrivals pool
+    const seasonal = remainingProducts.slice(0, PRODUCTS_PER_SECTION);
     setSeasonalProducts(seasonal);
 
-    // Recommended: randomized with session seed
+    // Recommended: randomized with session seed from the remaining pool
+    const seasonalIds = new Set(seasonal.map(p => p.id));
+    const recommendedPool = remainingProducts.filter(p => !seasonalIds.has(p.id));
+
     const seed = recommendedSeedRef.current;
-    const recommended = [...productsWithImages]
+    const recommended = [...recommendedPool]
       .sort(() => Math.sin(seed * (Math.random() + 1)) - 0.5)
       .slice(0, PRODUCTS_PER_SECTION);
     setRecommendedProducts(recommended);
@@ -158,7 +163,68 @@ export function Home() {
     };
 
     loadAllData();
+
+    // Set Page Title, Description, and Keywords
+    document.title = "MySuperStore Nigeria | Premium Electronics, Fashion & Home Goods";
+    
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', "Curating excellence in luxury fashion, premium electronics, and home goods in Nigeria. Shop top quality brands at MySuperStore.");
+
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', "luxury shopping, e-commerce nigeria, premium electronics, luxury fashion, home goods, online store lagos");
+
+    // Inject JSON-LD Schema (Organization & WebSite)
+    const schemaOrg = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "MySuperStore",
+      "url": "https://mysuperstore.co",
+      "logo": "https://mysuperstore.co/logo.png",
+      "sameAs": [
+        "https://www.facebook.com/mysuperstore",
+        "https://www.instagram.com/mysuperstore",
+        "https://twitter.com/mysuperstore"
+      ]
+    };
+
+    const schemaWebsite = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MySuperStore Nigeria",
+      "url": "https://mysuperstore.co",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://mysuperstore.co/shop?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    };
+
+    const scriptId = 'jsonld-schema-home';
+    let scriptEl = document.getElementById(scriptId);
+    if (!scriptEl) {
+      scriptEl = document.createElement('script');
+      scriptEl.id = scriptId;
+      scriptEl.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(scriptEl);
+    }
+    scriptEl.textContent = JSON.stringify([schemaOrg, schemaWebsite]);
+
+    return () => {
+      const el = document.getElementById(scriptId);
+      if (el) el.remove();
+    };
   }, []);
+
 
   // Removed the setInterval auto-rotate effect for carousels
 
@@ -242,6 +308,7 @@ export function Home() {
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-4xl xl:text-5xl mb-2 sm:mb-3 md:mb-4 lg:mb-3 leading-tight text-white font-extrabold" style={{ fontFamily: 'dosis', textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+                <span className="sr-only">Premium Electronics & Fashion Store in Nigeria - </span>
                 Discover <span className="bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>Luxury</span>
               </h1>
               <p className="hidden sm:block text-sm md:text-base lg:text-sm xl:text-base text-white mb-4 md:mb-6 lg:mb-4 leading-relaxed" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8)' }}>

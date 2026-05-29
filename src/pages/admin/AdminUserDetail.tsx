@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { Avatar } from '../../components/Avatar';
 import { ArrowLeft, Mail, User as UserIcon, Calendar, Clock, Shield } from 'lucide-react';
 
 interface UserDetail {
@@ -140,18 +141,17 @@ export function AdminUserDetail() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-500 mb-1">Avatar URL</label>
-                                {user.avatar_url ? (
-                                    <div className="flex items-center gap-3">
-                                        <img
-                                            src={user.avatar_url}
-                                            alt="Avatar"
-                                            className="w-16 h-16 rounded-full object-cover"
-                                        />
-                                        <p className="text-gray-700 text-sm break-all">{user.avatar_url}</p>
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-700">Not set</p>
-                                )}
+                                <div className="flex items-center gap-3">
+                                    <Avatar
+                                        src={user.avatar_url}
+                                        displayName={user.display_name || user.email}
+                                        className="w-16 h-16"
+                                        fallbackClassName="bg-gray-100 border border-gray-300 text-gray-700 text-xl font-bold"
+                                    />
+                                    <p className="text-gray-700 text-sm break-all font-mono">
+                                        {user.avatar_url || 'No external URL set'}
+                                    </p>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-500 mb-1">Role</label>

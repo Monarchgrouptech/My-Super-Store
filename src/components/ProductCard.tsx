@@ -78,7 +78,7 @@ export function ProductCard({ product, onProductClick, variant = 'default' }: Pr
         <div className="relative w-full h-full overflow-hidden rounded-lg">
           <ImageWithFallback
             src={images[imageIndex]}
-            alt={product.name}
+            alt={product.name ? `${product.name} - ${product.category || 'Product'}` : undefined}
             className="product-image transition-opacity duration-500"
           />
 

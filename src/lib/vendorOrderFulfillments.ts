@@ -109,6 +109,21 @@ export async function updateVendorReadiness(
         pickup_notes?: string;
     }
 ): Promise<VendorOrderFulfillment> {
+    // Verify authenticated session before calling the Edge Function
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+        throw new Error('User is not authenticated. Please log in and try again.');
+    }
+
+    console.log('Submitting vendor readiness', {
+        orderId,
+        vendorId: _vendorId,
+        userId: session.user?.id,
+    });
+
     const { data: resData, error } = await supabase.functions.invoke('vendor-readiness-submit', {
         body: {
             orderId,
@@ -123,11 +138,16 @@ export async function updateVendorReadiness(
         }
     });
 
+    console.log('vendor-readiness-submit response', resData);
+    console.log('vendor-readiness-submit error', error);
+
     if (error) {
+        console.error('Vendor readiness failed:', error);
         throw error;
     }
 
     if (resData?.error) {
+        console.error('Vendor readiness failed (response error):', resData.error);
         throw new Error(resData.error);
     }
 

@@ -44,7 +44,7 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                                 <div className="relative aspect-square mb-3 overflow-hidden rounded-lg bg-slate-50">
                                     <img
                                         src={product.image}
-                                        alt={product.name}
+                                        alt={product.name ? `${product.name} - ${product.category || 'Product'}` : undefined}
                                         className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                                     />
                                 </div>
@@ -73,7 +73,7 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                                 <div className="relative aspect-square mb-3 overflow-hidden rounded-lg bg-slate-50">
                                     <img
                                         src={product.image}
-                                        alt={product.name}
+                                        alt={product.name ? `${product.name} - ${product.category || 'Product'}` : undefined}
                                         className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                                     />
                                 </div>

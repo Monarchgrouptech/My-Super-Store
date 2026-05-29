@@ -5,6 +5,7 @@ import { useAdmin } from '../context/AdminContext';
 import { useDeliveryPartner } from '../hooks/useDeliveryPartner';
 import { supabase } from '../lib/supabase';
 import { getAvatarUrl } from '../lib/avatarUtils';
+import { Avatar } from '../components/Avatar';
 import { useNavigate } from 'react-router-dom';
 import { getAddressFromLocation } from '../lib/geolocationUtils';
 import { useCurrency } from '../context/CurrencyContext';
@@ -336,15 +337,12 @@ export function Account() {
                                     <div className="relative mb-6">
                                         <div className="absolute inset-0 bg-gradient-to-r from-[#FEFDFE] via-[#FFC92E] to-[#DE9D0D] rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
                                         <div className="relative w-24 h-24 rounded-full p-[2px] bg-gradient-to-r from-[#FEFDFE] via-[#FFC92E] to-[#DE9D0D]">
-                                            <div className="w-full h-full rounded-full bg-[#0B0B0B] flex items-center justify-center overflow-hidden">
-                                                {avatarUrl ? (
-                                                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <span className="text-3xl font-bold bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] bg-clip-text text-transparent">
-                                                        {(profile?.display_name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
-                                                    </span>
-                                                )}
-                                            </div>
+                                            <Avatar
+                                                src={avatarUrl}
+                                                displayName={profile?.display_name || user?.user_metadata?.full_name || user?.email}
+                                                className="w-full h-full"
+                                                fallbackClassName="bg-[#0B0B0B] border border-[#FFC92E]/30 text-3xl font-bold"
+                                            />
                                         </div>
                                         <div className="absolute bottom-0 right-0 bg-[#0B0B0B] rounded-full p-1 border border-[#FFC92E]">
                                             <div className="w-3 h-3 bg-[#00FF00] rounded-full animate-pulse"></div>

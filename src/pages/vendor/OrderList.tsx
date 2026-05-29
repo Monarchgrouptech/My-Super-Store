@@ -253,7 +253,13 @@ export function OrderList() {
             setSelectedOrderId(null);
         } catch (err) {
             console.error('Error updating vendor readiness:', err);
-            setSubmitError(err instanceof Error ? err.message : 'Failed to update readiness');
+            const message = err instanceof Error ? err.message : 'Failed to update readiness';
+            // Surface auth errors with actionable guidance
+            if (message.toLowerCase().includes('not authenticated') || message.toLowerCase().includes('unauthorized')) {
+                setSubmitError('Your session has expired. Please refresh the page and log in again.');
+            } else {
+                setSubmitError(message);
+            }
         } finally {
             setUpdating(null);
         }

@@ -55,7 +55,7 @@ export function LuxuryProductCard({ product, delay = 0, isTrending = false }: Lu
                 {product.image ? (
                     <img
                         src={product.image}
-                        alt={product.name}
+                        alt={product.name ? `${product.name} - ${product.category || 'Product'}` : undefined}
                         loading="lazy"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                         className="w-full h-full transition-opacity duration-700"

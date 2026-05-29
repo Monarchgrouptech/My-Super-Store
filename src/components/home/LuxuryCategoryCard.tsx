@@ -68,7 +68,7 @@ export function LuxuryCategoryCard({ category, products }: LuxuryCategoryCardPro
                 {currentProduct && currentProduct.image ? (
                     <img
                         src={currentProduct.image}
-                        alt={currentProduct.name}
+                        alt={currentProduct.name ? `${currentProduct.name} - ${currentProduct.category || 'Product'}` : undefined}
                         loading="lazy"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                         className="w-full h-full transition-opacity duration-700 p-2"

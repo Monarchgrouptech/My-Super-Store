@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mysuperstore.co/sitemap.xml

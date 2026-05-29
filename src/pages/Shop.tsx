@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { useSearchParams, useParams } from 'react-router-dom';
+import { useSearchParams, useParams, Link } from 'react-router-dom';
 
 import { supabase } from '../lib/supabase';
 import { useCurrency } from '../context/CurrencyContext';
@@ -18,6 +18,7 @@ interface Product {
   image?: string;
   product_images?: { url: string; alt_text?: string; position?: number }[];
   category: string;
+  slug?: string;
   product_specs?: { spec_key: string; spec_value: string }[];
   view_count?: number;
 }
@@ -62,6 +63,40 @@ export function Shop({ onNavigate }: ShopProps) {
     setSearchTerm(searchFromUrl ?? '');
     setShopPage(0); // reset page when filters change
   }, [categorySlug, searchParams]);
+
+  useEffect(() => {
+    // Dynamic titles and description
+    let title = "Luxury Collection | MySuperStore Nigeria";
+    let desc = "Browse our luxury collection at MySuperStore Nigeria. Find premium items across all categories.";
+    
+    if (selectedCategory && selectedCategory !== 'All') {
+      title = `${selectedCategory} Products | MySuperStore Nigeria`;
+      desc = `Shop premium ${selectedCategory.toLowerCase()} products at MySuperStore Nigeria. Explore our curated selection of high-quality items.`;
+    }
+    
+    if (searchTerm) {
+      title = `Search results for "${searchTerm}" | MySuperStore`;
+      desc = `Browse results for ${searchTerm} at MySuperStore Nigeria. High-quality products curated for your needs.`;
+    }
+    
+    document.title = title;
+
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', desc);
+
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', `luxury products, online shopping nigeria, ${selectedCategory !== 'All' ? selectedCategory.toLowerCase() + ',' : ''} premium items, mysuperstore`);
+  }, [selectedCategory, searchTerm]);
 
 
 
@@ -130,6 +165,42 @@ export function Shop({ onNavigate }: ShopProps) {
   const totalShopPages = Math.ceil(filteredProducts.length / SHOP_PAGE_SIZE);
   const pagedProducts = filteredProducts.slice(shopPage * SHOP_PAGE_SIZE, (shopPage + 1) * SHOP_PAGE_SIZE);
 
+  useEffect(() => {
+    // Inject ItemList JSON-LD Schema
+    if (pagedProducts.length > 0) {
+      const schemaItemList = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": selectedCategory === 'All' ? "Luxury Collection" : `${selectedCategory} Products`,
+        "numberOfItems": filteredProducts.length,
+        "itemListElement": pagedProducts.map((product, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "url": `${window.location.origin}/product/${product.slug || product.id}`,
+          "name": product.name,
+          "image": product.image,
+          "price": product.price,
+          "priceCurrency": "NGN"
+        }))
+      };
+
+      const scriptId = 'jsonld-schema-shop';
+      let scriptEl = document.getElementById(scriptId);
+      if (!scriptEl) {
+        scriptEl = document.createElement('script');
+        scriptEl.id = scriptId;
+        scriptEl.setAttribute('type', 'application/ld+json');
+        document.head.appendChild(scriptEl);
+      }
+      scriptEl.textContent = JSON.stringify(schemaItemList);
+    }
+
+    return () => {
+      const el = document.getElementById('jsonld-schema-shop');
+      if (el) el.remove();
+    };
+  }, [selectedCategory, pagedProducts, filteredProducts.length]);
+
   if (loading) {
     return (
       <div className="section flex items-center justify-center min-h-[50vh]">
@@ -140,13 +211,28 @@ export function Shop({ onNavigate }: ShopProps) {
 
   return (
     <div className="page-fade section relative">
+      {/* Breadcrumb Navigation */}
+      <nav className="mb-4 text-sm text-gray-500 flex items-center gap-2 relative z-10" style={{ padding: '0 1rem' }}>
+        <Link to="/" className="hover:text-[var(--gold-primary)] transition-colors">Home</Link>
+        <span>/</span>
+        <span className="text-gray-300">Shop</span>
+        {selectedCategory !== 'All' && (
+          <>
+            <span>/</span>
+            <span className="text-gray-300">{selectedCategory}</span>
+          </>
+        )}
+      </nav>
+
       {/* Header with Particles Behind */}
       <div className="relative min-h-[300px] flex items-center justify-center -mx-8 -mt-8 px-8 pt-8 mb-8" style={{ overflow: 'hidden' }}>
         <div className="absolute inset-0 z-0">
 
         </div>
         <div className="relative z-10 text-center">
-          <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif" }}>Luxury Collection</h1>
+          <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif" }}>
+            {selectedCategory === 'All' ? 'Luxury Collection' : `${selectedCategory} Products`}
+          </h1>
           <p className="page-desc">
             {searchTerm
               ? `${filteredProducts.length} results for “${searchTerm}”`
