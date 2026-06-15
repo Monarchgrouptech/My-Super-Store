@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserPayments, UserPaymentRecord } from '../lib/userPayments';
+import { SEO } from '../components/SEO';
 
 // Maps currency codes to their symbols — no conversion, just display as-is from DB
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -103,6 +104,7 @@ export function PaymentHistory() {
 
     return (
         <div className="min-h-screen bg-black text-white">
+            <SEO title="Payment History" description="Your complete MySuperStore payment and transaction history." robots="noindex, nofollow" />
             <div className="w-full max-w-5xl mx-auto px-4 py-8">
 
                 {/* Back button */}

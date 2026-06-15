@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCurrency } from '../../context/CurrencyContext';
 
 interface Product {
@@ -13,6 +13,7 @@ interface Product {
     image?: string;
     product_images?: { url: string; alt_text?: string; position?: number }[];
     category: string;
+    slug?: string;
     product_specs?: { spec_key: string; spec_value: string }[];
     view_count?: number;
 }
@@ -24,16 +25,15 @@ interface LuxuryProductCardProps {
 }
 
 export function LuxuryProductCard({ product, delay = 0, isTrending = false }: LuxuryProductCardProps) {
-    const navigate = useNavigate();
     const { formatPrice } = useCurrency();
 
     return (
-        <div
-            className="group w-50 relative bg-white rounded-[20px] border-2 border-[rgba(212,175,55,0.3)] overflow-hidden cursor-pointer transition-all duration-500 hover:border-[rgba(212,175,55,0.8)] hover:shadow-[0_20px_50px_rgba(212,175,55,0.25),inset_0_0_30px_rgba(212,175,55,0.1)] flex flex-col h-full"
+        <Link
+            className="group w-50 relative bg-white rounded-[20px] border-2 border-[rgba(212,175,55,0.3)] overflow-hidden cursor-pointer transition-all duration-500 hover:border-[rgba(212,175,55,0.8)] hover:shadow-[0_20px_50px_rgba(212,175,55,0.25),inset_0_0_30px_rgba(212,175,55,0.1)] flex flex-col h-full no-underline"
             style={{
                 animation: `slideUp 0.6s ease-out ${delay}s both`,
             }}
-            onClick={() => navigate(`/shop/${product.id}`)}
+            to={`/product/${product.slug || product.id}`}
         >
             {/* Gold gradient accent on hover */}
             <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] rounded-[20px] opacity-0 group-hover:opacity-20 blur transition-opacity duration-500 -z-10" />
@@ -88,6 +88,6 @@ export function LuxuryProductCard({ product, delay = 0, isTrending = false }: Lu
                     Add to Cart
                 </button>
             </div>
-        </div>
+        </Link>
     );
 }

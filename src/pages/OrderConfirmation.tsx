@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useCurrency } from '../context/CurrencyContext';
+import { SEO } from '../components/SEO';
 
 interface Order {
     id: string;
@@ -251,6 +252,7 @@ export function OrderConfirmation() {
 
     return (
         <div className="section relative">
+            <SEO title="Order Confirmation" description="Your order receipt and payment confirmation." robots="noindex, nofollow" />
             <div className="max-w-4xl mx-auto">
 
                 {/* Status Header */}

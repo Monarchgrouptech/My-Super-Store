@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface Product {
     id: any;
@@ -19,7 +19,6 @@ interface LuxuryCategoryCardProps {
 }
 
 export function LuxuryCategoryCard({ category, products }: LuxuryCategoryCardProps) {
-    const navigate = useNavigate();
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Get products from this category that have images
@@ -52,10 +51,12 @@ export function LuxuryCategoryCard({ category, products }: LuxuryCategoryCardPro
         setCurrentIndex(prev => (prev + 1) % categoryProducts.length);
     };
 
+    const slug = category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
     return (
-        <div
-            onClick={() => navigate(`/shop?category=${category.name}`)}
-            className="group relative rounded-[20px] overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 hover:-translate-y-2 bg-white border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] w-full h-full flex flex-col"
+        <Link
+            to={`/categories/${slug}`}
+            className="group relative rounded-[20px] overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 hover:-translate-y-2 bg-white border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] w-full h-full flex flex-col no-underline"
         >
             {/* Gold gradient glow background */}
             <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] rounded-[20px] opacity-0 group-hover:opacity-20 blur transition-opacity duration-500 -z-10" />
@@ -139,6 +140,6 @@ export function LuxuryCategoryCard({ category, products }: LuxuryCategoryCardPro
                     )}
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }

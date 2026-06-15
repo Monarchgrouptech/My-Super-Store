@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useCurrency } from '../context/CurrencyContext';
 
@@ -14,11 +15,12 @@ interface Product {
   image?: string;
   product_images?: { url: string; alt_text?: string; position?: number }[];
   category: string;
+  slug?: string;
 }
 
 interface ProductCardProps {
   product: Product;
-  onProductClick: (id: number) => void;
+  onProductClick?: (id: number) => void;
   variant?: 'default' | 'black';
 }
 
@@ -64,9 +66,15 @@ export function ProductCard({ product, onProductClick, variant = 'default' }: Pr
   const inStock = (product.stock ?? 0) > 0;
 
   return (
-    <div
-      onClick={() => onProductClick(product.id)}
-      className={`product-card ${variant === 'black' ? 'card-black p-4' : ''}`}
+    <Link
+      to={`/product/${product.slug || product.id}`}
+      onClick={(e) => {
+        if (onProductClick) {
+          e.preventDefault();
+          onProductClick(product.id);
+        }
+      }}
+      className={`product-card block cursor-pointer no-underline ${variant === 'black' ? 'card-black p-4' : ''}`}
     >
       {/* Image Container with Carousel */}
       <div
@@ -177,6 +185,6 @@ export function ProductCard({ product, onProductClick, variant = 'default' }: Pr
         )}
 
       </div>
-    </div>
+    </Link>
   );
 }

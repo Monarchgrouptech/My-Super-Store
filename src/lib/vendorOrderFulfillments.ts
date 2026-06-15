@@ -124,7 +124,10 @@ export async function updateVendorReadiness(
         userId: session.user?.id,
     });
 
-    const { data: resData, error } = await supabase.functions.invoke('vendor-readiness-submit', {
+    console.log('[vendor-readiness-submit] Payload orderId:', orderId);
+    console.log('[vendor-readiness-submit] typeof orderId:', typeof orderId);
+
+    const response = await supabase.functions.invoke('vendor-readiness-submit', {
         body: {
             orderId,
             pickupContactName: data.pickup_contact_name,
@@ -138,8 +141,9 @@ export async function updateVendorReadiness(
         }
     });
 
-    console.log('vendor-readiness-submit response', resData);
-    console.log('vendor-readiness-submit error', error);
+    console.log("vendor-readiness-submit response", response);
+
+    const { data: resData, error } = response;
 
     if (error) {
         console.error('Vendor readiness failed:', error);
@@ -147,12 +151,14 @@ export async function updateVendorReadiness(
     }
 
     if (resData?.error) {
-        console.error('Vendor readiness failed (response error):', resData.error);
-        throw new Error(resData.error);
+        console.error('Vendor readiness failed (response error):', resData.error, resData.message);
+        throw new Error(resData.message || resData.error);
     }
 
-    const result = resData?.vendor_order_fulfillment;
+    // The edge function returns { ok: true, data: <row> }
+    const result = resData?.data;
     if (!result) {
+        console.error('[vendor-readiness-submit] Unexpected response shape:', resData);
         throw new Error('No vendor order fulfillment data returned from edge function');
     }
 

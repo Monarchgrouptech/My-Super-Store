@@ -127,21 +127,23 @@ export function Header({ cartItemCount }: HeaderProps) {
                       ? 'bg-[#0A0A0A]/80 border border-white/10'
                       : 'bg-white/30 border border-white/20'
                       }`}>
-                      {shopCategories.map((category) => (
-                        <button
-                          key={category.value}
-                          onClick={() => {
-                            navigate(`/shop?category=${category.value}`);
-                            setIsShopDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 transition-all ${isAccountPage
-                            ? 'text-white/70 hover:text-white hover:bg-white/10 first:rounded-t-lg last:rounded-b-lg'
-                            : 'text-slate-900/20 hover:text-slate-900 hover:bg-slate-100/20 first:rounded-t-lg last:rounded-b-lg'
-                            } text-sm font-medium`}
-                        >
-                          {category.label}
-                        </button>
-                      ))}
+                      {shopCategories.map((category) => {
+                        const slug = category.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                        const toUrl = category.value === 'All' ? '/shop' : `/categories/${slug}`;
+                        return (
+                          <Link
+                            key={category.value}
+                            to={toUrl}
+                            onClick={() => setIsShopDropdownOpen(false)}
+                            className={`w-full block text-left px-4 py-3 transition-all no-underline ${isAccountPage
+                              ? 'text-white/70 hover:text-white hover:bg-white/10 first:rounded-t-lg last:rounded-b-lg'
+                              : 'text-slate-900/70 hover:text-slate-900 hover:bg-slate-100/20 first:rounded-t-lg last:rounded-b-lg'
+                              } text-sm font-medium`}
+                          >
+                            {category.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

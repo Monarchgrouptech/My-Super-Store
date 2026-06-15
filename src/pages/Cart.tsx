@@ -3,13 +3,14 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
+import { SEO } from '../components/SEO';
 
 
 interface CartProps {
   onNavigate: (page: string) => void;
 }
 
-export function Cart({ onNavigate }: CartProps) {
+export function Cart(_props: CartProps) {
   const { items, total, removeFromCart, updateQuantity, loading } = useCart();
   const { formatPrice } = useCurrency();
 
@@ -28,19 +29,20 @@ export function Cart({ onNavigate }: CartProps) {
 
   return (
     <div className="page-fade section relative" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw', paddingLeft: 'clamp(0.75rem, 4vw, 1.5rem)', paddingRight: 'clamp(0.75rem, 4vw, 1.5rem)', boxSizing: 'border-box' }}>
+      <SEO title="Shopping Cart" description="View and manage your selected luxury items in your MySuperStore shopping cart." robots="noindex, nofollow" />
       <h1 className="page-title" style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', marginBottom: '1.5rem' }}>Shopping Cart</h1>
 
       {items.length === 0 ? (
         <div className="card-black text-center" style={{ padding: 'clamp(2rem, 8vw, 6rem) 1rem' }}>
           <h3 className="text-white mb-6" style={{ fontSize: 'clamp(1rem, 4vw, 1.5rem)' }}>Your cart is empty</h3>
           <p className="text-muted mb-8">Discover our exceptional collection</p>
-          <button
-            onClick={() => onNavigate('shop')}
-            className="btn-primary"
+          <Link
+            to="/shop"
+            className="btn-primary inline-flex items-center justify-center no-underline"
             style={{ padding: '0.75rem 2rem' }}
           >
             Continue Shopping
-          </button>
+          </Link>
         </div>
       ) : (
         <div className="cart-grid" style={{ width: '100%', minWidth: 0 }}>
@@ -129,22 +131,20 @@ export function Cart({ onNavigate }: CartProps) {
                 </div>
               </div>
 
-              <Link to="/checkout" style={{ textDecoration: 'none' }}>
-              <button
-                className="btn-primary"
-                style={{ width: '100%', marginBottom: '1rem', padding: '1rem' }}
-                
+              <Link 
+                to="/checkout" 
+                className="btn-primary block text-center no-underline"
+                style={{ width: '100%', marginBottom: '1rem', padding: '1rem', boxSizing: 'border-box' }}
               >
                 Proceed to Checkout
-              </button>
+              </Link>
 
-              <button
-                onClick={() => onNavigate('shop')}
-                className="btn-outline-gold"
-                style={{ width: '100%', padding: '1rem' }}
+              <Link 
+                to="/shop" 
+                className="btn-outline-gold block text-center no-underline"
+                style={{ width: '100%', padding: '1rem', boxSizing: 'border-box' }}
               >
                 Continue Shopping
-              </button>
               </Link>
 
               {/* Free Shipping Message */}

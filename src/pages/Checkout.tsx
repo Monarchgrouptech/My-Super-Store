@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Loader2, MapPin, ShoppingBag, AlertCircle, X, CreditCard, Wallet } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { supabase } from '../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { SEO } from '../components/SEO';
 
 interface Address {
     id: string;
@@ -34,7 +35,7 @@ type PaymentMethod = 'paystack' | 'stripe' | null;
 
 export function Checkout() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { rate, formatPrice } = useCurrency();
 
     const [loading, setLoading] = useState(true);
@@ -63,6 +64,8 @@ export function Checkout() {
     };
 
     useEffect(() => {
+        if (authLoading) return;
+
         const fetchData = async () => {
             if (!user) {
                 navigate('/login');
@@ -178,33 +181,22 @@ export function Checkout() {
 
             const userEmail = profileData?.email || user.email;
 
-            const response = await fetch(
-                'https://hoieogginmsfmoarubuu.supabase.co/functions/v1/super-endpoint',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                    },
-                    body: JSON.stringify({
-                        user_id: user.id,
-                        email: userEmail,
-                        currency: 'NGN',
-                        items,
-                        shipping_address_id: shippingAddress.id,
-                        billing_address_id: shippingAddress.id,
-                    }),
+            const { data, error: invokeError } = await supabase.functions.invoke('super-endpoint', {
+                body: {
+                    user_id: user.id,
+                    email: userEmail,
+                    currency: 'NGN',
+                    items,
+                    shipping_address_id: shippingAddress.id,
+                    billing_address_id: shippingAddress.id,
                 }
-            );
+            });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Payment initialization failed');
+            if (invokeError) {
+                throw new Error(invokeError.message || 'Payment initialization failed');
             }
 
-            const data = await response.json();
-
-            if (!data.authorization_url || !data.order_id) {
+            if (!data || !data.authorization_url || !data.order_id) {
                 throw new Error('Invalid response from payment service');
             }
 
@@ -253,35 +245,24 @@ export function Checkout() {
             const success_url = `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
             const cancel_url = `${baseUrl}/checkout`;
 
-            const response = await fetch(
-                'https://hoieogginmsfmoarubuu.supabase.co/functions/v1/create-stripe-payment',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                    },
-                    body: JSON.stringify({
-                        user_id: user.id,
-                        email: userEmail,
-                        currency: 'USD',
-                        items,
-                        shipping_address_id: shippingAddress.id,
-                        billing_address_id: shippingAddress.id,
-                        success_url,
-                        cancel_url,
-                    }),
+            const { data, error: invokeError } = await supabase.functions.invoke('create-stripe-payment', {
+                body: {
+                    user_id: user.id,
+                    email: userEmail,
+                    currency: 'USD',
+                    items,
+                    shipping_address_id: shippingAddress.id,
+                    billing_address_id: shippingAddress.id,
+                    success_url,
+                    cancel_url,
                 }
-            );
+            });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Payment initialization failed');
+            if (invokeError) {
+                throw new Error(invokeError.message || 'Payment initialization failed');
             }
 
-            const data = await response.json();
-
-            if (!data.checkout_url) {
+            if (!data || !data.checkout_url) {
                 throw new Error('Invalid response from payment service');
             }
 
@@ -294,7 +275,7 @@ export function Checkout() {
         }
     };
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="section flex items-center justify-center min-h-[60vh]">
                 <Loader2 className="animate-spin text-[var(--gold-primary)]" size={48} />
@@ -309,9 +290,9 @@ export function Checkout() {
                     <ShoppingBag size={64} className="mx-auto mb-6 text-[var(--gold-primary)]" />
                     <h3 className="text-white mb-4">Your cart is empty</h3>
                     <p className="text-muted mb-8">Add some items to proceed with checkout</p>
-                    <button onClick={() => navigate('/shop')} className="btn-primary" style={{ padding: '0.75rem 2rem' }}>
+                    <Link to="/shop" className="btn-primary inline-flex items-center justify-center no-underline" style={{ padding: '0.75rem 2rem' }}>
                         Continue Shopping
-                    </button>
+                    </Link>
                 </div>
             </div>
         );
@@ -319,6 +300,7 @@ export function Checkout() {
 
     return (
         <div className="section relative" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw', paddingLeft: 'clamp(0.75rem, 4vw, 1.5rem)', paddingRight: 'clamp(0.75rem, 4vw, 1.5rem)', boxSizing: 'border-box' }}>
+            <SEO title="Checkout" description="Complete your secure purchase at MySuperStore." robots="noindex, nofollow" />
             <div style={{ maxWidth: '72rem', margin: '0 auto', width: '100%', minWidth: 0 }}>
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.5rem, 5vw, 3rem)', marginBottom: 0 }}>Checkout</h1>
@@ -360,12 +342,12 @@ export function Checkout() {
                                     <p className="text-orange-200 mb-4">
                                         No shipping address found. Please add your delivery address to continue.
                                     </p>
-                                    <button
-                                        onClick={() => navigate('/account')}
-                                        className="btn-outline-gold"
+                                    <Link
+                                        to="/account"
+                                        className="btn-outline-gold inline-flex items-center justify-center no-underline"
                                     >
                                         Add Address in Account
-                                    </button>
+                                    </Link>
                                 </div>
                             )}
                         </div>
@@ -495,12 +477,12 @@ export function Checkout() {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    onClick={() => navigate('/account')}
-                                    className="btn-primary"
+                                <Link
+                                    to="/account"
+                                    className="btn-primary inline-flex items-center justify-center no-underline"
                                 >
                                     Go to Account
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>

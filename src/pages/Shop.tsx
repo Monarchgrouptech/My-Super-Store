@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { ChevronDown, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 
 import { supabase } from '../lib/supabase';
 import { useCurrency } from '../context/CurrencyContext';
@@ -64,39 +65,29 @@ export function Shop({ onNavigate }: ShopProps) {
     setShopPage(0); // reset page when filters change
   }, [categorySlug, searchParams]);
 
-  useEffect(() => {
-    // Dynamic titles and description
-    let title = "Luxury Collection | MySuperStore Nigeria";
-    let desc = "Browse our luxury collection at MySuperStore Nigeria. Find premium items across all categories.";
-    
-    if (selectedCategory && selectedCategory !== 'All') {
-      title = `${selectedCategory} Products | MySuperStore Nigeria`;
-      desc = `Shop premium ${selectedCategory.toLowerCase()} products at MySuperStore Nigeria. Explore our curated selection of high-quality items.`;
-    }
-    
-    if (searchTerm) {
-      title = `Search results for "${searchTerm}" | MySuperStore`;
-      desc = `Browse results for ${searchTerm} at MySuperStore Nigeria. High-quality products curated for your needs.`;
-    }
-    
-    document.title = title;
+  const categoryDescriptions: Record<string, string> = {
+    'Cosmetics': "Enhance your natural beauty with our exclusive collection of organic cosmetics, designer fragrances, and premium skincare from world-renowned luxury brands.",
+    'Construction': "Discover premium hardware, building supplies, and professional-grade materials engineered for durability, safety, and high-precision engineering.",
+    'Furniture': "Elevate your living spaces with hand-crafted statement furniture, minimalist office desks, and custom decor items representing the pinnacle of interior design.",
+    'Clothing and Fashion': "Shop premium luxury apparel, bespoke couture, and runway-inspired fashion accessories curated from independent heritage designers.",
+    'Events Tools': "Plan flawless events with professional sound systems, premium stage lighting tools, and elegant decoration equipment designed for high-profile celebrations.",
+    'Electrical Appliances': "Experience high-performance home automation, state-of-the-art kitchen appliances, and cutting-edge consumer electronics.",
+    'All': "Browse our complete collection of exceptional pieces representing the pinnacle of craftsmanship, luxury, and premium quality."
+  };
 
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', desc);
+  const seoTitle = selectedCategory && selectedCategory !== 'All' 
+    ? `${selectedCategory} Collection` 
+    : (searchTerm ? `Search results for "${searchTerm}"` : 'Luxury Collection');
 
-    let metaKeywords = document.querySelector('meta[name="keywords"]');
-    if (!metaKeywords) {
-      metaKeywords = document.createElement('meta');
-      metaKeywords.setAttribute('name', 'keywords');
-      document.head.appendChild(metaKeywords);
-    }
-    metaKeywords.setAttribute('content', `luxury products, online shopping nigeria, ${selectedCategory !== 'All' ? selectedCategory.toLowerCase() + ',' : ''} premium items, mysuperstore`);
-  }, [selectedCategory, searchTerm]);
+  const seoDesc = selectedCategory && selectedCategory !== 'All'
+    ? categoryDescriptions[selectedCategory]
+    : (searchTerm ? `Browse search results for "${searchTerm}" at MySuperStore.` : categoryDescriptions['All']);
+
+  const seoKeywords = `luxury products, online shopping nigeria, ${selectedCategory !== 'All' ? selectedCategory.toLowerCase() + ',' : ''} premium items, mysuperstore`;
+
+  const robotsDirective = (searchTerm || categorySlug === 'gfygf' || selectedCategory.toLowerCase() === 'test')
+    ? 'noindex, nofollow'
+    : 'index, follow';
 
 
 
@@ -165,41 +156,66 @@ export function Shop({ onNavigate }: ShopProps) {
   const totalShopPages = Math.ceil(filteredProducts.length / SHOP_PAGE_SIZE);
   const pagedProducts = filteredProducts.slice(shopPage * SHOP_PAGE_SIZE, (shopPage + 1) * SHOP_PAGE_SIZE);
 
-  useEffect(() => {
-    // Inject ItemList JSON-LD Schema
-    if (pagedProducts.length > 0) {
-      const schemaItemList = {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "name": selectedCategory === 'All' ? "Luxury Collection" : `${selectedCategory} Products`,
-        "numberOfItems": filteredProducts.length,
-        "itemListElement": pagedProducts.map((product, index) => ({
-          "@type": "ListItem",
-          "position": index + 1,
-          "url": `${window.location.origin}/product/${product.slug || product.id}`,
-          "name": product.name,
-          "image": product.image,
-          "price": product.price,
-          "priceCurrency": "NGN"
-        }))
-      };
+  // ItemList Schema
+  const itemListSchema = useMemo(() => {
+    if (pagedProducts.length === 0) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": selectedCategory === 'All' ? "Luxury Collection" : `${selectedCategory} Products`,
+      "numberOfItems": filteredProducts.length,
+      "itemListElement": pagedProducts.map((product, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "url": `https://mysuperstore.co/product/${product.slug || product.id}`,
+        "name": product.name,
+        "image": product.image,
+        "price": product.price,
+        "priceCurrency": "NGN"
+      }))
+    };
+  }, [pagedProducts, selectedCategory, filteredProducts.length]);
 
-      const scriptId = 'jsonld-schema-shop';
-      let scriptEl = document.getElementById(scriptId);
-      if (!scriptEl) {
-        scriptEl = document.createElement('script');
-        scriptEl.id = scriptId;
-        scriptEl.setAttribute('type', 'application/ld+json');
-        document.head.appendChild(scriptEl);
+  // Breadcrumb Schema
+  const breadcrumbSchema = useMemo(() => {
+    const items = [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://mysuperstore.co"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "https://mysuperstore.co/shop"
       }
-      scriptEl.textContent = JSON.stringify(schemaItemList);
+    ];
+
+    if (selectedCategory && selectedCategory !== 'All') {
+      const slug = selectedCategory.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      items.push({
+        "@type": "ListItem",
+        "position": 3,
+        "name": selectedCategory,
+        "item": `https://mysuperstore.co/categories/${slug}`
+      });
     }
 
-    return () => {
-      const el = document.getElementById('jsonld-schema-shop');
-      if (el) el.remove();
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": items
     };
-  }, [selectedCategory, pagedProducts, filteredProducts.length]);
+  }, [selectedCategory]);
+
+  // Combined schemas
+  const shopSchemas = useMemo(() => {
+    const schemas: any[] = [breadcrumbSchema];
+    if (itemListSchema) schemas.push(itemListSchema);
+    return schemas;
+  }, [breadcrumbSchema, itemListSchema]);
 
   if (loading) {
     return (
@@ -211,6 +227,13 @@ export function Shop({ onNavigate }: ShopProps) {
 
   return (
     <div className="page-fade section relative">
+      <SEO 
+        title={seoTitle} 
+        description={seoDesc} 
+        keywords={seoKeywords} 
+        schema={shopSchemas} 
+        robots={robotsDirective} 
+      />
       {/* Breadcrumb Navigation */}
       <nav className="mb-4 text-sm text-gray-500 flex items-center gap-2 relative z-10" style={{ padding: '0 1rem' }}>
         <Link to="/" className="hover:text-[var(--gold-primary)] transition-colors">Home</Link>
@@ -233,10 +256,10 @@ export function Shop({ onNavigate }: ShopProps) {
           <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif" }}>
             {selectedCategory === 'All' ? 'Luxury Collection' : `${selectedCategory} Products`}
           </h1>
-          <p className="page-desc">
+          <p className="page-desc max-w-2xl mx-auto mt-2 text-slate-500 text-sm leading-relaxed">
             {searchTerm
               ? `${filteredProducts.length} results for “${searchTerm}”`
-              : `${filteredProducts.length} exceptional pieces representing the pinnacle of craftsmanship.`}
+              : (categoryDescriptions[selectedCategory] || categoryDescriptions['All'])}
           </p>
         </div>
       </div>

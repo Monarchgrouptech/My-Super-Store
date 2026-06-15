@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { LuxuryProductCard } from './LuxuryProductCard';
 
 interface Product {
@@ -46,7 +46,6 @@ export function ProductSection({
     loading,
     productsPerSection
 }: ProductSectionProps) {
-    const navigate = useNavigate();
 
     const bgGradients = [
         'from-[rgba(255,229,92,0.05)] via-white to-[rgba(212,175,55,0.03)]',
@@ -88,15 +87,13 @@ export function ProductSection({
                                 {titleText}
                             </h2>
                         </div>
-                        <button
-                            onClick={() =>
-                                navigate(`/shop${categoryName ? `?category=${categoryName}` : ''}`)
-                            }
-                            className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] hover:opacity-80 transition-all flex items-right gap-2 group"
+                        <Link
+                            to={categoryName ? `/categories/${categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}` : '/shop'}
+                            className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] hover:opacity-80 transition-all flex items-center gap-2 group no-underline"
                         >
                             See all
                             <span className="group-hover:translate-x-1 transition-transform">→</span>
-                        </button>
+                        </Link>
                     </div>
                     {/* Underline spanning full width under See all text */}
                     <div className="h-[3px] w-full bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] rounded-full shadow-lg shadow-[#D4AF37]/30 mt-4" />

@@ -12,6 +12,7 @@ import {
     HelpCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { SEO } from '../components/SEO';
 
 interface TrackingEvent {
     id: string;
@@ -112,6 +113,7 @@ export function OrderTracking() {
     
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
+            <SEO title="Track Your Order" description="Track the real-time status of your MySuperStore order." robots="noindex, nofollow" />
             {/* Minimal Header */}
             <div className="bg-white border-b border-gray-100 sticky top-0 z-50">
                 <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">

@@ -229,13 +229,21 @@ export function OrderList() {
             return;
         }
 
+        // ── DEBUG: Trace orderId source ──
+        const selectedOrder = orders.find(o => o.id === selectedOrderId);
+        console.log('[vendor-readiness] selected order object:', selectedOrder);
+        console.log('[vendor-readiness] selectedOrderId (from state):', selectedOrderId);
+        console.log('[vendor-readiness] selectedOrder.id:', selectedOrder?.id);
+        console.log('[vendor-readiness] vendor.id:', vendor.id);
+        console.log('[vendor-readiness] all order IDs in state:', orders.map(o => ({ id: o.id, placed_at: o.placed_at })));
+        // ── END DEBUG ──
+
         try {
             setUpdating(selectedOrderId);
             setSubmitError(null);
 
-            // Update vendor_order_fulfillments table
-            // This will trigger database triggers to sync order state
-            await updateVendorReadiness(selectedOrderId, vendor.id, {
+            // Call the edge function — this is the ONLY write path
+            const updatedFulfillment = await updateVendorReadiness(selectedOrderId, vendor.id, {
                 pickup_contact_name: readinessForm.pickup_contact_name,
                 pickup_contact_phone: readinessForm.pickup_contact_phone,
                 pickup_address: readinessForm.pickup_address,
@@ -245,14 +253,24 @@ export function OrderList() {
                 pickup_notes: readinessForm.pickup_notes || undefined,
             });
 
-            // Refresh orders to show updated state
-            await fetchOrders();
+            console.log('[vendor-readiness] edge function returned fulfillment:', updatedFulfillment);
+
+            // Update local state with the returned fulfillment instead of a full refetch
+            setOrders(prev => prev.map(order => {
+                if (order.id !== selectedOrderId) return order;
+                const existing = order.vendor_order_fulfillments || [];
+                const idx = existing.findIndex(f => f.vendor_id === vendor!.id);
+                const updated = idx >= 0
+                    ? existing.map((f, i) => i === idx ? updatedFulfillment : f)
+                    : [...existing, updatedFulfillment];
+                return { ...order, vendor_order_fulfillments: updated };
+            }));
 
             // Close modal
             setShowReadinessModal(false);
             setSelectedOrderId(null);
         } catch (err) {
-            console.error('Error updating vendor readiness:', err);
+            console.error('[vendor-readiness] Error:', err);
             const message = err instanceof Error ? err.message : 'Failed to update readiness';
             // Surface auth errors with actionable guidance
             if (message.toLowerCase().includes('not authenticated') || message.toLowerCase().includes('unauthorized')) {

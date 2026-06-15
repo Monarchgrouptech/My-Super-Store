@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { LuxuryCategoryCard } from '../components/home/LuxuryCategoryCard';
+import { SEO } from '../components/SEO';
 
 import { HeroCarousel } from '../components/home/HeroCarousel';
 import { AutoScrollProductSection } from '../components/home/AutoScrollProductSection';
@@ -20,6 +21,7 @@ interface Product {
   image?: string;
   product_images?: { url: string; alt_text?: string; position?: number }[];
   category: string;
+  slug?: string;
   product_specs?: { spec_key: string; spec_value: string }[];
   view_count?: number;
 }
@@ -32,7 +34,6 @@ interface Category {
 const PRODUCTS_PER_SECTION = 8;
 
 export function Home() {
-  const navigate = useNavigate();
   const { formatPrice } = useCurrency();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -83,6 +84,7 @@ export function Home() {
         image: p.product_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url,
         product_images: p.product_images?.sort((a: any, b: any) => a.position - b.position) || [],
         category: p.product_categories?.[0]?.categories?.name || 'Uncategorized',
+        slug: p.slug,
         product_specs: p.product_specs || [],
         view_count: p.view_count || 0,
       })) || [];
@@ -154,36 +156,7 @@ export function Home() {
     setFashionProducts(fashion);
   };
 
-  // Load all data on mount
-  useEffect(() => {
-    const loadAllData = async () => {
-      await fetchCategories();
-      const products = await fetchAllProducts();
-      processProducts(products);
-    };
-
-    loadAllData();
-
-    // Set Page Title, Description, and Keywords
-    document.title = "MySuperStore Nigeria | Premium Electronics, Fashion & Home Goods";
-    
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', "Curating excellence in luxury fashion, premium electronics, and home goods in Nigeria. Shop top quality brands at MySuperStore.");
-
-    let metaKeywords = document.querySelector('meta[name="keywords"]');
-    if (!metaKeywords) {
-      metaKeywords = document.createElement('meta');
-      metaKeywords.setAttribute('name', 'keywords');
-      document.head.appendChild(metaKeywords);
-    }
-    metaKeywords.setAttribute('content', "luxury shopping, e-commerce nigeria, premium electronics, luxury fashion, home goods, online store lagos");
-
-    // Inject JSON-LD Schema (Organization & WebSite)
+  const homeSchema = useMemo(() => {
     const schemaOrg = {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -209,20 +182,18 @@ export function Home() {
       }
     };
 
-    const scriptId = 'jsonld-schema-home';
-    let scriptEl = document.getElementById(scriptId);
-    if (!scriptEl) {
-      scriptEl = document.createElement('script');
-      scriptEl.id = scriptId;
-      scriptEl.setAttribute('type', 'application/ld+json');
-      document.head.appendChild(scriptEl);
-    }
-    scriptEl.textContent = JSON.stringify([schemaOrg, schemaWebsite]);
+    return [schemaOrg, schemaWebsite];
+  }, []);
 
-    return () => {
-      const el = document.getElementById(scriptId);
-      if (el) el.remove();
+  // Load all data on mount
+  useEffect(() => {
+    const loadAllData = async () => {
+      await fetchCategories();
+      const products = await fetchAllProducts();
+      processProducts(products);
     };
+
+    loadAllData();
   }, []);
 
 
@@ -230,6 +201,12 @@ export function Home() {
 
   return (
     <main className="bg-white">
+      <SEO 
+        title="MySuperStore Nigeria | Premium Electronics, Fashion & Home Goods"
+        description="Curating excellence in luxury fashion, premium electronics, and home goods in Nigeria. Shop top quality brands at MySuperStore — fast delivery, secure checkout."
+        keywords="luxury shopping nigeria, premium electronics nigeria, fashion store lagos, home goods online, buy electronics nigeria, mysuperstore"
+        schema={homeSchema} 
+      />
       <style>{`
         @keyframes slideUp {
           from {
@@ -314,15 +291,15 @@ export function Home() {
               <p className="hidden sm:block text-sm md:text-base lg:text-sm xl:text-base text-white mb-4 md:mb-6 lg:mb-4 leading-relaxed" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8)' }}>
                 Explore our curated collection of premium products.
               </p>
-              <button
-                onClick={() => navigate('/shop')}
-                className="relative group/btn inline-block w-full"
+              <Link
+                to="/shop"
+                className="relative group/btn inline-block w-full no-underline"
               >
                 <div className="absolute -inset-0.5 sm:-inset-1 bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] rounded-lg sm:rounded-xl opacity-50 group-hover/btn:opacity-100 blur transition duration-500 group-hover/btn:duration-200" />
                 <div className="relative bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] text-[#050505] px-4 py-2 sm:px-5 sm:py-2.5 md:px-8 md:py-3 lg:px-6 lg:py-2.5 rounded-lg sm:rounded-xl font-extrabold text-xs sm:text-sm md:text-base lg:text-sm hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)] sm:hover:shadow-[0_20px_40px_rgba(212,175,55,0.4)] transition-all duration-300 transform hover:scale-105 active:scale-95 text-center">
                   Shop Now
                 </div>
-              </button>
+              </Link>
             </div>
           </div>
         </section>
@@ -331,9 +308,9 @@ export function Home() {
         <section className="w-full bg-gradient-to-b from-[rgba(255,229,92,0.05)] via-white to-[rgba(212,175,55,0.03)] py-6 lg:py-0 lg:col-span-3 border-y lg:border-0 border-[rgba(212,175,55,0.2)] mt-4 lg:mt-0">
           <div className="mx-auto px-6 lg:px-2 h-full flex items-center">
             {promoProduct ? (
-              <div
-                className="relative rounded-[24px] lg:rounded-2xl overflow-hidden group cursor-pointer border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 w-full"
-                onClick={() => navigate(`/product/${promoProduct.id}`)}
+              <Link
+                to={`/product/${promoProduct.slug || promoProduct.id}`}
+                className="relative block rounded-[24px] lg:rounded-2xl overflow-hidden group cursor-pointer border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 w-full no-underline"
               >
                 <img
                   src={promoProduct.image}
@@ -349,7 +326,7 @@ export function Home() {
                     {formatPrice(promoProduct.price)}
                   </p>
                 </div>
-              </div>
+              </Link>
             ) : (
               <div className="w-full lg:h-[600px] bg-slate-100 animate-pulse rounded-[22px] lg:rounded-xl" />
             )}
@@ -413,10 +390,10 @@ export function Home() {
                   <div className="relative w-full overflow-hidden">
                     <div className="flex gap-4 animate-scroll w-max hover:pause">
                       {[...seasonalProducts, ...seasonalProducts, ...seasonalProducts].map((product, index) => (
-                        <div
+                        <Link
                           key={`seasonal-row1-${product.id}-${index}`}
-                          onClick={() => navigate(`/product/${product.id}`)}
-                          className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group"
+                          to={`/product/${product.slug || product.id}`}
+                          className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group no-underline"
                         >
                           <div className="relative aspect-square mb-3 overflow-hidden rounded-lg bg-slate-50">
                             <img
@@ -432,7 +409,7 @@ export function Home() {
                               {product.category}
                             </span>
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -441,10 +418,10 @@ export function Home() {
                   <div className="relative w-full overflow-hidden">
                     <div className="flex gap-4 animate-scroll-reverse w-max hover:pause">
                       {[...seasonalProducts].reverse().concat([...seasonalProducts].reverse()).concat([...seasonalProducts].reverse()).map((product, index) => (
-                        <div
+                        <Link
                           key={`seasonal-row2-${product.id}-${index}`}
-                          onClick={() => navigate(`/product/${product.id}`)}
-                          className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group"
+                          to={`/product/${product.slug || product.id}`}
+                          className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group no-underline"
                         >
                           <div className="relative aspect-square mb-3 overflow-hidden rounded-lg bg-slate-50">
                             <img
@@ -460,7 +437,7 @@ export function Home() {
                               {product.category}
                             </span>
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   </div>

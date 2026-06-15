@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { SEO } from '../components/SEO';
 
 import { ProductCarousel } from '../components/ProductCarousel';
 import TypingText from '../components/TypingText';
@@ -19,7 +20,6 @@ interface AboutProps {
 }
 
 export function About({ onNavigate }: AboutProps) {
-  const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeAccordion, setActiveAccordion] = useState<number | null>(0);
@@ -78,6 +78,10 @@ export function About({ onNavigate }: AboutProps) {
 
   return (
     <div className="bg-[#050505] text-white min-h-screen selection:bg-[#D4AF37]/30 selection:text-white">
+      <SEO 
+        title="About Us" 
+        description="Learn about MySuperStore, our dual-phase inspection charter, secure Paystack escrow infrastructure, and logistics tracking protocols." 
+      />
       {/* ================= HERO SECTION ================= */}
       <section className="relative w-full py-20 lg:py-36 px-6 lg:px-10 overflow-hidden border-b border-slate-900 bg-gradient-to-b from-[#110e05] via-[#050505] to-[#050505]">
         {/* Floating Ambient Glowing Blobs */}
@@ -123,26 +127,26 @@ export function About({ onNavigate }: AboutProps) {
 
               {/* CTA BUTTONS */}
               <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-2 w-full">
-                <button
-                  onClick={() => navigate('/shop')}
-                  className="group relative h-14 px-8 min-w-[180px] rounded-lg bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black font-extrabold uppercase shadow-lg transition active:scale-95 hover:shadow-[#D4AF37]/20 hover:shadow-xl cursor-pointer"
+                <Link
+                  to="/shop"
+                  className="group relative h-14 px-8 min-w-[180px] rounded-lg bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black font-extrabold uppercase shadow-lg transition active:scale-95 hover:shadow-[#D4AF37]/20 hover:shadow-xl cursor-pointer flex items-center justify-center no-underline"
                 >
                   Shop Collection
-                </button>
+                </Link>
 
-                <button
-                  onClick={() => navigate('/shop')}
-                  className="h-14 px-8 min-w-[180px] rounded-lg border border-slate-700 bg-white/5 font-extrabold uppercase hover:bg-white/10 hover:border-[#D4AF37]/50 text-white transition cursor-pointer"
+                <Link
+                  to="/shop"
+                  className="h-14 px-8 min-w-[180px] rounded-lg border border-slate-700 bg-white/5 font-extrabold uppercase hover:bg-white/10 hover:border-[#D4AF37]/50 text-white transition cursor-pointer flex items-center justify-center no-underline"
                 >
                   Explore More
-                </button>
+                </Link>
 
-                <button
-                  onClick={() => navigate('/vendor/dashboard')}
-                  className="h-14 px-8 min-w-[180px] rounded-lg bg-slate-900 text-[#D4AF37] font-extrabold uppercase border border-slate-800 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                <Link
+                  to="/vendor/dashboard"
+                  className="h-14 px-8 min-w-[180px] rounded-lg bg-slate-900 text-[#D4AF37] font-extrabold uppercase border border-slate-800 hover:bg-slate-800 hover:text-white transition cursor-pointer flex items-center justify-center no-underline"
                 >
                   Vendor Portal
-                </button>
+                </Link>
               </div>
 
               {/* KEY STATS QUICK VIEW */}

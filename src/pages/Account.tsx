@@ -6,7 +6,8 @@ import { useDeliveryPartner } from '../hooks/useDeliveryPartner';
 import { supabase } from '../lib/supabase';
 import { getAvatarUrl } from '../lib/avatarUtils';
 import { Avatar } from '../components/Avatar';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { getAddressFromLocation } from '../lib/geolocationUtils';
 import { useCurrency } from '../context/CurrencyContext';
 import { fetchUserOrders, isSuccessfulPaymentStatus, UserOrderRecord } from '../lib/userOrders';
@@ -292,6 +293,7 @@ export function Account() {
 
     return (
         <div className="min-h-screen bg-black text-white overflow-x-hidden">
+            <SEO title="My Account" description="Manage your profile, shipping addresses, order history, and payment details." robots="noindex, nofollow" />
             <div className="w-full max-w-7xl mx-auto px-4 py-8">
                     {/* Welcome Header */}
                     <div className="mb-6 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0B0B0B] via-[#111] to-[#0B0B0B] p-4 sm:p-6 border border-[#FFC92E]/30 shadow-[0_0_30px_rgba(255,201,46,0.1)]">
@@ -433,13 +435,13 @@ export function Account() {
                                                 </div>
                                                 <h3 className="text-xl font-bold text-white mb-3">No orders placed yet</h3>
                                                 <p className="text-gray-500 mb-8 max-w-md mx-auto">Start your collection of premium products today.</p>
-                                                <button
-                                                    onClick={() => navigate('/shop')}
-                                                    className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5"
+                                                <Link
+                                                    to="/shop"
+                                                    className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5 no-underline"
                                                 >
                                                     <Sparkles size={18} />
                                                     Explore Shop
-                                                </button>
+                                                </Link>
                                             </div>
                                         </div>
                                     ) : (
@@ -555,13 +557,13 @@ export function Account() {
                                                 </div>
                                                 <h3 className="text-xl font-bold text-white mb-3">Your cart is empty</h3>
                                                 <p className="text-gray-500 mb-8 max-w-md mx-auto">Add items to your cart to get started.</p>
-                                                <button
-                                                    onClick={() => navigate('/shop')}
-                                                    className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5"
+                                                <Link
+                                                    to="/shop"
+                                                    className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5 no-underline"
                                                 >
                                                     <Sparkles size={18} />
                                                     Start Shopping
-                                                </button>
+                                                </Link>
                                             </div>
                                         </div>
                                     ) : (
@@ -603,13 +605,13 @@ export function Account() {
                                                         {formatPrice(cartItems.reduce((sum, item) => sum + (item.quantity * parseFloat(item.price_at_time)), 0))}
                                                     </p>
                                                 </div>
-                                                <button
-                                                    onClick={() => navigate('/cart')}
-                                                    className="w-full py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all flex items-center justify-center gap-2"
+                                                <Link
+                                                    to="/cart"
+                                                    className="w-full py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all flex items-center justify-center gap-2 no-underline"
                                                 >
                                                     <ShoppingBag size={18} />
                                                     View Full Cart
-                                                </button>
+                                                </Link>
                                             </div>
                                         </div>
                                     )}
@@ -630,13 +632,13 @@ export function Account() {
                                             </div>
                                             <h3 className="text-xl font-bold text-white mb-3">No payment records yet</h3>
                                             <p className="text-gray-500 mb-8 max-w-md mx-auto">Complete a purchase to see your payment history here.</p>
-                                            <button
-                                                onClick={() => navigate('/shop')}
-                                                className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5"
+                                            <Link
+                                                to="/shop"
+                                                className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFC92E] to-[#DE9D0D] text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(255,201,46,0.3)] transition-all transform hover:-translate-y-0.5 no-underline"
                                             >
                                                 <ShoppingBag size={18} />
                                                 Shop Now
-                                            </button>
+                                            </Link>
                                         </div>
                                     ) : (
                                         <>

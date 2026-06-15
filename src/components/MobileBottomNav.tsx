@@ -1,5 +1,5 @@
 import { Home, ShoppingCart, ShoppingBag, Info, User } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 /**
  * MobileBottomNav - Fixed bottom navigation bar for mobile devices
@@ -15,7 +15,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 export function MobileBottomNav() {
     const location = useLocation();
-    const navigate = useNavigate();
 
     const navItems = [
         { name: 'Home', path: '/', icon: Home },
@@ -47,10 +46,10 @@ export function MobileBottomNav() {
                     if (item.isHero) {
                         // Hero Shop button - elevated and styled
                         return (
-                            <button
+                            <Link
                                 key={item.name}
-                                onClick={() => navigate(item.path)}
-                                className="flex flex-col items-center justify-center"
+                                to={item.path}
+                                className="flex flex-col items-center justify-center no-underline"
                                 aria-label={item.name}
                             >
                                 {/* Elevated container with glow */}
@@ -75,16 +74,16 @@ export function MobileBottomNav() {
                                 >
                                     {item.name}
                                 </span>
-                            </button>
+                            </Link>
                         );
                     }
 
                     // Regular nav items
                     return (
-                        <button
+                        <Link
                             key={item.name}
-                            onClick={() => navigate(item.path)}
-                            className="flex flex-col items-center justify-center min-w-[60px] py-2"
+                            to={item.path}
+                            className="flex flex-col items-center justify-center min-w-[60px] py-2 no-underline"
                             aria-label={item.name}
                         >
                             <div
@@ -101,7 +100,7 @@ export function MobileBottomNav() {
                             >
                                 {item.name}
                             </span>
-                        </button>
+                        </Link>
                     );
                 })}
             </div>

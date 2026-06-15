@@ -1,5 +1,5 @@
 import { X, ChevronRight, ChevronDown } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSwipe } from '../hooks/TouchSwipe';
@@ -137,15 +137,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         }
     };
 
-    const handleNavigation = (path: string) => {
-        navigate(path);
-        onClose();
-    };
 
-    const handleCategoryClick = (categoryValue: string) => {
-        navigate(`/shop?category=${categoryValue}`);
-        onClose();
-    };
 
     // if (!isOpen) return null; // Removed to allow animation
 
@@ -209,28 +201,34 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                                         <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${isShopExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0 mt-0'
                                             }`}>
                                             <div className="min-h-0 flex flex-col gap-3 py-2 pl-8">
-                                                {shopCategories.map((category) => (
-                                                    <button
-                                                        key={category.value}
-                                                        onClick={() => handleCategoryClick(category.value)}
-                                                        className="text-left text-lg text-slate-500 hover:text-[#D4AF37] transition-colors py-1 font-medium font-serif"
-                                                    >
-                                                        {category.label}
-                                                    </button>
-                                                ))}
+                                                {shopCategories.map((category) => {
+                                                    const slug = category.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                    const toUrl = category.value === 'All' ? '/shop' : `/categories/${slug}`;
+                                                    return (
+                                                        <Link
+                                                            key={category.value}
+                                                            to={toUrl}
+                                                            onClick={onClose}
+                                                            className="text-left text-lg text-slate-500 hover:text-[#D4AF37] transition-colors py-1 font-medium font-serif no-underline block"
+                                                        >
+                                                            {category.label}
+                                                        </Link>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     </>
                                 ) : (
-                                    <button
-                                        onClick={() => handleNavigation(item.path)}
-                                        className={`w-full text-left text-2xl transition-all duration-300 font-serif py-2 border-l-4 ${location.pathname === item.path
+                                    <Link
+                                        to={item.path}
+                                        onClick={onClose}
+                                        className={`w-full block text-left text-2xl transition-all duration-300 font-serif py-2 border-l-4 no-underline ${location.pathname === item.path
                                                 ? 'border-[#D4AF37] text-[#D4AF37] font-medium pl-4 bg-[#D4AF37]/5'
                                                 : 'border-transparent text-slate-800 pl-4 hover:text-[#D4AF37] hover:pl-6'
                                             }`}
                                     >
                                         {item.name}
-                                    </button>
+                                    </Link>
                                 )}
                             </div>
                         ))}

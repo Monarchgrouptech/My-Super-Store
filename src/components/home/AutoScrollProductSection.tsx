@@ -1,5 +1,5 @@
 
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCurrency } from '../../context/CurrencyContext';
 
 interface Product {
@@ -8,6 +8,7 @@ interface Product {
     price: number;
     image?: string;
     category: string;
+    slug?: string;
 }
 
 interface AutoScrollProductSectionProps {
@@ -17,7 +18,6 @@ interface AutoScrollProductSectionProps {
 }
 
 export function AutoScrollProductSection({ title, products, className = '' }: AutoScrollProductSectionProps) {
-    const navigate = useNavigate();
     const { formatPrice } = useCurrency();
 
     if (!products || products.length === 0) return null;
@@ -36,10 +36,10 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                     <div className="flex gap-4 animate-scroll w-max hover:pause">
                         {/* Duplicate products for seamless loop (3 sets for smooth scrolling) */}
                         {[...products, ...products, ...products].map((product, index) => (
-                            <div
+                            <Link
                                 key={`row1-${product.id}-${index}`}
-                                onClick={() => navigate(`/product/${product.id}`)}
-                                className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group"
+                                to={`/product/${product.slug || product.id}`}
+                                className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group no-underline"
                             >
                                 <div className="relative aspect-square mb-3 overflow-hidden rounded-lg bg-slate-50">
                                     <img
@@ -55,7 +55,7 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                                         {product.category}
                                     </span>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
@@ -65,10 +65,10 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                     <div className="flex gap-4 animate-scroll-reverse w-max hover:pause">
                         {/* Duplicate products for seamless loop (reverse order for variety) */}
                         {[...products].reverse().concat([...products].reverse()).concat([...products].reverse()).map((product, index) => (
-                            <div
+                            <Link
                                 key={`row2-${product.id}-${index}`}
-                                onClick={() => navigate(`/product/${product.id}`)}
-                                className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group"
+                                to={`/product/${product.slug || product.id}`}
+                                className="flex-shrink-0 w-[220px] bg-white border border-slate-100 rounded-xl p-3 cursor-pointer hover:shadow-lg hover:border-[#D4AF37]/30 transition-all duration-300 group no-underline"
                             >
                                 <div className="relative aspect-square mb-3 overflow-hidden rounded-lg bg-slate-50">
                                     <img
@@ -84,7 +84,7 @@ export function AutoScrollProductSection({ title, products, className = '' }: Au
                                         {product.category}
                                     </span>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>

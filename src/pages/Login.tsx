@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export function Login() {
     const navigate = useNavigate();
@@ -92,6 +93,7 @@ export function Login() {
 
     return (
         <div className="page-fade section flex items-center justify-center min-h-[70vh]">
+            <SEO title="Login or Register | MySuperStore" description="Sign in to your MySuperStore account or create a new one. Shop premium products, track orders, and manage your profile." robots="index, follow" />
             <div className="card-black max-w-md w-full p-8 border border-[#FFC92E]/20 shadow-[0_0_40px_rgba(255,201,46,0.1)]">
                 <div className="flex border-b border-white/10 mb-8">
                     <button

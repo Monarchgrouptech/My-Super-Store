@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart, Truck, Shield, RotateCcw, Star, Minus, Plus, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { LoginPrompt } from '../components/LoginPrompt';
+import { SEO } from '../components/SEO';
 
 import { supabase } from '../lib/supabase';
 import { useCart } from '../context/CartContext';
@@ -62,66 +63,75 @@ export function ProductDetail() {
     }
   };
 
-  useEffect(() => {
-    if (product) {
-      // Set Page Title, Description, and Keywords
-      document.title = `${product.name} | MySuperStore Nigeria`;
-
-      let metaDesc = document.querySelector('meta[name="description"]');
-      if (!metaDesc) {
-        metaDesc = document.createElement('meta');
-        metaDesc.setAttribute('name', 'description');
-        document.head.appendChild(metaDesc);
+  const productSchema = useMemo(() => {
+    if (!product) return null;
+    return {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": product.name,
+      "image": product.product_images?.map((img: any) => img.url) || [product.image],
+      "description": product.short_description || product.description || "Premium product from MySuperStore",
+      "sku": product.sku || `MSS-${product.id}`,
+      "brand": {
+        "@type": "Brand",
+        "name": product.brand || "MySuperStore"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": window.location.href,
+        "priceCurrency": "NGN",
+        "price": product.price,
+        "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "itemCondition": "https://schema.org/NewCondition"
       }
-      const descText = product.short_description || product.description || "Premium product from MySuperStore.";
-      metaDesc.setAttribute('content', descText.slice(0, 155));
-
-      let metaKeywords = document.querySelector('meta[name="keywords"]');
-      if (!metaKeywords) {
-        metaKeywords = document.createElement('meta');
-        metaKeywords.setAttribute('name', 'keywords');
-        document.head.appendChild(metaKeywords);
-      }
-      metaKeywords.setAttribute('content', `${product.name.toLowerCase()}, ${product.category?.toLowerCase() || 'product'}, premium shopping, mysuperstore`);
-
-      // Inject JSON-LD Schema
-      const schemaProduct = {
-        "@context": "https://schema.org/",
-        "@type": "Product",
-        "name": product.name,
-        "image": product.product_images?.map((img: any) => img.url) || [product.image],
-        "description": product.short_description || product.description || "Premium product from MySuperStore",
-        "sku": product.sku || `MSS-${product.id}`,
-        "brand": {
-          "@type": "Brand",
-          "name": product.brand || "MySuperStore"
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": window.location.href,
-          "priceCurrency": "NGN",
-          "price": product.price,
-          "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-          "itemCondition": "https://schema.org/NewCondition"
-        }
-      };
-
-      const scriptId = 'jsonld-schema-product';
-      let scriptEl = document.getElementById(scriptId);
-      if (!scriptEl) {
-        scriptEl = document.createElement('script');
-        scriptEl.id = scriptId;
-        scriptEl.setAttribute('type', 'application/ld+json');
-        document.head.appendChild(scriptEl);
-      }
-      scriptEl.textContent = JSON.stringify(schemaProduct);
-
-      return () => {
-        const el = document.getElementById(scriptId);
-        if (el) el.remove();
-      };
-    }
+    };
   }, [product]);
+
+  const breadcrumbSchema = useMemo(() => {
+    if (!product) return null;
+    const catSlug = product.category ? product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : 'uncategorized';
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://mysuperstore.co"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Shop",
+          "item": "https://mysuperstore.co/shop"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": product.category,
+          "item": `https://mysuperstore.co/categories/${catSlug}`
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": product.name,
+          "item": `https://mysuperstore.co/product/${product.slug || product.id}`
+        }
+      ]
+    };
+  }, [product]);
+
+  const detailSchemas = useMemo(() => {
+    const schemas = [];
+    if (breadcrumbSchema) schemas.push(breadcrumbSchema);
+    if (productSchema) schemas.push(productSchema);
+    return schemas;
+  }, [breadcrumbSchema, productSchema]);
+
+  const robotsDirective = (id === 'test' || product?.slug === 'test' || product?.name?.toLowerCase() === 'test')
+    ? 'noindex, nofollow'
+    : 'index, follow';
 
   const handleAddToCart = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -151,6 +161,15 @@ export function ProductDetail() {
 
   return (
     <div className="section relative" style={{ overflowX: 'hidden', paddingLeft: 'clamp(1rem, 4vw, 1.5rem)', paddingRight: 'clamp(1rem, 4vw, 1.5rem)' }}>
+      <SEO 
+        title={product.name} 
+        description={product.short_description || product.description} 
+        keywords={`${product.name.toLowerCase()}, ${product.category?.toLowerCase() || 'product'}, premium shopping, mysuperstore`}
+        image={product.image}
+        ogType="product"
+        schema={detailSchemas}
+        robots={robotsDirective}
+      />
       {/* Breadcrumb Navigation */}
       <nav className="mb-6 text-sm text-gray-400 flex items-center gap-2 relative z-10">
         <Link to="/" className="hover:text-[var(--gold-primary)] transition-colors">Home</Link>
