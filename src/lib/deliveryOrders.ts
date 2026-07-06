@@ -127,7 +127,6 @@ export async function fetchDeliveryOrders(searchQuery?: string): Promise<Deliver
             fulfillment_status,
             delivery_status
         `)
-        .in('delivery_status', ['ready_for_pickup', 'processing', 'picked_up', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'])
         .order('placed_at', { ascending: false });
 
     if (ordersError) {

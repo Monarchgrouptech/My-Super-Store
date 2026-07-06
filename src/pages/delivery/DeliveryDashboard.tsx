@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDeliveryOrders } from '../../hooks/useDeliveryOrders';
-import { getStage } from '../../lib/deliveryUtils';
+import { useDeliveryPartner } from '../../hooks/useDeliveryPartner';
 import { DeliverySummaryCards } from '../../components/delivery/modular/DeliverySummaryCards';
 import { DeliveryOrderList } from '../../components/delivery/modular/DeliveryOrderList';
 import { DeliveryOrderDetailPanel } from '../../components/delivery/modular/DeliveryOrderDetailPanel';
@@ -12,9 +12,11 @@ import { Search, Filter } from 'lucide-react';
 export function DeliveryDashboard() {
     const location = useLocation();
     const { orders, loading, updateOrderStatus, createShipment, refetch } = useDeliveryOrders();
+    const { partner } = useDeliveryPartner();
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
+    const [hiddenOrderIds, setHiddenOrderIds] = useState<string[]>([]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,11 +36,20 @@ export function DeliveryDashboard() {
         setSelectedOrderId(null);
     }, [currentTab]);
 
+    // Reset hidden orders whenever orders updates from database
+    useEffect(() => {
+        setHiddenOrderIds([]);
+    }, [orders]);
+
     // Filter orders based on tab
     const filteredOrders = useMemo(() => {
         let result = [...orders];
 
-        // Search is now handled server-side in the hook, but we can still do a local pass for display consistency
+        if (hiddenOrderIds.length > 0) {
+            result = result.filter(o => !hiddenOrderIds.includes(o.id));
+        }
+
+        // Search local pass for display consistency
         if (searchQuery) {
             result = result.filter(o => 
                 o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -49,73 +60,145 @@ export function DeliveryDashboard() {
         }
 
         if (currentTab === 'dashboard') {
-            // Dashboard (Operational Overview): Show orders ready to be accepted or picked up
+            // Available Orders
             result = result.filter(o => {
-                const stage = getStage(o);
-                return stage === 'ready_for_pickup';
+                const fulfillment = o.order_fulfillments?.[0];
+                const partnerId = fulfillment?.delivery_partner_id;
+                const status = fulfillment?.status;
+                const isPaid = ['succeeded', 'success', 'paid', 'completed'].includes((o.status || '').toLowerCase());
+                const allVendorsReady = o.vendor_order_fulfillments && 
+                                        o.vendor_order_fulfillments.length > 0 && 
+                                        o.vendor_order_fulfillments.every(v => v.status === 'ready');
+                
+                return !partnerId &&
+                       ['pending', 'not_started', 'ready_for_pickup'].includes(status || '') &&
+                       isPaid &&
+                       allVendorsReady;
             });
         } else if (currentTab === 'active') {
-            // Active Shipments: Orders currently being handled (picked up, shipped, in transit, out for delivery)
+            // My Active Shipments
             result = result.filter(o => {
-                const stage = getStage(o);
-                return stage === 'picked_up' || stage === 'shipped' || stage === 'in_transit' || stage === 'out_for_delivery';
+                const fulfillment = o.order_fulfillments?.[0];
+                const partnerId = fulfillment?.delivery_partner_id;
+                const status = fulfillment?.status;
+                
+                return partnerId && partner?.id && partnerId === partner.id &&
+                       ['ready_for_pickup', 'picked_up', 'shipped', 'in_transit', 'out_for_delivery'].includes(status || '');
             });
         } else if (currentTab === 'all') {
-            // All Orders: Everything paid (full list from hook)
+            // Delivered / History
+            result = result.filter(o => {
+                const fulfillment = o.order_fulfillments?.[0];
+                const partnerId = fulfillment?.delivery_partner_id;
+                const status = fulfillment?.status;
+                
+                return partnerId && partner?.id && partnerId === partner.id &&
+                       status === 'delivered';
+            });
         } else if (currentTab === 'updates') {
-            // Tracking Updates: Filter orders with actual events
-            result = result.filter(o => (o.order_tracking_events?.length || 0) > 0);
+            // Tracking Updates: only show updates for orders assigned to me
+            result = result.filter(o => {
+                const fulfillment = o.order_fulfillments?.[0];
+                const partnerId = fulfillment?.delivery_partner_id;
+                return partnerId && partner?.id && partnerId === partner.id &&
+                       (o.order_tracking_events?.length || 0) > 0;
+            });
         }
 
         return result;
-    }, [orders, currentTab, searchQuery]);
+    }, [orders, currentTab, searchQuery, partner, hiddenOrderIds]);
 
     const selectedOrder = useMemo(() => 
         orders.find(o => o.id === selectedOrderId) || null
     , [orders, selectedOrderId]);
 
-    // Summary counts for dashboard
+    // Summary counts for dashboard (derived from live database query state)
     const stats = useMemo(() => {
+        const activeShipments = orders.filter(o => {
+            const fulfillment = o.order_fulfillments?.[0];
+            const partnerId = fulfillment?.delivery_partner_id;
+            const status = fulfillment?.status;
+            return partnerId && partner?.id && partnerId === partner.id &&
+                   ['ready_for_pickup', 'picked_up', 'shipped', 'in_transit', 'out_for_delivery'].includes(status || '');
+        }).length;
+
+        const pickupReady = orders.filter(o => {
+            const fulfillment = o.order_fulfillments?.[0];
+            const partnerId = fulfillment?.delivery_partner_id;
+            const status = fulfillment?.status;
+            return partnerId && partner?.id && partnerId === partner.id &&
+                   status === 'ready_for_pickup';
+        }).length;
+
+        const inMotion = orders.filter(o => {
+            const fulfillment = o.order_fulfillments?.[0];
+            const partnerId = fulfillment?.delivery_partner_id;
+            const status = fulfillment?.status;
+            return partnerId && partner?.id && partnerId === partner.id &&
+                   ['picked_up', 'shipped', 'in_transit', 'out_for_delivery'].includes(status || '');
+        }).length;
+
+        const deliveredToday = orders.filter(o => {
+            const fulfillment = o.order_fulfillments?.[0];
+            const partnerId = fulfillment?.delivery_partner_id;
+            const status = fulfillment?.status;
+            if (!(partnerId && partner?.id && partnerId === partner.id && status === 'delivered')) {
+                return false;
+            }
+            const deliveredAt = fulfillment?.delivered_at;
+            if (!deliveredAt) return false;
+            return new Date(deliveredAt).toDateString() === new Date().toDateString();
+        }).length;
+
         return {
-            totalShipments: orders.filter(o => {
-                const stage = getStage(o);
-                return stage !== 'pending' && stage !== 'delivered' && stage !== 'ready_for_pickup';
-            }).length,
-            pickupReady: orders.filter(o => getStage(o) === 'ready_for_pickup').length,
-            inMotion: orders.filter(o => {
-                const stage = getStage(o);
-                return stage === 'in_transit' || stage === 'out_for_delivery';
-            }).length,
-            deliveredToday: orders.filter(o => {
-                const stage = getStage(o);
-                if (stage !== 'delivered') return false;
-                const deliveredAt = o.order_fulfillments?.[0]?.delivered_at;
-                if (!deliveredAt) return false;
-                return new Date(deliveredAt).toDateString() === new Date().toDateString();
-            }).length
+            totalShipments: activeShipments,
+            pickupReady,
+            inMotion,
+            deliveredToday
         };
-    }, [orders]);
+    }, [orders, partner]);
 
     const handleAction = async (orderId: string, action: string) => {
-        switch (action) {
-            case 'ACCEPT':
-                await updateOrderStatus(orderId, 'accept_order');
-                break;
-            case 'PICKUP':
-                await updateOrderStatus(orderId, 'mark_picked_up');
-                break;
-            case 'SHIP':
-                setIsShipmentModalOpen(true);
-                break;
-            case 'TRANSIT':
-                await updateOrderStatus(orderId, 'mark_in_transit');
-                break;
-            case 'OUT_FOR_DELIVERY':
-                await updateOrderStatus(orderId, 'out_for_delivery');
-                break;
-            case 'DELIVER':
-                await updateOrderStatus(orderId, 'mark_delivered');
-                break;
+        try {
+            switch (action) {
+                case 'ACCEPT':
+                    await updateOrderStatus(orderId, 'accept_order');
+                    break;
+                case 'PICKUP':
+                    await updateOrderStatus(orderId, 'mark_picked_up');
+                    break;
+                case 'SHIP':
+                    setIsShipmentModalOpen(true);
+                    break;
+                case 'TRANSIT':
+                    await updateOrderStatus(orderId, 'mark_in_transit');
+                    break;
+                case 'OUT_FOR_DELIVERY':
+                    await updateOrderStatus(orderId, 'out_for_delivery');
+                    break;
+                case 'DELIVER':
+                    await updateOrderStatus(orderId, 'mark_delivered');
+                    break;
+            }
+        } catch (err: any) {
+            console.error('Action failed:', err);
+            const errorMsg = err?.message || '';
+            const isConflict = errorMsg.includes('409') || 
+                               errorMsg.includes('403') || 
+                               errorMsg.toLowerCase().includes('conflict') ||
+                               errorMsg.toLowerCase().includes('already') ||
+                               errorMsg.toLowerCase().includes('assign');
+            
+            if (action === 'ACCEPT' && isConflict) {
+                // Remove order from available list on the frontend instantly
+                setHiddenOrderIds(prev => [...prev, orderId]);
+                
+                // Refresh dashboard automatically
+                refetch();
+                
+                throw new Error("Order has already been accepted by another delivery partner.");
+            }
+            throw err;
         }
     };
 

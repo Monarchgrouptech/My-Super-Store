@@ -93,7 +93,7 @@ export function DeliveryOrderCard({ order, isSelected, onClick }: DeliveryOrderC
                 <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">Tracking</span>
                     <span className="text-[11px] font-black text-black">
-                        {order.order_fulfillments?.[0]?.tracking_number || 'UNASSIGNED'}
+                        {order.order_fulfillments?.[0]?.tracking_number || (order.order_fulfillments?.[0]?.delivery_partner_id ? 'ASSIGNED' : 'UNASSIGNED')}
                     </span>
                 </div>
                 <ArrowRight 

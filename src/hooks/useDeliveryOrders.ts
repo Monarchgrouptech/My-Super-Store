@@ -16,12 +16,27 @@ export function useDeliveryOrders() {
             setError(null);
             const hydratedOrders = await fetchDeliveryOrders(searchQuery);
             
-            // Filter orders so delivery partners only see ready-for-pickup orders (unassigned)
-            // or orders explicitly assigned to them.
+            // Filter orders so delivery partners see:
+            // 1. Available orders (unassigned, status is pending/not_started/ready_for_pickup, paid, all vendors ready)
+            // 2. Orders assigned to the current delivery partner.
             const filtered = hydratedOrders.filter(o => {
-                if (o.delivery_status === 'ready_for_pickup') return true;
                 const fulfillment = o.order_fulfillments?.[0];
-                return fulfillment?.delivery_partner_id === partner?.id;
+                const partnerId = fulfillment?.delivery_partner_id || null;
+                const fulfillmentStatus = fulfillment?.status || 'pending';
+
+                const isPaid = ['succeeded', 'success', 'paid', 'completed'].includes((o.status || '').toLowerCase());
+                const allVendorsReady = o.vendor_order_fulfillments && 
+                                        o.vendor_order_fulfillments.length > 0 && 
+                                        o.vendor_order_fulfillments.every(v => v.status === 'ready');
+                
+                const isAvailable = !partnerId && 
+                                    ['pending', 'not_started', 'ready_for_pickup'].includes(fulfillmentStatus.toLowerCase()) &&
+                                    isPaid && 
+                                    allVendorsReady;
+
+                const isAssignedToMe = partnerId && partner?.id && partnerId === partner.id;
+
+                return isAvailable || isAssignedToMe;
             });
             
             setOrders(filtered);
@@ -83,6 +98,35 @@ export function useDeliveryOrders() {
 
     useEffect(() => {
         fetchOrders();
+
+        const channel = supabase
+            .channel('delivery-dashboard-realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'order_fulfillments' },
+                () => {
+                    fetchOrders();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'orders' },
+                () => {
+                    fetchOrders();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'vendor_order_fulfillments' },
+                () => {
+                    fetchOrders();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [fetchOrders]);
 
     return {

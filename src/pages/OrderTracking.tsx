@@ -29,9 +29,11 @@ interface OrderDetails {
     total_amount: number;
     placed_at: string;
     order_fulfillments?: {
-        carrier_name: string;
-        tracking_number: string;
-        estimated_delivery_at: string;
+        carrier_name: string | null;
+        tracking_number: string | null;
+        estimated_delivery_at: string | null;
+        tracking_url: string | null;
+        delivery_partner_id: string | null;
     }[];
 }
 
@@ -57,13 +59,13 @@ export function OrderTracking() {
                 .from('orders')
                 .select(`
                     id, status, fulfillment_status, total_amount, placed_at,
-                    order_fulfillments (carrier_name, tracking_number, estimated_delivery_at)
+                    order_fulfillments (carrier_name, tracking_number, estimated_delivery_at, tracking_url, delivery_partner_id)
                 `)
                 .eq('id', id)
                 .single();
 
             if (orderError) throw orderError;
-            setOrder(orderData);
+            setOrder(orderData as any);
 
             // Fetch events
             const { data: eventsData, error: eventsError } = await supabase
@@ -142,18 +144,43 @@ export function OrderTracking() {
                         {currentStep.replace('_', ' ')}
                     </h2>
                     
-                    {order.order_fulfillments?.[0] && (
-                        <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-50">
+                    <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-50">
+                        <div className="flex-1 min-w-[140px]">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Courier Status</p>
+                            <span className={`inline-block px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${
+                                order.order_fulfillments?.[0]?.delivery_partner_id 
+                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                    : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}>
+                                {order.order_fulfillments?.[0]?.delivery_partner_id ? 'Courier Assigned' : 'Awaiting Courier'}
+                            </span>
+                        </div>
+                        {order.order_fulfillments?.[0]?.carrier_name && (
                             <div className="flex-1 min-w-[140px]">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Carrier</p>
                                 <p className="text-sm font-bold text-gray-900">{order.order_fulfillments[0].carrier_name}</p>
                             </div>
+                        )}
+                        {order.order_fulfillments?.[0]?.tracking_number && (
                             <div className="flex-1 min-w-[140px]">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tracking Number</p>
                                 <p className="text-sm font-bold text-[#D4AF37] font-mono">{order.order_fulfillments[0].tracking_number}</p>
                             </div>
-                        </div>
-                    )}
+                        )}
+                        {order.order_fulfillments?.[0]?.tracking_url && (
+                            <div className="flex-1 min-w-[140px]">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tracking Link</p>
+                                <a 
+                                    href={order.order_fulfillments[0].tracking_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#D4AF37] hover:underline uppercase tracking-wider mt-1"
+                                >
+                                    Track Package <ArrowRight size={12} />
+                                </a>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Timeline */}

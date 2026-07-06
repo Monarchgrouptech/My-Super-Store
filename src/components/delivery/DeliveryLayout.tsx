@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -6,7 +6,9 @@ import {
     LogOut,
     Bell,
     ClipboardList,
-    TrendingUp
+    TrendingUp,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { useDeliveryPartner } from '../../hooks/useDeliveryPartner';
 import { supabase } from '../../lib/supabase';
@@ -20,6 +22,33 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const { partner } = useDeliveryPartner();
+
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        const persisted = localStorage.getItem('delivery-sidebar-collapsed');
+        if (persisted !== null) {
+            return persisted === 'true';
+        }
+        // Default based on screen size on mount
+        if (typeof window !== 'undefined') {
+            return window.innerWidth < 1200;
+        }
+        return false;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('delivery-sidebar-collapsed', String(isCollapsed));
+    }, [isCollapsed]);
+
+    useEffect(() => {
+        const persisted = localStorage.getItem('delivery-sidebar-collapsed');
+        if (persisted === null) {
+            const handleResize = () => {
+                setIsCollapsed(window.innerWidth < 1200);
+            };
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }
+    }, []);
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -95,10 +124,24 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
             </header>
 
             {/* Side Navigation Bar - Fixed */}
-            <aside className="delivery-sidebar hidden md:flex flex-col py-8 overflow-y-auto">
-                <div className="px-8 mb-12">
-                    <h1 className="text-[18px] font-black tracking-tight text-black uppercase leading-none mb-1">MYSUPERSTORE</h1>
-                    <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">OPERATIONS CENTER</p>
+            <aside className={`delivery-sidebar hidden md:flex flex-col py-8 overflow-y-auto ${isCollapsed ? 'collapsed' : ''}`}>
+                <div className={`px-6 mb-12 flex ${isCollapsed ? 'flex-col gap-4' : 'flex-row'} items-center justify-between`}>
+                    {!isCollapsed ? (
+                        <div className="min-w-0">
+                            <h1 className="text-[16px] font-black tracking-tight text-black uppercase leading-none mb-1 truncate">MYSUPERSTORE</h1>
+                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider truncate">OPERATIONS CENTER</p>
+                        </div>
+                    ) : (
+                        <span className="text-[18px] font-black text-black tracking-tight select-none">MS</span>
+                    )}
+                    <button 
+                        type="button"
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 hover:text-black text-zinc-400 transition-all shrink-0"
+                        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    </button>
                 </div>
                 
                 <nav className="flex-1 flex flex-col">
@@ -109,13 +152,18 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                                 to={item.to}
                                 className={() => {
                                     const isCurrent = getIsActive(item.to);
-                                    return `flex items-center gap-4 px-8 py-4 transition-all duration-150 group ${isCurrent
+                                    return `flex items-center ${isCollapsed ? 'justify-center px-4' : 'gap-4 px-8'} py-4 transition-all duration-150 group ${isCurrent
                                         ? 'text-black border-r-4 border-[#9f7418] bg-zinc-50' 
                                         : 'text-zinc-400 hover:bg-zinc-50 hover:text-black'}`;
                                 }}
+                                title={isCollapsed ? item.label : undefined}
                             >
-                                <item.icon size={20} strokeWidth={getIsActive(item.to) ? 2.5 : 2} />
-                                <span className="text-[12px] font-bold uppercase tracking-[0.1em]">{item.label}</span>
+                                <item.icon size={20} strokeWidth={getIsActive(item.to) ? 2.5 : 2} className="shrink-0" />
+                                {!isCollapsed && (
+                                    <span className="text-[12px] font-bold uppercase tracking-[0.1em] whitespace-nowrap animate-in fade-in duration-200">
+                                        {item.label}
+                                    </span>
+                                )}
                             </NavLink>
                         ))}
                     </div>
@@ -141,7 +189,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
             </nav>
 
             {/* Main Content Area - Scrollable */}
-            <main className="delivery-main flex-1 overflow-x-hidden">
+            <main className={`delivery-main flex-1 overflow-x-hidden ${isCollapsed ? 'collapsed-main' : ''}`}>
                 <div className="h-full">
                     {children}
                 </div>

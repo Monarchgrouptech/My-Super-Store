@@ -272,12 +272,22 @@
   width: 256px;
   background: var(--delivery-white);
   border-right: 1px solid var(--delivery-border);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-sidebar.collapsed {
+  width: 72px;
 }
 
 .delivery-main {
   min-height: 100vh;
   margin-left: 256px;
   padding-top: 80px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-main.collapsed-main {
+  margin-left: 72px;
 }
 
 .delivery-page {
@@ -497,7 +507,7 @@
 
 @media (max-width: 1023px) {
   .delivery-main {
-    margin-left: 0;
+    margin-left: 72px;
   }
 
   .delivery-dashboard-grid {
