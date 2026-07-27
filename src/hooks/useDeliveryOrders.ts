@@ -89,7 +89,13 @@ export function useDeliveryOrders() {
 
     const createShipment = async (orderId: string, data: { carrierName: string, trackingNumber: string, trackingUrl: string }) => {
         try {
-            await updateOrderStatus(orderId, 'confirm_shipment', data);
+            const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(data.carrierName + ' tracking ' + data.trackingNumber)}`;
+            const finalTrackingUrl = data.trackingUrl?.trim() || fallbackUrl;
+            await updateOrderStatus(orderId, 'confirm_shipment', {
+                carrierName: data.carrierName,
+                trackingNumber: data.trackingNumber,
+                trackingUrl: finalTrackingUrl
+            });
             return { success: true };
         } catch (err) {
             return { success: false, error: err };

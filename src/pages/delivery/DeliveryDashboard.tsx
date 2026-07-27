@@ -126,8 +126,22 @@ export function DeliveryDashboard() {
             const fulfillment = o.order_fulfillments?.[0];
             const partnerId = fulfillment?.delivery_partner_id;
             const status = fulfillment?.status;
-            return partnerId && partner?.id && partnerId === partner.id &&
-                   status === 'ready_for_pickup';
+
+            // Count available orders waiting for partner collection (unassigned, vendors ready)
+            const isPaid = ['succeeded', 'success', 'paid', 'completed'].includes((o.status || '').toLowerCase());
+            const allVendorsReady = o.vendor_order_fulfillments && 
+                                    o.vendor_order_fulfillments.length > 0 && 
+                                    o.vendor_order_fulfillments.every(v => v.status === 'ready');
+            const isAvailable = !partnerId &&
+                                ['pending', 'not_started', 'ready_for_pickup'].includes(status || '') &&
+                                isPaid &&
+                                allVendorsReady;
+
+            // Also count orders assigned to this partner that are ready for pickup
+            const isAssigned = partnerId && partner?.id && partnerId === partner.id &&
+                               status === 'ready_for_pickup';
+
+            return isAvailable || isAssigned;
         }).length;
 
         const inMotion = orders.filter(o => {

@@ -9,16 +9,22 @@ export function getFulfillment(order: DeliveryOrder) {
 }
 
 export function getStage(order: DeliveryOrder): DeliveryStage {
+    const fulfillment = getFulfillment(order);
+    const fulfillmentRowStatus = normalizeStatus(fulfillment?.status);
     const deliveryStatus = normalizeStatus(order.delivery_status);
     const fulfillmentStatus = normalizeStatus(order.fulfillment_status);
     
-    // Priority 1: Progress made by delivery partner
-    if (deliveryStatus === 'completed' || deliveryStatus === 'delivered') return 'delivered';
-    if (deliveryStatus === 'out_for_delivery') return 'out_for_delivery';
-    if (deliveryStatus === 'in_transit') return 'in_transit';
-    if (deliveryStatus === 'shipped') return 'shipped';
-    if (deliveryStatus === 'picked_up') return 'picked_up';
-    if (deliveryStatus === 'ready_for_pickup') return 'ready_for_pickup';
+    // Priority 1: Progress made by delivery partner in order_fulfillments table or delivery_status column
+    const activeStatus = (fulfillmentRowStatus && fulfillmentRowStatus !== 'pending' && fulfillmentRowStatus !== 'not_started')
+        ? fulfillmentRowStatus
+        : deliveryStatus;
+
+    if (activeStatus === 'completed' || activeStatus === 'delivered') return 'delivered';
+    if (activeStatus === 'out_for_delivery') return 'out_for_delivery';
+    if (activeStatus === 'in_transit') return 'in_transit';
+    if (activeStatus === 'shipped') return 'shipped';
+    if (activeStatus === 'picked_up') return 'picked_up';
+    if (activeStatus === 'ready_for_pickup') return 'ready_for_pickup';
     
     // Priority 2: Vendor readiness
     if (fulfillmentStatus === 'packed' || fulfillmentStatus === 'ready_for_pickup') return 'ready_for_pickup';

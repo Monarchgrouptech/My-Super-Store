@@ -17,11 +17,13 @@ export function ShipmentModal({ isOpen, onClose, onConfirm }: ShipmentModalProps
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!carrierName || !trackingNumber) {
+        if (!carrierName.trim() || !trackingNumber.trim()) {
             setError('Carrier name and tracking number are required.');
             return;
         }
-        onConfirm({ carrierName, trackingNumber, trackingUrl });
+        const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(carrierName.trim() + ' tracking ' + trackingNumber.trim())}`;
+        const finalTrackingUrl = trackingUrl.trim() || fallbackUrl;
+        onConfirm({ carrierName: carrierName.trim(), trackingNumber: trackingNumber.trim(), trackingUrl: finalTrackingUrl });
         onClose();
     };
 
