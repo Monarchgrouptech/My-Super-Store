@@ -283,7 +283,7 @@ export function ChatWidget() {
           <button
             onClick={() => setIsOpen(false)}
             aria-label="Close chat"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-sm text-white/90 transition hover:border-[#d4af37]/50 hover:bg-white/8"
+            className="mini-btn flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-sm text-white/90 transition hover:border-[#d4af37]/50 hover:bg-white/8"
           >
             x
           </button>

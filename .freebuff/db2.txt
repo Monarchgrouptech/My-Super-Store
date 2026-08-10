@@ -1,0 +1,853 @@
+CONNECTED
+
+===== TRIGGERS (20) =====
+  cart_items | AFTER INSERT | trg_notify_on_cart_insert
+  order_fulfillments | AFTER UPDATE | trg_sync_delivery_state_from_fulfillment
+  order_fulfillments | AFTER INSERT | trg_sync_delivery_state_from_fulfillment
+  order_fulfillments | AFTER UPDATE | trg_sync_tracking_events_from_fulfillment
+  order_fulfillments | AFTER INSERT | trg_sync_tracking_events_from_fulfillment
+  order_items | AFTER INSERT | trg_sync_vendor_readiness_after_order_items
+  order_items | AFTER DELETE | trg_sync_vendor_readiness_after_order_items
+  order_items | AFTER UPDATE | trg_sync_vendor_readiness_after_order_items
+  order_status_history | AFTER INSERT | trg_enqueue_order_status_notifications
+  orders | BEFORE UPDATE | trg_block_orders_delivery_status_updates
+  payments | AFTER UPDATE | trg_enqueue_paid_notifications
+  payments | AFTER INSERT | trg_enqueue_paid_notifications
+  payments | AFTER INSERT | trg_enqueue_vendor_order_paid
+  payments | AFTER INSERT | trg_sync_vendor_readiness_after_payment
+  payments | AFTER UPDATE | trg_sync_vendor_readiness_after_payment
+  vendor_order_fulfillments | AFTER UPDATE | trg_sync_order_state_after_vendor_fulfillment
+  vendor_order_fulfillments | AFTER INSERT | trg_sync_order_state_after_vendor_fulfillment
+  vendor_order_fulfillments | BEFORE UPDATE | trg_vendor_order_fulfillments_updated_at
+  vendor_order_fulfillments | BEFORE UPDATE | trg_vendor_order_fulfillments_validate_ready
+  vendor_order_fulfillments | BEFORE INSERT | trg_vendor_order_fulfillments_validate_ready
+===== FUNCTION NAMES (30) =====
+  _order_has_vendor_user
+  _order_is_owned_by
+  block_orders_delivery_status_updates
+  dp_can_read_assigned_order
+  dp_can_read_available_order
+  enqueue_notification_outbox
+  enqueue_vendor_order_paid_notifications
+  handle_new_user_foolproof
+  is_admin
+  is_admin_or_owner
+  is_admin_user
+  is_delivery_partner
+  notify_on_cart_insert
+  order_distinct_vendor_count
+  order_has_successful_payment
+  order_is_fully_vendor_ready
+  order_is_ready_for_delivery
+  order_ready_vendor_count
+  set_updated_at
+  sync_delivery_state_from_fulfillment
+  sync_order_vendor_readiness_from_order
+  sync_tracking_events_from_fulfillment
+  trg_enqueue_order_status_notifications
+  trg_enqueue_paid_notifications
+  trg_order_items_sync_vendor_readiness
+  trg_payments_sync_vendor_readiness
+  trg_vendor_order_fulfillments_sync_order_state
+  vendor_fulfillment_is_ready
+  vendor_order_fulfillments_validate_ready
+  vendor_owns_order
+===== enqueue_notification_outbox DEFINITION (1) =====
+CREATE OR REPLACE FUNCTION public.enqueue_notification_outbox(p_event_type text, p_order_id uuid, p_vendor_id uuid, p_delivery_partner_id uuid, p_recipient_email text, p_recipient_phone text, p_payload jsonb, p_idempotency_key text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if p_idempotency_key is null then
+    raise exception 'idempotency_key required';
+  end if;
+
+  insert into public.notification_outbox (
+    id,
+    event_type,
+    order_id,
+    vendor_id,
+    delivery_partner_id,
+    recipient_email,
+    recipient_phone,
+    payload,
+    idempotency_key,
+    created_at
+  )
+  select
+    gen_random_uuid(),
+    p_event_type,
+    p_order_id,
+    p_vendor_id,
+    p_delivery_partner_id,
+    p_recipient_email,
+    p_recipient_phone,
+    p_payload,
+    p_idempotency_key,
+    now()
+  where not exists (
+    select 1 from public.notification_outbox
+    where idempotency_key = p_idempotency_key
+  );
+end;
+$function$
+
+===== TRIGGER FUNCTION BODIES (13) =====
+
+--- on_auth_user_created on auth.users ---
+CREATE OR REPLACE FUNCTION public.handle_new_user_foolproof()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_display_name text;
+  v_avatar_url text;
+BEGIN
+  -- pick a display name from common metadata fields, fallback to email
+  v_display_name := COALESCE(
+    NEW.raw_user_meta_data->>'display_name',
+    NEW.raw_user_meta_data->>'name',
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'username',
+    NEW.email
+  );
+
+  -- pick avatar from common metadata fields
+  v_avatar_url := COALESCE(
+    NEW.raw_user_meta_data->>'avatar_url',
+    NEW.raw_user_meta_data->>'picture',
+    NEW.raw_user_meta_data->>'photo_url',
+    ''
+  );
+
+  -- Try to insert/update profile but NEVER raise an error to the caller
+  BEGIN
+    INSERT INTO public.user_profiles (
+      user_id,
+      email,
+      display_name,
+      avatar_url,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      NEW.id,
+      NEW.email,
+      v_display_name,
+      v_avatar_url,
+      now(),
+      now()
+    )
+    -- If profile exists, update sensible fields without overwriting good existing values
+    ON CONFLICT (user_id) DO UPDATE
+      SET
+        email = EXCLUDED.email,
+        display_name = COALESCE(NULLIF(EXCLUDED.display_name, ''), user_profiles.display_name),
+        avatar_url   = COALESCE(NULLIF(EXCLUDED.avatar_url, ''), user_profiles.avatar_url),
+        updated_at   = now()
+    ;
+  EXCEPTION WHEN OTHERS THEN
+    -- Do NOT re-raise: log a notice so the auth transaction continues
+    RAISE NOTICE 'handle_new_user_foolproof: insert/update suppressed: %', SQLERRM;
+  END;
+
+  RETURN NEW;
+END;
+$function$
+
+
+--- trg_notify_on_cart_insert on cart_items ---
+CREATE OR REPLACE FUNCTION public.notify_on_cart_insert()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_user uuid;
+  v_product_name text;
+  v_display_name text;
+  v_message text;
+BEGIN
+  -- Get cart owner (may be NULL for guest carts)
+  SELECT user_id INTO v_user FROM public.carts WHERE id = NEW.cart_id LIMIT 1;
+
+  -- Get product name (if product exists)
+  SELECT name INTO v_product_name FROM public.products WHERE id = NEW.product_id LIMIT 1;
+
+  -- Get display name (if user exists)
+  IF v_user IS NOT NULL THEN
+    SELECT display_name INTO v_display_name FROM public.user_profiles WHERE user_id = v_user LIMIT 1;
+  END IF;
+
+  -- Compose message
+  IF v_product_name IS NULL THEN
+    v_product_name := 'A product';
+  END IF;
+
+  IF v_display_name IS NOT NULL AND trim(v_display_name) <> '' THEN
+    v_message := v_display_name || ' added✨' || v_product_name || ' to their cart 🛒';
+  ELSE
+    v_message := v_product_name || ' was added✨ to a user"s cart 🛒';
+  END IF;
+
+  -- OPTIONAL: simple cooldown/dedup protection (uncomment if you want to avoid spamming)
+  /*
+  IF EXISTS (
+    SELECT 1 FROM public.global_notifications
+    WHERE product_id = NEW.product_id
+      AND created_at > now() - interval '2 minutes'
+  ) THEN
+    RETURN NEW; -- skip inserting to avoid duplicates in short window
+  END IF;
+  */
+
+  -- Insert the notification
+  INSERT INTO public.global_notifications (product_id, user_id, message, created_at)
+  VALUES (NEW.product_id, v_user, v_message, now());
+
+  RETURN NEW;
+END;
+$function$
+
+
+--- trg_sync_delivery_state_from_fulfillment on order_fulfillments ---
+CREATE OR REPLACE FUNCTION public.sync_delivery_state_from_fulfillment()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+declare
+  old_status text;
+  new_status text;
+begin
+  old_status := null;
+
+  if TG_OP = 'UPDATE' then
+    old_status := OLD.status;
+  end if;
+
+  new_status := NEW.status;
+
+  -- canonical mapping: fulfillment-domain pending -> delivery-domain not_started
+  new_status := case when new_status = 'pending' then 'not_started' else new_status end;
+
+  -- allow this transaction to update orders.delivery_status
+  perform set_config('app.orders_delivery_canonical_ok', '1', true);
+
+  update public.orders
+  set
+    delivery_status = new_status,
+    updated_at = now()
+  where id = NEW.order_id;
+
+  -- Write history if changed
+  if old_status is distinct from NEW.status then
+    insert into public.order_status_history (
+      id,
+      order_id,
+      status_type,
+      old_value,
+      new_value,
+      note,
+      changed_by,
+      created_at
+    )
+    values (
+      gen_random_uuid(),
+      NEW.order_id,
+      new_status,
+      case when old_status = 'pending' then 'not_started' else old_status end,
+      new_status,
+      null,
+      null,
+      now()
+    );
+  end if;
+
+  return NEW;
+end;
+$function$
+
+
+--- trg_sync_tracking_events_from_fulfillment on order_fulfillments ---
+CREATE OR REPLACE FUNCTION public.sync_tracking_events_from_fulfillment()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+
+  -- prevent duplicate event for same status transition
+  if TG_OP = 'UPDATE' and NEW.status = OLD.status then
+    return NEW;
+  end if;
+
+  if exists (
+    select 1
+    from public.order_tracking_events
+    where fulfillment_id = NEW.id
+      and status = NEW.status
+  ) then
+    return NEW;
+  end if;
+
+  -- canonical mapping: fulfillment-domain pending -> event-domain not_started
+  insert into public.order_tracking_events (
+    id,
+    order_id,
+    fulfillment_id,
+    status,
+    location,
+    description,
+    event_time
+  )
+  values (
+    gen_random_uuid(),
+    NEW.order_id,
+    NEW.id,
+    case when NEW.status = 'pending' then 'not_started' else NEW.status end,
+    null,
+    coalesce(NEW.last_status_note, NEW.status),
+    now()
+  );
+
+  return NEW;
+end;
+$function$
+
+
+--- trg_sync_vendor_readiness_after_order_items on order_items ---
+CREATE OR REPLACE FUNCTION public.trg_order_items_sync_vendor_readiness()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  PERFORM public.sync_order_vendor_readiness_from_order(COALESCE(NEW.order_id, OLD.order_id));
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+
+
+--- trg_enqueue_order_status_notifications on order_status_history ---
+CREATE OR REPLACE FUNCTION public.trg_enqueue_order_status_notifications()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_order_id uuid;
+  v_new text;
+  v_old text;
+  v_vendor_ids uuid[];
+  v_delivery_partner_id uuid;
+  v_vendor_id uuid;
+  v_email text;
+  v_phone text;
+  v_payload jsonb;
+  v_idem text;
+begin
+  v_order_id := NEW.order_id;
+  v_new := NEW.new_value;
+  v_old := NEW.old_value;
+
+  -- Identify (optional) delivery partner assigned for this order
+  select ofu.delivery_partner_id
+    into v_delivery_partner_id
+  from public.order_fulfillments ofu
+  where ofu.order_id = v_order_id
+  limit 1;
+
+  -- Collect vendor ids
+  select array_agg(distinct vof.vendor_id)
+    into v_vendor_ids
+  from public.vendor_order_fulfillments vof
+  where vof.order_id = v_order_id;
+
+  -- Special case: when order becomes ready_for_pickup, broadcast to ALL active delivery partners
+  if v_new = 'ready_for_pickup' then
+    for v_delivery_partner_id in (
+      select dp.id
+      from public.delivery_partners dp
+      where dp.is_active = true
+        and dp.email is not null
+    )
+    loop
+      select dp.email, dp.phone
+        into v_email, v_phone
+      from public.delivery_partners dp
+      where dp.id = v_delivery_partner_id
+      limit 1;
+
+      v_payload := jsonb_build_object(
+        'order_id', v_order_id,
+        'event', 'ready_for_delivery',
+        'new_status', v_new
+      );
+
+      v_idem := 'status:'||v_order_id::text||':dp_ready:'||v_delivery_partner_id::text;
+
+      perform public.enqueue_notification_outbox(
+        'order_ready_for_delivery',
+        v_order_id,
+        null, -- vendor_id should be null
+        v_delivery_partner_id,
+        v_email,
+        v_phone,
+        v_payload,
+        v_idem
+      );
+    end loop;
+
+    -- Do not run vendor broadcast (and do not notify a single assigned DP)
+    return NEW;
+  end if;
+
+  -- Always broadcast any status update to: vendor(s) + delivery partner (if assigned)
+  if v_vendor_ids is not null then
+    foreach v_vendor_id in array v_vendor_ids loop
+      select email, phone
+        into v_email, v_phone
+      from public.vendors
+      where id = v_vendor_id
+      limit 1;
+
+      v_payload := jsonb_build_object(
+        'order_id', v_order_id,
+        'event', 'order_status_updated',
+        'old_status', v_old,
+        'new_status', v_new
+      );
+
+      v_idem := 'status:'||v_order_id::text||':v:'||v_vendor_id::text||':'||coalesce(v_new,'');
+
+      perform public.enqueue_notification_outbox(
+        'order_status_updated',
+        v_order_id,
+        v_vendor_id,
+        null,
+        v_email,
+        v_phone,
+        v_payload,
+        v_idem
+      );
+    end loop;
+  end if;
+
+  if v_delivery_partner_id is not null then
+    select email, phone
+      into v_email, v_phone
+    from public.delivery_partners
+    where id = v_delivery_partner_id
+    limit 1;
+
+    v_payload := jsonb_build_object(
+      'order_id', v_order_id,
+      'event', 'order_status_updated',
+      'old_status', v_old,
+      'new_status', v_new
+    );
+
+    v_idem := 'status:'||v_order_id::text||':dp:'||v_delivery_partner_id::text||':'||coalesce(v_new,'');
+
+    perform public.enqueue_notification_outbox(
+      'order_status_updated',
+      v_order_id,
+      null,
+      v_delivery_partner_id,
+      v_email,
+      v_phone,
+      v_payload,
+      v_idem
+    );
+  end if;
+
+  return NEW;
+end;
+$function$
+
+
+--- trg_block_orders_delivery_status_updates on orders ---
+CREATE OR REPLACE FUNCTION public.block_orders_delivery_status_updates()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if NEW.delivery_status is distinct from OLD.delivery_status then
+    -- only allow canonical updates from order_fulfillments sync
+    if current_setting('app.orders_delivery_canonical_ok', true) is distinct from '1' then
+      raise exception 'orders.delivery_status is managed canonically by order_fulfillments';
+    end if;
+  end if;
+
+  return NEW;
+end;
+$function$
+
+
+--- trg_enqueue_paid_notifications on payments ---
+CREATE OR REPLACE FUNCTION public.trg_enqueue_paid_notifications()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_vendor_id uuid;
+  v_vendor_email text;
+  v_vendor_phone text;
+  v_delivery_partner_id uuid;
+  v_delivery_email text;
+  v_delivery_phone text;
+  v_payload jsonb;
+  v_order_id uuid;
+begin
+  if (TG_OP = 'INSERT' and NEW.status <> 'success') or (TG_OP = 'UPDATE' and NEW.status <> 'success') then
+    return NEW;
+  end if;
+
+  v_order_id := NEW.order_id;
+
+  -- For all vendors tied to this order
+  for v_vendor_id in (
+    select distinct vof.vendor_id
+    from public.vendor_order_fulfillments vof
+    where vof.order_id = v_order_id
+  )
+  loop
+    select email, phone
+      into v_vendor_email, v_vendor_phone
+    from public.vendors
+    where id = v_vendor_id
+    limit 1;
+
+    v_payload := jsonb_build_object(
+      'order_id', v_order_id,
+      'event', 'paid'
+    );
+
+    perform public.enqueue_notification_outbox(
+      'order_paid',
+      v_order_id,
+      v_vendor_id,
+      null,
+      v_vendor_email,
+      v_vendor_phone,
+      v_payload,
+      'order_paid:'||v_order_id::text||':'||v_vendor_id::text
+    );
+  end loop;
+
+  -- Delivery partner (if already assigned)
+  select ofu.delivery_partner_id
+    into v_delivery_partner_id
+  from public.order_fulfillments ofu
+  where ofu.order_id = v_order_id
+  limit 1;
+
+  if v_delivery_partner_id is not null then
+    select email, phone
+      into v_delivery_email, v_delivery_phone
+    from public.delivery_partners
+    where id = v_delivery_partner_id
+    limit 1;
+
+    v_payload := jsonb_build_object(
+      'order_id', v_order_id,
+      'event', 'paid'
+    );
+
+    perform public.enqueue_notification_outbox(
+      'order_paid',
+      v_order_id,
+      null,
+      v_delivery_partner_id,
+      v_delivery_email,
+      v_delivery_phone,
+      v_payload,
+      'order_paid:'||v_order_id::text||':dp:'||v_delivery_partner_id::text
+    );
+  end if;
+
+  return NEW;
+end;
+$function$
+
+
+--- trg_enqueue_vendor_order_paid on payments ---
+CREATE OR REPLACE FUNCTION public.enqueue_vendor_order_paid_notifications()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+begin
+  -- Only react to successful payments
+  if new.status is distinct from 'success' then
+    return new;
+  end if;
+
+  -- Ensure vendor_order_fulfillments exists (one row per (order_id, vendor_id))
+  insert into public.vendor_order_fulfillments (
+    order_id,
+    vendor_id,
+    status
+  )
+  select
+    new.order_id as order_id,
+    p.seller_id as vendor_id,
+    'not_ready'::text as status
+  from public.order_items oi
+  join public.products p on p.id = oi.product_id
+  where oi.order_id = new.order_id
+  group by p.seller_id
+  on conflict (order_id, vendor_id)
+  do nothing;
+
+  -- Enqueue notification(s) for vendors that have an email
+  insert into public.notification_outbox (
+    event_type,
+    order_id,
+    vendor_id,
+    recipient_email,
+    payload,
+    idempotency_key
+  )
+  select
+    'vendor_order_paid'::text as event_type,
+    vof.order_id,
+    vof.vendor_id,
+    v.email as recipient_email,
+    jsonb_build_object(
+      'order_id', vof.order_id,
+      'vendor_id', vof.vendor_id,
+      'business_name', v.business_name,
+      'placed_at', o.placed_at
+    ) as payload,
+    'vendor_order_paid:' || vof.order_id::text || ':' || vof.vendor_id::text as idempotency_key
+  from public.vendor_order_fulfillments vof
+  join public.vendors v on v.id = vof.vendor_id
+  join public.orders o on o.id = vof.order_id
+  where vof.order_id = new.order_id
+    and v.email is not null
+  on conflict (idempotency_key)
+  do update set
+    event_type = excluded.event_type,
+    recipient_email = excluded.recipient_email,
+    payload = excluded.payload;
+
+  return new;
+end;
+$function$
+
+
+--- trg_sync_vendor_readiness_after_payment on payments ---
+CREATE OR REPLACE FUNCTION public.trg_payments_sync_vendor_readiness()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  PERFORM public.sync_order_vendor_readiness_from_order(COALESCE(NEW.order_id, OLD.order_id));
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+
+
+--- trg_sync_order_state_after_vendor_fulfillment on vendor_order_fulfillments ---
+CREATE OR REPLACE FUNCTION public.trg_vendor_order_fulfillments_sync_order_state()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  PERFORM public.sync_order_vendor_readiness_from_order(COALESCE(NEW.order_id, OLD.order_id));
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+
+
+--- trg_vendor_order_fulfillments_updated_at on vendor_order_fulfillments ---
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$function$
+
+
+--- trg_vendor_order_fulfillments_validate_ready on vendor_order_fulfillments ---
+CREATE OR REPLACE FUNCTION public.vendor_order_fulfillments_validate_ready()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  IF NEW.status = 'ready' THEN
+    NEW.pickup_contact_name := NULLIF(btrim(COALESCE(NEW.pickup_contact_name, '')), '');
+    NEW.pickup_contact_phone := NULLIF(btrim(COALESCE(NEW.pickup_contact_phone, '')), '');
+    NEW.pickup_address := NULLIF(btrim(COALESCE(NEW.pickup_address, '')), '');
+    NEW.pickup_city := NULLIF(btrim(COALESCE(NEW.pickup_city, '')), '');
+    NEW.pickup_state := NULLIF(btrim(COALESCE(NEW.pickup_state, '')), '');
+    NEW.pickup_country := NULLIF(btrim(COALESCE(NEW.pickup_country, '')), '');
+
+    IF NEW.pickup_contact_name IS NULL THEN
+      RAISE EXCEPTION 'pickup_contact_name is required before marking ready';
+    END IF;
+
+    IF NEW.pickup_contact_phone IS NULL THEN
+      RAISE EXCEPTION 'pickup_contact_phone is required before marking ready';
+    END IF;
+
+    IF NEW.pickup_address IS NULL THEN
+      RAISE EXCEPTION 'pickup_address is required before marking ready';
+    END IF;
+
+    IF NEW.pickup_city IS NULL THEN
+      RAISE EXCEPTION 'pickup_city is required before marking ready';
+    END IF;
+
+    IF NEW.pickup_state IS NULL THEN
+      RAISE EXCEPTION 'pickup_state is required before marking ready';
+    END IF;
+
+    IF NEW.pickup_country IS NULL THEN
+      RAISE EXCEPTION 'pickup_country is required before marking ready';
+    END IF;
+
+    IF NEW.submitted_at IS NULL THEN
+      NEW.submitted_at := now();
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+
+===== RLS POLICIES (key tables) (48) =====
+  delivery_partners | ALL | Admins have full access to partners | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM user_profiles
+  WHERE ((user_profiles.user_id = auth.uid()) AND (user_profiles.is_admin = true))))
+  delivery_partners | SELECT | Partners can view own profile | roles={authenticated} | (auth.uid() = user_id)
+  notification_outbox | SELECT | notification_outbox_admin | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE ((up.user_id = auth.uid()) AND (up.is_admin = true))))
+  order_fulfillments | ALL | Admins full access fulfillment | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM user_profiles
+  WHERE ((user_profiles.user_id = auth.uid()) AND (user_profiles.is_admin = true))))
+  order_fulfillments | INSERT | Customers can initialize fulfillment | roles={authenticated} | 
+  order_fulfillments | SELECT | Customers can view own fulfillment | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM orders
+  WHERE ((orders.id = order_fulfillments.order_id) AND (orders.user_id = auth.uid()))))
+  order_fulfillments | SELECT | DP can read assigned fulfillments | roles={authenticated} | (delivery_partner_id IN ( SELECT dp.id
+   FROM delivery_partners dp
+  WHERE ((dp.user_id = auth.uid()) AND (dp.is_active = true))))
+  order_fulfillments | SELECT | DP can read available fulfillments | roles={authenticated} | ((delivery_partner_id IS NULL) AND (status = ANY (ARRAY['pending'::text, 'ready_for_pickup'::text, 'not_started'::text])) AND order_is_ready
+  order_fulfillments | UPDATE | DP can update assigned or claim | roles={authenticated} | ((delivery_partner_id IN ( SELECT dp.id
+   FROM delivery_partners dp
+  WHERE ((dp.user_id = auth.uid()) AND (dp.is_active = true)))) OR ((de
+  order_fulfillments | INSERT | vendors can insert fulfillments for their orders | roles={authenticated} | 
+  order_fulfillments | UPDATE | vendors can update fulfillments for their orders | roles={authenticated} | vendor_owns_order(order_id)
+  order_fulfillments | SELECT | vendors can view fulfillments for their orders | roles={authenticated} | vendor_owns_order(order_id)
+  order_status_history | SELECT | Admins can view history | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM user_profiles
+  WHERE ((user_profiles.user_id = auth.uid()) AND (user_profiles.is_admin = true))))
+  order_status_history | INSERT | Staff can log status changes | roles={authenticated} | 
+  order_status_history | SELECT | delivery_partners_can_read_all_status_history | roles={authenticated} | ((EXISTS ( SELECT 1
+   FROM delivery_partners dp
+  WHERE (dp.user_id = auth.uid()))) OR (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE 
+  order_status_history | INSERT | vendors can insert status history for their orders | roles={authenticated} | 
+  order_tracking_events | ALL | Admins full access tracking | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM user_profiles
+  WHERE ((user_profiles.user_id = auth.uid()) AND (user_profiles.is_admin = true))))
+  order_tracking_events | SELECT | Customers can view tracking | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM orders
+  WHERE ((orders.id = order_tracking_events.order_id) AND (orders.user_id = auth.uid()))))
+  order_tracking_events | INSERT | Staff can insert tracking events | roles={authenticated} | 
+  order_tracking_events | SELECT | delivery_partners_can_read_all_tracking_events | roles={authenticated} | ((EXISTS ( SELECT 1
+   FROM delivery_partners dp
+  WHERE (dp.user_id = auth.uid()))) OR (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE 
+  order_tracking_events | INSERT | vendors can insert tracking events for their orders | roles={authenticated} | 
+  orders | SELECT | DP can read assigned orders | roles={authenticated} | dp_can_read_assigned_order(id)
+  orders | SELECT | DP can read orders available for delivery | roles={authenticated} | dp_can_read_available_order(id)
+  orders | ALL | Orders universal access | roles={authenticated} | is_admin_or_owner(user_id)
+  orders | DELETE | orders_delete_admin | roles={public} | (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE ((up.user_id = auth.uid()) AND (up.is_admin = true))))
+  orders | INSERT | orders_insert_auth_own | roles={public} | 
+  orders | SELECT | orders_select_owner_or_admin | roles={public} | ((user_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE ((up.user_id = auth.uid()) AND (up.is_admin = true)))))
+  orders | SELECT | orders_select_vendor | roles={public} | (_order_has_vendor_user(id, auth.uid()) OR (user_id = auth.uid()))
+  orders | UPDATE | orders_update_admin | roles={public} | (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE ((up.user_id = auth.uid()) AND (up.is_admin = true))))
+  orders | UPDATE | vendors can update orders containing their products | roles={authenticated} | vendor_owns_order(id)
+  user_profiles | ALL | UserProfiles universal access | roles={authenticated} | is_admin_or_owner(user_id)
+  user_profiles | INSERT | allow_postgres_insert | roles={postgres} | 
+  user_profiles | SELECT | allow_postgres_select | roles={postgres} | true
+  user_profiles | UPDATE | allow_postgres_update | roles={postgres} | true
+  user_profiles | SELECT | delivery_partners_can_read_all_user_profiles | roles={authenticated} | (is_delivery_partner(auth.uid()) OR is_admin_user(auth.uid()))
+  user_profiles | DELETE | user_profiles_delete_own | roles={authenticated} | (user_id = auth.uid())
+  user_profiles | INSERT | user_profiles_insert_own | roles={authenticated} | 
+  user_profiles | SELECT | user_profiles_select_own | roles={authenticated} | (user_id = auth.uid())
+  user_profiles | UPDATE | user_profiles_update_own | roles={authenticated} | (user_id = auth.uid())
+  vendor_order_fulfillments | SELECT | vendor_order_fulfillments_select_delivery_partner | roles={authenticated} | ((EXISTS ( SELECT 1
+   FROM delivery_partners dp
+  WHERE ((dp.user_id = auth.uid()) AND (dp.is_active = true)))) AND (EXISTS ( SELECT 1
+   F
+  vendor_order_fulfillments | SELECT | vendor_order_fulfillments_select_own | roles={authenticated} | ((EXISTS ( SELECT 1
+   FROM vendors v
+  WHERE ((v.id = vendor_order_fulfillments.vendor_id) AND (v.user_id = auth.uid())))) OR (EXISTS ( SEL
+  vendor_order_fulfillments | UPDATE | vendor_order_fulfillments_update_own | roles={authenticated} | (((EXISTS ( SELECT 1
+   FROM vendors v
+  WHERE ((v.id = vendor_order_fulfillments.vendor_id) AND (v.user_id = auth.uid())))) AND (EXISTS ( S
+  vendors | ALL | Vendor universal access | roles={authenticated} | is_admin_or_owner(user_id)
+  vendors | INSERT | insert_own_vendor | roles={public} | 
+  vendors | SELECT | select_own_vendor | roles={public} | (user_id = auth.uid())
+  vendors | UPDATE | update_own_vendor | roles={public} | (user_id = auth.uid())
+  vendors | SELECT | vendors_select_admin | roles={authenticated} | (EXISTS ( SELECT 1
+   FROM user_profiles up
+  WHERE ((up.user_id = auth.uid()) AND (up.is_admin = true))))
+  vendors | SELECT | vendors_select_own | roles={authenticated} | (user_id = auth.uid())
+===== notification_outbox GRANTS (28) =====
+  anon: DELETE
+  anon: INSERT
+  anon: REFERENCES
+  anon: SELECT
+  anon: TRIGGER
+  anon: TRUNCATE
+  anon: UPDATE
+  authenticated: DELETE
+  authenticated: INSERT
+  authenticated: REFERENCES
+  authenticated: SELECT
+  authenticated: TRIGGER
+  authenticated: TRUNCATE
+  authenticated: UPDATE
+  postgres: DELETE
+  postgres: INSERT
+  postgres: REFERENCES
+  postgres: SELECT
+  postgres: TRIGGER
+  postgres: TRUNCATE
+  postgres: UPDATE
+  service_role: DELETE
+  service_role: INSERT
+  service_role: REFERENCES
+  service_role: SELECT
+  service_role: TRIGGER
+  service_role: TRUNCATE
+  service_role: UPDATE
+
+DONE

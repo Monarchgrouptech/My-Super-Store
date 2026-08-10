@@ -14,6 +14,7 @@ def generate_icons():
     
     # Simple transparency converter (threshold near-black pixels to transparent)
     def make_transparent(pil_img):
+    
         rgba = pil_img.convert("RGBA")
         datas = rgba.getdata()
         newData = []

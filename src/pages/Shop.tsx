@@ -248,10 +248,7 @@ export function Shop({ onNavigate }: ShopProps) {
       </nav>
 
       {/* Header with Particles Behind */}
-      <div className="relative min-h-[300px] flex items-center justify-center -mx-8 -mt-8 px-8 pt-8 mb-8" style={{ overflow: 'hidden' }}>
-        <div className="absolute inset-0 z-0">
-
-        </div>
+      <div className="relative min-h-[180px] sm:min-h-[300px] flex items-center justify-center -mx-4 sm:-mx-8 -mt-8 px-4 sm:px-8 pt-8 mb-8" style={{ overflow: 'hidden' }}>
         <div className="relative z-10 text-center">
           <h1 className="page-title" style={{ fontFamily: "'Oswald', sans-serif" }}>
             {selectedCategory === 'All' ? 'Luxury Collection' : `${selectedCategory} Products`}
@@ -381,13 +378,7 @@ export function Shop({ onNavigate }: ShopProps) {
 
       {/* Products Grid */}
  <div
-  className="grid gap-3 md:gap-4"
-  style={{
-    gridTemplateColumns:
-      window.innerWidth < 768
-        ? 'repeat(2, minmax(0, 1fr))'
-        : 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
-  }}
+  className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,170px),1fr))] gap-3 md:gap-5"
 >
   {pagedProducts.map((product) => (
     <div key={product.id}>

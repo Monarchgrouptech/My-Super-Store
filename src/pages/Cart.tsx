@@ -11,13 +11,14 @@ interface CartProps {
 }
 
 export function Cart(_props: CartProps) {
-  const { items, total, removeFromCart, updateQuantity, loading } = useCart();
+  const { items, total, itemCount, removeFromCart, updateQuantity, loading } = useCart();
   const { formatPrice } = useCurrency();
 
+  // The cart total is the sum of the vendor (USD) item prices. Checkout and the
+  // payment gateway charge exactly this item total (no hidden shipping/tax), so
+  // the displayed total must match what the user will actually pay.
   const subtotal = total;
-  const shipping = subtotal > 500 ? 0 : 50;
-  const tax = subtotal * 0.08;
-  const finalTotal = subtotal + shipping + tax;
+  const finalTotal = subtotal;
 
   if (loading) {
     return (
@@ -53,7 +54,7 @@ export function Cart(_props: CartProps) {
                 {/* Image */}
                 <div className="cart-thumb">
                   <ImageWithFallback
-                    src={item.products?.product_images?.[0]?.url || 'https://via.placeholder.com/150'}
+                    src={item.products?.product_images?.[0]?.url || '/images/product-placeholder.svg'}
                     alt={item.products?.name}
                     className="product-image"
                   />
@@ -70,7 +71,7 @@ export function Cart(_props: CartProps) {
                     </div>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="text-muted hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+                      className="mini-btn p-0 text-muted hover:text-white transition-colors bg-transparent border-none cursor-pointer"
                     >
                       <X size={24} strokeWidth={2.5} />
                     </button>
@@ -81,7 +82,7 @@ export function Cart(_props: CartProps) {
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                        className="qty-btn"
+                        className="qty-btn mini-btn"
                         style={{ width: '32px', height: '32px' }}
                       >
                         <Minus size={14} strokeWidth={2.5} />
@@ -89,7 +90,7 @@ export function Cart(_props: CartProps) {
                       <span className="text-white w-8 text-center">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="qty-btn"
+                        className="qty-btn mini-btn"
                         style={{ width: '32px', height: '32px' }}
                       >
                         <Plus size={14} strokeWidth={2.5} />
@@ -111,16 +112,8 @@ export function Cart(_props: CartProps) {
 
               <div className="space-y-4 mb-8">
                 <div className="summary-row">
-                  <span>Subtotal</span>
+                  <span>Items ({itemCount})</span>
                   <span>{formatPrice(subtotal)}</span>
-                </div>
-                <div className="summary-row">
-                  <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
-                </div>
-                <div className="summary-row">
-                  <span>Tax</span>
-                  <span>{formatPrice(tax)}</span>
                 </div>
 
                 <div className="summary-total">
@@ -146,15 +139,6 @@ export function Cart(_props: CartProps) {
               >
                 Continue Shopping
               </Link>
-
-              {/* Free Shipping Message */}
-              {subtotal < 500 && (
-                <div className="mt-6 p-4 border border-[rgba(222,157,13,0.3)] text-center">
-                  <p className="text-muted text-sm">
-                    Add <span style={{ color: 'var(--gold-solid)' }}>{formatPrice(500 - subtotal)}</span> more for free shipping
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>

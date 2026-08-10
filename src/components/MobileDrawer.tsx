@@ -169,7 +169,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                     <button
                         onClick={onClose}
                         aria-label="Close menu"
-                        className="flex items-center justify-center size-10 rounded-full hover:bg-black/5 transition-colors text-slate-900"
+                        className="mini-btn flex items-center justify-center size-10 rounded-full hover:bg-black/5 transition-colors text-slate-900"
                     >
                         <X size={24} strokeWidth={1.5} />
                     </button>

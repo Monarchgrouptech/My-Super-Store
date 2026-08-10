@@ -229,15 +229,6 @@ export function OrderList() {
             return;
         }
 
-        // ── DEBUG: Trace orderId source ──
-        const selectedOrder = orders.find(o => o.id === selectedOrderId);
-        console.log('[vendor-readiness] selected order object:', selectedOrder);
-        console.log('[vendor-readiness] selectedOrderId (from state):', selectedOrderId);
-        console.log('[vendor-readiness] selectedOrder.id:', selectedOrder?.id);
-        console.log('[vendor-readiness] vendor.id:', vendor.id);
-        console.log('[vendor-readiness] all order IDs in state:', orders.map(o => ({ id: o.id, placed_at: o.placed_at })));
-        // ── END DEBUG ──
-
         try {
             setUpdating(selectedOrderId);
             setSubmitError(null);
@@ -252,8 +243,6 @@ export function OrderList() {
                 pickup_country: readinessForm.pickup_country,
                 pickup_notes: readinessForm.pickup_notes || undefined,
             });
-
-            console.log('[vendor-readiness] edge function returned fulfillment:', updatedFulfillment);
 
             // Update local state with the returned fulfillment instead of a full refetch
             setOrders(prev => prev.map(order => {
@@ -441,7 +430,7 @@ export function OrderList() {
                                             <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-[#D4AF37]/10 transition-colors">
                                                 <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-gray-100 shrink-0">
                                                     <img 
-                                                        src={item.products?.product_images?.[0]?.url || '/placeholder-product.png'} 
+                                                        src={item.products?.product_images?.[0]?.url || '/images/product-placeholder.svg'} 
                                                         alt={item.products?.name} 
                                                         className="w-full h-full object-cover"
                                                     />
@@ -486,7 +475,7 @@ export function OrderList() {
                             </h2>
                             <button
                                 onClick={() => setShowReadinessModal(false)}
-                                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                                className="mini-btn p-2 hover:bg-gray-100 rounded-xl transition-colors"
                             >
                                 <X size={20} className="text-gray-500" />
                             </button>

@@ -186,7 +186,7 @@ export function ProductDetail() {
         <div>
           <div className="gallery-main">
             <ImageWithFallback
-              src={product.image || 'https://via.placeholder.com/800'}
+              src={product.image || '/images/product-placeholder.svg'}
               alt={product.name ? `${product.name} - ${product.category || 'Product'}` : undefined}
               className="product-image"
             />

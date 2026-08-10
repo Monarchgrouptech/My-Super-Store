@@ -22,10 +22,21 @@ export function ProductCarousel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [cardWidth, setCardWidth] = useState(300);
 
-  const CARD_WIDTH = 300;
   const GAP = 24;
   const AUTO_SCROLL_INTERVAL = 3000;
+
+  // Responsive card width — smaller on mobile, capped on desktop
+  useEffect(() => {
+    const updateCardWidth = () => {
+      const vw = window.innerWidth || 1024;
+      setCardWidth(Math.min(300, Math.max(200, Math.round(vw * 0.72))));
+    };
+    updateCardWidth();
+    window.addEventListener("resize", updateCardWidth);
+    return () => window.removeEventListener("resize", updateCardWidth);
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -37,13 +48,13 @@ export function ProductCarousel({
     }, AUTO_SCROLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [activeIndex, isPaused, products.length]);
+  }, [activeIndex, isPaused, products.length, cardWidth]);
 
   const scrollToIndex = (index: number) => {
     if (!scrollRef.current) return;
 
     scrollRef.current.scrollTo({
-      left: index * (CARD_WIDTH + GAP),
+      left: index * (cardWidth + GAP),
       behavior: "smooth",
     });
 
@@ -55,7 +66,7 @@ export function ProductCarousel({
     if (!scrollRef.current) return;
 
     const scrollLeft = scrollRef.current.scrollLeft;
-    const index = Math.round(scrollLeft / (CARD_WIDTH + GAP));
+    const index = Math.round(scrollLeft / (cardWidth + GAP));
     setActiveIndex(index);
   };
 
@@ -70,14 +81,13 @@ export function ProductCarousel({
         ref={scrollRef}
         onScroll={handleScroll}
         className="
-          flex gap-6 px-12 overflow-x-auto
+          flex gap-6 px-4 sm:px-12 overflow-x-auto
           scroll-smooth
           snap-x snap-mandatory
           overflow-y-hidden
         "
         style={{
-         
-          minHeight: "500px",
+          minHeight: "440px",
           msOverflowStyle: "none",
           scrollbarWidth: "none",
         }}
@@ -90,16 +100,16 @@ export function ProductCarousel({
               key={product.id}
               className={`
                 snap-center shrink-0 transition-all duration-500
-                ${isActive ? "scale-100 opacity-100" : "scale-90 opacity-50"}
+                ${isActive ? "scale-100 opacity-100" : "scale-95 opacity-70"}
               `}
               style={{ 
-                width: CARD_WIDTH,
-                minHeight: "420px",
+                width: cardWidth,
+                minHeight: "380px",
                 display: "flex",
                 alignItems: "center",
               }}
             >
-              <div className="glass-border shadow-2xl w-full" style={{ height: "450px" }}>
+              <div className="glass-border shadow-2xl w-full" style={{ minHeight: "400px" }}>
                 <ProductCard
                   product={product}
                   onProductClick={onProductClick}
@@ -111,15 +121,16 @@ export function ProductCarousel({
       </div>
 
       {/* Dots */}
-      <div className="flex justify-center gap-2 mt-6">
+      <div className="carousel-dots flex justify-center gap-1.5 sm:gap-2 mt-5 sm:mt-6">
         {products.map((_, index) => (
           <button
             key={index}
             onClick={() => scrollToIndex(index)}
+            aria-label={`Go to slide ${index + 1}`}
             className={`rounded-full transition-all duration-300 ${
               index === activeIndex
-                ? "w-3 h-3 bg-[#D4AF37]"
-                : "w-2 h-2 bg-white/30 hover:bg-white/50"
+                ? "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#D4AF37]"
+                : "w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white/30 hover:bg-white/50"
             }`}
           />
         ))}

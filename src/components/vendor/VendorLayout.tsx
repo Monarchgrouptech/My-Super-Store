@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useVendor } from '../../hooks/useVendor';
 import { supabase } from '../../lib/supabase';
+import { NotificationBell } from '../NotificationBell';
 
 interface VendorLayoutProps {
     children: ReactNode;
@@ -67,13 +68,16 @@ export function VendorLayout({ children }: VendorLayoutProps) {
                             </h1>
                         </div>
 
-                        <button
-                            onClick={handleSignOut}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
-                        >
-                            <LogOut size={18} />
-                            <span className="hidden sm:inline">Sign Out</span>
-                        </button>
+                        <div className="flex items-center gap-1">
+                            <NotificationBell getLink={() => '/vendor/orders'} />
+                            <button
+                                onClick={handleSignOut}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+                            >
+                                <LogOut size={18} />
+                                <span className="hidden sm:inline">Sign Out</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

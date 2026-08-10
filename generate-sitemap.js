@@ -95,7 +95,7 @@ async function generate() {
     const today = new Date().toISOString().split('T')[0];
 
     // Per-URL config for static pages
-    const staticUrlConfig: Record<string, { priority: string; changefreq: string }> = {
+    const staticUrlConfig = {
       '':       { priority: '1.0', changefreq: 'daily' },
       '/shop':  { priority: '0.9', changefreq: 'daily' },
       '/about': { priority: '0.7', changefreq: 'monthly' },

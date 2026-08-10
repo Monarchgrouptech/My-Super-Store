@@ -44,7 +44,7 @@ export function LuxuryProductCard({ product, delay = 0, isTrending = false }: Lu
                     <div className="relative">
                         <div className="absolute -inset-2 bg-gradient-to-r from-[#FFE55C]/60 to-[#D4AF37]/40 rounded-full blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-300 animate-pulse-glow" />
                         <div className="relative bg-gradient-to-r from-[#FFE55C] via-[#F4E04D] to-[#D4AF37] px-3 py-1.5 rounded-full text-[0.65rem] font-extrabold text-[#050505] uppercase tracking-wider shadow-[0_4px_12px_rgba(212,175,55,0.4)] border border-[rgba(255,248,220,0.6)] hover:shadow-[0_6px_16px_rgba(212,175,55,0.6)]">
-                            🔥 Trending
+                            Trending
                         </div>
                     </div>
                 </div>
@@ -61,9 +61,12 @@ export function LuxuryProductCard({ product, delay = 0, isTrending = false }: Lu
                         className="w-full h-full transition-opacity duration-700"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                        <span className="text-slate-400 text-sm">No image</span>
-                    </div>
+                    <img
+                        src="/images/product-placeholder.svg"
+                        alt={product.name ? `${product.name} - ${product.category || 'Product'}` : undefined}
+                        loading="lazy"
+                        className="w-full h-full object-contain"
+                    />
                 )}
                 {/* Premium overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

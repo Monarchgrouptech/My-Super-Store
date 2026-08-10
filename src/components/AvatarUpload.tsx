@@ -134,7 +134,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: Avata
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
+                                className="mini-btn px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
                             >
                                 <X size={16} />
                             </button>

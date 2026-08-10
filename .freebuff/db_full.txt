@@ -1,0 +1,20 @@
+FAILED via direct -> getaddrinfo ENOTFOUND db.hoieogginmsfmoarubuu.supabase.co
+CONNECTED via pooler {"current_user":"postgres","current_database":"postgres","version":"PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit"}
+
+=== TRIGGERS (public schema) (20 rows) ===
+
+=== PUBLIC FUNCTIONS + DEFINITIONS (30 rows) ===
+
+=== notification_outbox (all) (17 rows) ===
+
+=== order_status_history (all) (10 rows) ===
+
+=== RLS POLICIES (111 rows) ===
+
+=== TABLE GRANTS (anon/authenticated/service_role) (504 rows) ===
+
+=== ALL PUBLIC TABLES + RLS (24 rows) ===
+
+=== TRIGGER-OWNED FUNCTIONS (bodies) (18 rows) ===
+
+DONE

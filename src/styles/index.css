@@ -666,7 +666,7 @@ h6 {
 
 .product-info {
     background-color: #000000;
-    padding: 1.5rem;
+    padding: 1rem 1rem 1.25rem;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -692,10 +692,10 @@ h6 {
 
 .product-name {
     color: var(--gold-light);
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
     font-weight: 700;
-    font-size: 1.05rem;
-    line-height: 1.4;
+    font-size: 0.95rem;
+    line-height: 1.35;
     transition: color 0.3s ease;
 }
 
@@ -712,7 +712,7 @@ h6 {
     background-clip: text;
     color: transparent;
     font-weight: 800;
-    font-size: 1.35rem;
+    font-size: 1.15rem;
 }
 
 .wishlist-btn {
@@ -1605,8 +1605,8 @@ h6 {
         box-shadow: 0 12px 28px rgba(212, 175, 55, 0.25);
     }
 
-    /* Optimized button sizing for mobile */
-    button {
+    /* Optimized button sizing for mobile (mini-btn icons/dots keep their own sizing) */
+    button:not(.mini-btn) {
         font-size: 1rem;
         padding: 0.75rem 1.5rem;
     }
@@ -1628,7 +1628,7 @@ h6 {
         font-size: 0.95rem;
     }
 
-    button {
+    button:not(.mini-btn) {
         font-size: 0.9rem;
         padding: 0.625rem 1.25rem;
     }
@@ -1702,6 +1702,21 @@ select:focus-visible {
     .animate-gold-glow {
         animation: goldenGlow 2s ease-in-out infinite;
     }
+}
+
+/* Carousel pagination dots — stay small on mobile (exempt from global touch/button sizing rules) */
+.carousel-dots button {
+    padding: 0;
+    min-width: 0;
+    min-height: 0;
+    font-size: 0;
+    line-height: 0;
+}
+
+/* Small icon & dot buttons — exempt from the global 44px touch-target min sizing */
+.mini-btn {
+    min-width: 0 !important;
+    min-height: 0 !important;
 }
 
 /* Optimized transitions for smoother mobile animations */

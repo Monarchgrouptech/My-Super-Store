@@ -48,6 +48,10 @@ export function About({ onNavigate }: AboutProps) {
               id: p.id,
               name: p.name,
               brand: p.brand,
+              price: p.price,
+              stock: p.stock,
+              sku: p.sku,
+              slug: p.slug,
               short_description: p.short_description,
               image:
                 p.product_images
@@ -63,6 +67,8 @@ export function About({ onNavigate }: AboutProps) {
               category:
                 p.product_categories?.[0]?.categories?.name ||
                 'Uncategorized',
+              product_specs: p.product_specs || [],
+              view_count: p.view_count || 0,
             }))
           );
         }

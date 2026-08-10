@@ -361,7 +361,7 @@ export function Checkout() {
                                     <div key={item.id} className="flex gap-3 bg-white/5 rounded-lg" style={{ padding: 'clamp(0.5rem, 3vw, 1rem)', minWidth: 0 }}>
                                         <div className="flex-shrink-0" style={{ width: 'clamp(48px, 12vw, 80px)', height: 'clamp(48px, 12vw, 80px)' }}>
                                             <ImageWithFallback
-                                                src={item.products?.product_images?.[0]?.url || 'https://via.placeholder.com/150'}
+                                                src={item.products?.product_images?.[0]?.url || '/images/product-placeholder.svg'}
                                                 alt={item.products?.name}
                                                 className="w-full h-full object-cover rounded"
                                             />
@@ -458,7 +458,7 @@ export function Checkout() {
                     <div className="card-black max-w-md w-full relative">
                         <button
                             onClick={() => setShowAddressModal(false)}
-                            className="absolute top-4 right-4 text-muted hover:text-white transition-colors"
+                            className="mini-btn p-0 absolute top-4 right-4 text-muted hover:text-white transition-colors"
                         >
                             <X size={24} />
                         </button>

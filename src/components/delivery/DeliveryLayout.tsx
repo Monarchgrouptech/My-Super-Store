@@ -4,12 +4,12 @@ import {
     LayoutDashboard,
     Truck,
     LogOut,
-    Bell,
     ClipboardList,
     TrendingUp,
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
+import { NotificationBell } from '../NotificationBell';
 import { useDeliveryPartner } from '../../hooks/useDeliveryPartner';
 import { supabase } from '../../lib/supabase';
 import '../../styles/delivery.css';
@@ -98,10 +98,13 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                     </h2>
 
                     <div className="flex items-center gap-6">
-                        <button type="button" className="relative text-black hover:text-zinc-600 transition-colors" aria-label="Delivery notifications">
-                            <Bell size={20} />
-                            <span className="pulse-dot absolute top-0 right-0 w-2 h-2 bg-[#9f7418] rounded-full ring-2 ring-white"></span>
-                        </button>
+                        <NotificationBell
+                            getLink={(notification) =>
+                                notification.order_id
+                                    ? `/delivery/orders/${notification.order_id}`
+                                    : '/delivery/orders'
+                            }
+                        />
 
                         <div className="flex items-center gap-4 border-l border-zinc-200 pl-6">
                             <div className="text-right hidden sm:block">
@@ -115,7 +118,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                                     <img src="/images/deliver_man_photo.jpg" className="w-full h-full object-cover grayscale" alt="Delivery partner avatar" />
                                 )}
                             </div>
-                            <button type="button" onClick={handleSignOut} className="text-zinc-400 hover:text-red-600 transition-colors" aria-label="Sign out">
+                            <button type="button" onClick={handleSignOut} className="mini-btn p-0 text-zinc-400 hover:text-red-600 transition-colors" aria-label="Sign out">
                                 <LogOut size={20} />
                             </button>
                         </div>
@@ -137,7 +140,7 @@ export function DeliveryLayout({ children }: DeliveryLayoutProps) {
                     <button 
                         type="button"
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 hover:text-black text-zinc-400 transition-all shrink-0"
+                        className="mini-btn p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 hover:text-black text-zinc-400 transition-all shrink-0"
                         title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

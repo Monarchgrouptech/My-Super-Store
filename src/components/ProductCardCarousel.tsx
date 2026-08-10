@@ -23,7 +23,7 @@ export function ProductCardCarousel({ product, onProductClick, variant = 'defaul
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const { formatPrice } = useCurrency();
 
-  const images = product.product_images?.map(img => img.url) || [product.image || 'https://via.placeholder.com/500'];
+  const images = product.product_images?.map(img => img.url) || [product.image || '/images/product-placeholder.svg'];
 
   // Auto-rotate images every 10 seconds
   useEffect(() => {
@@ -114,14 +114,14 @@ export function ProductCardCarousel({ product, onProductClick, variant = 'defaul
             <>
               <button
                 onClick={handlePrevImage}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 hover:bg-[#D4AF37] text-white hover:text-black p-2 rounded-full backdrop-blur-sm z-20 pointer-events-auto"
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 hover:bg-[#D4AF37] text-white hover:text-black mini-btn p-2 rounded-full backdrop-blur-sm z-20 pointer-events-auto"
               >
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
 
               <button
                 onClick={handleNextImage}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 hover:bg-[#D4AF37] text-white hover:text-black p-2 rounded-full backdrop-blur-sm z-20 pointer-events-auto"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 hover:bg-[#D4AF37] text-white hover:text-black mini-btn p-2 rounded-full backdrop-blur-sm z-20 pointer-events-auto"
               >
                 <ChevronRight size={20} strokeWidth={2.5} />
               </button>
@@ -142,7 +142,7 @@ export function ProductCardCarousel({ product, onProductClick, variant = 'defaul
                   setIsAutoPlaying(false);
                   setCurrentImageIndex(index);
                 }}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${index === currentImageIndex
+                className={`mini-btn w-1.5 h-1.5 rounded-full transition-all ${index === currentImageIndex
                   ? 'bg-[#D4AF37] w-3'
                   : 'bg-white/40 hover:bg-white/60'
                   }`}

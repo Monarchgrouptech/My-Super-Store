@@ -53,6 +53,20 @@ interface Address {
     postal_code: string;
 }
 
+// Raw payment display — reads the currency symbol from the DB row and applies
+// NO conversion. payments.amount is already the exact amount that was paid
+// (in the paid currency), so it must never pass through formatPrice().
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: '₵',
+    KES: 'KSh', ZAR: 'R', CAD: 'CA$', AUD: 'A$', JPY: '¥',
+};
+function rawAmount(amount: number | null | undefined, currency: string | null | undefined): string {
+    const code = (currency ?? 'USD').toUpperCase();
+    const symbol = CURRENCY_SYMBOLS[code] ?? `${code} `;
+    const value = Number(amount ?? 0);
+    return `${symbol}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function OrderConfirmation() {
     const [searchParams] = useSearchParams();
 
@@ -224,6 +238,20 @@ export function OrderConfirmation() {
     const isPaid = order?.status === 'paid';
     const isPending = order?.status === 'pending' || (!order && !!reference);
 
+    // order.total_amount and order_items.unit_price are the vendor (USD) prices.
+    // payments.amount is the exact amount actually paid in payment.currency
+    // (converted at the rate in effect when the order was placed). Derive that
+    // rate so the item breakdown on this receipt sums to the exact amount paid.
+    const paidRate =
+        payment && order?.total_amount
+            ? Number(payment.amount) / Number(order.total_amount)
+            : null;
+    const paidCurrency = payment?.currency ?? null;
+    const formatItemPrice = (usdAmount: number) =>
+        paidRate && paidCurrency
+            ? rawAmount(usdAmount * paidRate, paidCurrency)
+            : formatPrice(usdAmount);
+
     // Backend triggers will handle auto-creation of fulfillment and tracking records on payment status transition
 
     // UI rendering
@@ -265,7 +293,7 @@ export function OrderConfirmation() {
                         )}
                     </div>
 
-                    <h1 className="font-serif text-4xl mb-4 bg-gradient-to-r from-[var(--gold-light)] via-[var(--gold-primary)] to-[var(--gold-dark)] bg-clip-text text-transparent">
+                    <h1 className="font-serif text-2xl sm:text-4xl mb-4 bg-gradient-to-r from-[var(--gold-light)] via-[var(--gold-primary)] to-[var(--gold-dark)] bg-clip-text text-transparent">
                         {isPaid ? 'Order Confirmed!' : 'Waiting for Payment...'}
                     </h1>
 
@@ -306,7 +334,7 @@ export function OrderConfirmation() {
                                 <div className="flex justify-between">
                                     <span>Amount</span>
                                     <span className="text-white">
-                                        {formatPrice(payment.amount)}
+                                        {rawAmount(payment.amount, payment.currency)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -362,7 +390,7 @@ export function OrderConfirmation() {
                             <div key={item.id} className="flex gap-4 bg-white/5 p-4 rounded-lg">
                                 <div className="w-20 h-20 flex-shrink-0">
                                     <ImageWithFallback
-                                        src={item.product?.product_images?.[0]?.url || 'https://via.placeholder.com/150'}
+                                        src={item.product?.product_images?.[0]?.url || '/images/product-placeholder.svg'}
                                         alt={item.product?.name}
                                         className="w-full h-full object-cover rounded"
                                     />
@@ -371,11 +399,11 @@ export function OrderConfirmation() {
                                     <h4 className="text-white font-semibold mb-1">{item.product?.name}</h4>
                                     <p className="text-muted text-sm">Quantity: {item.quantity}</p>
                                     <p className="text-[var(--gold-primary)] font-semibold">
-                                        {formatPrice(item.unit_price * item.quantity)}
+                                        {formatItemPrice(item.unit_price * item.quantity)}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-white">{formatPrice(item.unit_price)}</p>
+                                    <p className="text-white">{formatItemPrice(item.unit_price)}</p>
                                     <p className="text-muted text-sm">each</p>
                                 </div>
                             </div>
@@ -387,7 +415,9 @@ export function OrderConfirmation() {
                         <div className="flex justify-between items-center">
                             <span className="text-xl font-serif text-white">Total Amount</span>
                             <span className="text-2xl font-bold text-[var(--gold-primary)]">
-                                {formatPrice(order?.total_amount || 0)}
+                                {payment
+                                    ? rawAmount(payment.amount, payment.currency)
+                                    : formatPrice(order?.total_amount || 0)}
                             </span>
                         </div>
                     </div>

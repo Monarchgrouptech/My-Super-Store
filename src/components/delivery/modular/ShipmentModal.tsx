@@ -42,7 +42,7 @@ export function ShipmentModal({ isOpen, onClose, onConfirm }: ShipmentModalProps
                     </div>
                     <button 
                         onClick={onClose}
-                        className="w-10 h-10 flex items-center justify-center border border-zinc-200 text-zinc-400 hover:text-black hover:border-black transition-all"
+                        className="mini-btn w-10 h-10 flex items-center justify-center border border-zinc-200 text-zinc-400 hover:text-black hover:border-black transition-all"
                     >
                         <X size={20} />
                     </button>

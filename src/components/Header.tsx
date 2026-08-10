@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { SearchBar } from './SearchBar';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileSearch } from './MobileSearch';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
@@ -67,7 +68,7 @@ export function Header({ cartItemCount }: HeaderProps) {
   return (
     <header className={headerClass}>
       <div className="flex justify-center w-full">
-        <div className="flex justify-between w-full max-w-[1280px] items-center px-4 sm:px-6 md:px-8 lg:px-10 py-5 gap-4 sm:gap-6 md:gap-8">
+        <div className="flex justify-between w-full max-w-[1280px] items-center px-4 sm:px-6 md:px-8 lg:px-10 py-4 gap-4 sm:gap-6 md:gap-8">
           {/* Logo Area - Left */}
           <Link to="/" className="flex items-center gap-2 cursor-pointer no-underline flex-shrink-0">
             <div className={`flex items-center justify-center size-8 rounded-full transition-colors ${isAdminPage ? 'bg-black' : isAccountPage ? 'bg-white/10' : 'bg-black'
@@ -176,6 +177,7 @@ export function Header({ cartItemCount }: HeaderProps) {
               </>
             ) : (
               <>
+                <NotificationBell />
                 <button
                   onClick={() => navigate(user ? '/account' : '/login')}
                   className={`flex items-center justify-center size-10 rounded-full ${hoverBgClass} transition-colors ${textColorClass}`}
@@ -188,7 +190,9 @@ export function Header({ cartItemCount }: HeaderProps) {
                 >
                   <ShoppingCart size={20} strokeWidth={2} />
                   {cartItemCount > 0 && (
-                    <span className="absolute top-2 right-2 size-2 bg-[#d4af37] rounded-full"></span>
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-r from-[#FFE55C] to-[#D4AF37] text-black text-[10px] font-extrabold rounded-full flex items-center justify-center border border-black/20 shadow-md">
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </span>
                   )}
                 </button>
               </>

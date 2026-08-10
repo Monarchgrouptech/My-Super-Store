@@ -35,7 +35,7 @@ export function ConfirmModal({
             <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
                 <button
                     onClick={onCancel}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                    className="mini-btn p-0 absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
                 >
                     <X size={20} />
                 </button>

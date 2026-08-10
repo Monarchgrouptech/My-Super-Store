@@ -67,7 +67,7 @@ export function CategoryMultiSelect({ selectedIds, onChange }: CategoryMultiSele
                             <button
                                 type="button"
                                 onClick={() => removeCategory(category.id)}
-                                className="hover:bg-[#D4AF37]/20 rounded-full p-0.5"
+                                className="mini-btn hover:bg-[#D4AF37]/20 rounded-full p-0.5"
                             >
                                 <X size={14} />
                             </button>

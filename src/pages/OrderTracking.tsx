@@ -121,7 +121,7 @@ export function OrderTracking() {
                 <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
                     <button 
                         onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+                        className="mini-btn p-2 hover:bg-gray-50 rounded-full transition-colors"
                     >
                         <ChevronLeft size={24} />
                     </button>

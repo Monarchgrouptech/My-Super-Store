@@ -81,7 +81,7 @@ export function DeliveryOrderDetailPanel({
                             <p className="text-xs font-bold text-red-800 uppercase tracking-wider mb-1">Transition Error</p>
                             <p className="text-[11px] text-red-700 leading-relaxed font-medium">{actionError}</p>
                         </div>
-                        <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600">
+                        <button onClick={() => setActionError(null)} className="mini-btn p-0 text-red-400 hover:text-red-600">
                             <X size={14} />
                         </button>
                     </div>

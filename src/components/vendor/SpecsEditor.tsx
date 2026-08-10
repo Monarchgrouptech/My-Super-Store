@@ -81,7 +81,7 @@ export function SpecsEditor({ specs, onChange }: SpecsEditorProps) {
                             <button
                                 type="button"
                                 onClick={() => handleRemove(index)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                className="mini-btn p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                                 aria-label="Remove specification"
                             >
                                 <X size={20} />

@@ -240,7 +240,7 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
                             <button
                                 type="button"
                                 onClick={() => handleRemove(index)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded transition flex-shrink-0"
+                                className="mini-btn p-2 text-red-600 hover:bg-red-50 rounded transition flex-shrink-0"
                             >
                                 <X size={18} />
                             </button>

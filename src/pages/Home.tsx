@@ -281,7 +281,7 @@ export function Home() {
             >
               <div className="inline-block mb-2 sm:mb-3 md:mb-4 lg:mb-4">
                 <span className="text-[10px] sm:text-xs md:text-sm font-bold sm:font-extrabold uppercase tracking-wider sm:tracking-widest bg-[rgba(212,175,55,0.25)] px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-full border border-[rgba(212,175,55,0.6)] shadow-md">
-                  ✨ Premium
+                  Premium
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-4xl xl:text-5xl mb-2 sm:mb-3 md:mb-4 lg:mb-3 leading-tight text-white font-extrabold" style={{ fontFamily: 'dosis', textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
@@ -340,7 +340,7 @@ export function Home() {
           <div className="w-full flex-1 flex flex-col lg:overflow-hidden">
             <div className="mb-4 lg:mb-3 flex-shrink-0">
               <h2 className="text-2xl lg:text-xl font-extrabold bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent flex items-center gap-2">
-                🔥 Hot Categories
+                Hot Categories
               </h2>
             </div>
 
@@ -369,7 +369,7 @@ export function Home() {
         {/* Featured Products - Two-Row Auto-scrolling Carousel - Desktop only */}
         {trendingProducts.length > 0 && (
           <div className="hidden lg:block lg:col-span-12 mt-4">
-            <AutoScrollProductSection title="⭐ Featured Products" products={trendingProducts} />
+            <AutoScrollProductSection title="Featured" products={trendingProducts} />
           </div>
         )}
 
@@ -378,7 +378,7 @@ export function Home() {
           <div className="lg:col-span-12 mt-4 w-full bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-extrabold bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent">
-                🎉 Seasonal Products
+                Seasonal Picks
               </h2>
             </div>
 
@@ -445,18 +445,24 @@ export function Home() {
               </div>
 
               {/* Flash Sales Banner - Right side */}
-              <div className="flex-shrink-0 w-full sm:w-[280px] lg:w-[280px] relative rounded-xl overflow-hidden border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 group cursor-pointer" style={{ minHeight: '300px' }}>
-                <img
-                  src="https://via.placeholder.com/300x400?text=FLASH+SALES"
-                  alt="Flash Sales & Offers"
-                  className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-700 brightness-90 group-hover:brightness-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 group-hover:to-black/50 transition-all duration-500 rounded-xl flex items-end justify-start p-4" />
-                <div className="absolute bottom-4 left-4 right-4 z-10 text-white">
-                  <p className="text-xs font-bold opacity-90 uppercase tracking-wider">Flash</p>
-                  <h3 className="text-xl font-extrabold text-[#FFE55C]">Sales</h3>
+              <Link
+                to="/shop"
+                className="flex-shrink-0 w-full sm:w-[280px] lg:w-[280px] relative rounded-xl overflow-hidden border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 group cursor-pointer no-underline flex flex-col items-center justify-center text-center"
+                style={{ minHeight: '300px', background: 'radial-gradient(120% 120% at 50% 0%, #2A2410 0%, #0F0F0F 55%, #050505 100%)' }}
+              >
+                <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full border border-[#D4AF37]/20" />
+                <div className="absolute -bottom-14 -right-14 w-52 h-52 rounded-full border border-[#D4AF37]/20" />
+                <div className="absolute inset-0 opacity-70 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.25),transparent_60%)]" />
+
+                <div className="relative z-10 px-6 py-8">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#FFE55C]/80 mb-3">Limited Time</p>
+                  <h3 className="text-3xl font-extrabold bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent mb-2">Flash Sales</h3>
+                  <p className="text-white/60 text-xs mb-6 leading-relaxed">Exclusive offers on premium picks — while stocks last.</p>
+                  <span className="inline-block bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] text-[#050505] text-xs font-extrabold uppercase tracking-widest px-5 py-2.5 rounded-full group-hover:scale-105 transition-transform duration-300">
+                    Shop Offers
+                  </span>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         )}
@@ -465,17 +471,17 @@ export function Home() {
       {/* ================= FULL-WIDTH CATEGORY CAROUSEL (Mobile Featured Categories) ================= */}
       <section className="lg:hidden w-full max-w-[4000px] mx-auto mt-8">
         {/* Top gold divider */}
-        <div className="h-[4px] bg-gradient-to-r from-[rgba(95,82,17,0.71)] via-[#D4AF37] to-[rgba(46,38,0,0.94)] opacity-50 mb-20" />
+        <div className="h-[4px] bg-gradient-to-r from-[rgba(95,82,17,0.71)] via-[#D4AF37] to-[rgba(46,38,0,0.94)] opacity-50 mb-10 sm:mb-20" />
 
-        <div className="relative mb-20 bg-black py-12 px-6 lg:px-10">
-          <h2 style={{ fontFamily: 'revert' }} className="text-5xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent">
+        <div className="relative mb-10 sm:mb-20 bg-black py-10 px-5 sm:py-12 sm:px-10">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent" style={{ fontFamily: "'Oswald', sans-serif" }}>
             Shop by Category
           </h2>
 
           <div className="h-[4px] w-48 bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] rounded-full mt-6 shadow-lg shadow-[#D4AF37]/40" />
         </div>
 
-        <div className="py-16 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        <div className="py-10 sm:py-16 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="rounded-[16px] h-40 bg-slate-100 animate-pulse" />
@@ -498,39 +504,52 @@ export function Home() {
 
       {/* ================= TRENDING PRODUCTS ================= */}
       <div className="mt-8 px-4">
-        <AutoScrollProductSection title="🔥 Trending Products" products={trendingProducts} />
+        <AutoScrollProductSection title="Trending Now" products={trendingProducts} />
       </div>
 
       {/* ================= RECOMMENDED FOR YOU ================= */}
       <div className="mt-8 px-4">
-        <AutoScrollProductSection title="💎 Recommended For You" products={recommendedProducts} />
+        <AutoScrollProductSection title="Recommended For You" products={recommendedProducts} />
       </div>
 
       {/* ================= ELECTRONICS PICKS ================= */}
       <div className="mt-8 px-4">
-        <AutoScrollProductSection title="⚡ Electronics Picks" products={electronicsProducts} />
+        <AutoScrollProductSection title="Electronics Picks" products={electronicsProducts} />
       </div>
 
       {/* ================= FASHION ESSENTIALS ================= */}
       <div className="mt-8 px-4 mb-8">
-        <AutoScrollProductSection title="👗 Fashion Essentials" products={fashionProducts} />
+        <AutoScrollProductSection title="Fashion Essentials" products={fashionProducts} />
       </div>
 
       {/* ================= LUXURY FULL WIDTH AD ================= */}
-      <section className="w-full py-20 bg-gradient-to-b from-[#0F0F0F] via-[#1A1A1A] to-[#0F0F0F] relative overflow-hidden group">
+      <section className="w-full py-12 sm:py-20 bg-gradient-to-b from-[#0F0F0F] via-[#1A1A1A] to-[#0F0F0F] relative overflow-hidden group">
         {/* Decorative gold accent lights */}
         <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-[#FFE55C] rounded-full mix-blend-screen filter blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-700" />
         <div className="absolute bottom-0 right-1/3 w-[500px] h-[500px] bg-[#D4AF37] rounded-full mix-blend-screen filter blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-700" />
 
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 relative z-10">
-          <div className="relative rounded-[24px] overflow-hidden group cursor-pointer border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500">
-            <img
-              src="https://via.placeholder.com/1600x400"
-              alt="Bottom Ad"
-              className="w-full rounded-[22px] group-hover:scale-110 transition-transform duration-700 brightness-75 group-hover:brightness-90"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FFE55C]/50 via-[#D4AF37]/30 to-[#B8941F]/50 group-hover:from-[#FFE55C]/70 group-hover:via-[#D4AF37]/50 group-hover:to-[#B8941F]/70 transition-all duration-500 rounded-[22px]" />
-          </div>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 relative z-10">
+          <Link
+            to="/shop"
+            className="relative rounded-[24px] overflow-hidden group cursor-pointer border-2 border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.8)] transition-all duration-500 block no-underline bg-[#0A0A0A]"
+          >
+            <div className="absolute -top-16 left-1/4 w-64 h-64 rounded-full bg-[#FFE55C] mix-blend-screen blur-[90px] opacity-20" />
+            <div className="absolute -bottom-20 right-1/5 w-72 h-72 rounded-full bg-[#D4AF37] mix-blend-screen blur-[100px] opacity-20" />
+
+            <div className="relative px-6 sm:px-12 py-12 sm:py-16 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+              <div className="relative z-10">
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[#FFE55C]/80 mb-3">The My Super Store Collection</p>
+                <h3 className="text-2xl sm:text-4xl font-extrabold text-white mb-2" style={{ fontFamily: 'dosis' }}>
+                  Luxury. <span className="bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] bg-clip-text text-transparent">Delivered.</span>
+                </h3>
+                <p className="text-white/50 text-sm max-w-md">Explore premium electronics, fashion and home goods — curated for the discerning.</p>
+              </div>
+
+              <span className="relative z-10 shrink-0 bg-gradient-to-r from-[#FFE55C] via-[#D4AF37] to-[#B8941F] text-[#050505] px-6 sm:px-8 py-3 rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-widest group-hover:scale-105 transition-transform duration-300 shadow-[0_10px_30px_rgba(212,175,55,0.3)]">
+                Shop Now
+              </span>
+            </div>
+          </Link>
         </div>
       </section>
     </main>

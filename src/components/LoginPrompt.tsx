@@ -22,7 +22,7 @@ export function LoginPrompt({ isOpen, onClose }: LoginPromptProps) {
             <div className="relative z-10 w-full max-w-md bg-[#0A0A0A] border border-[#D4AF37]/20 rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                    className="mini-btn p-0 absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
                 >
                     <X size={24} />
                 </button>

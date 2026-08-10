@@ -170,14 +170,14 @@ export function HeroCarousel() {
             <div className="absolute inset-0 pointer-events-none z-20">
                 <button
                     onClick={prevSlide}
-                    className="absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white p-1 sm:p-1.5 md:p-2 lg:p-3 rounded-full transition-all duration-300 hover:scale-110 border border-white/20"
+                    className="absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white mini-btn p-1 sm:p-1.5 md:p-2 lg:p-3 rounded-full transition-all duration-300 hover:scale-110 border border-white/20"
                     aria-label="Previous slide"
                 >
                     <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
                 </button>
                 <button
                     onClick={nextSlide}
-                    className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white p-1 sm:p-1.5 md:p-2 lg:p-3 rounded-full transition-all duration-300 hover:scale-110 border border-white/20"
+                    className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white mini-btn p-1 sm:p-1.5 md:p-2 lg:p-3 rounded-full transition-all duration-300 hover:scale-110 border border-white/20"
                     aria-label="Next slide"
                 >
                     <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
@@ -185,7 +185,7 @@ export function HeroCarousel() {
             </div>
 
             {/* Navigation dots */}
-            <div className="hidden sm:flex absolute bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-6 left-1/2 -translate-x-1/2 gap-1 sm:gap-1.5 md:gap-2 z-20">
+            <div className="carousel-dots hidden sm:flex absolute bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-6 left-1/2 -translate-x-1/2 gap-1 sm:gap-1.5 md:gap-2 z-20">
                 {slides.map((_, index) => (
                     <button
                         key={index}

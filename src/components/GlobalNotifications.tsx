@@ -121,7 +121,7 @@ export function GlobalNotifications() {
 
                         <button
                             onClick={() => dismiss(notif.id)}
-                            className="text-white/40 hover:text-white transition-colors shrink-0"
+                            className="mini-btn p-0 text-white/40 hover:text-white transition-colors shrink-0"
                         >
                             <X size={14} />
                         </button>

@@ -380,7 +380,7 @@ export function AdminOrders() {
                     <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl border">
                         <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
                             <h2 className="text-xl font-bold text-gray-900">Order Details</h2>
-                            <button onClick={() => setDetailsOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
+                            <button onClick={() => setDetailsOpen(false)} className="mini-btn p-2 rounded-lg hover:bg-gray-100">
                                 <X size={20} />
                             </button>
                         </div>

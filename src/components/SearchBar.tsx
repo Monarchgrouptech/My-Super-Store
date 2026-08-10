@@ -191,7 +191,7 @@ export function SearchBar() {
           ) : query && (
             <button
               onClick={handleClear}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="mini-btn p-0 text-slate-400 hover:text-slate-600 transition-colors"
               aria-label="Clear search"
             >
               <X className="h-5 w-5" strokeWidth={2} />
